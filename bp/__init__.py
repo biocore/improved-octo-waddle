@@ -6,5 +6,6 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 from ._bp import BP
+from ._parse import parse_newick
 
-__all__ = ['BP']
+__all__ = ['BP', 'parse_newick']
