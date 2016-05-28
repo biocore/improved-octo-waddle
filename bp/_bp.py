@@ -26,6 +26,7 @@ leftmostleaf(i) / rightmostleaf(i) leftmost/rightmost leaf of node i"""
 class BP(object):
     def __init__(self, B):
         assert B.sum() == (float(B.size) / 2)
+
         self.B = B
 
         self._k_index = [np.unique((~self.B).cumsum(), return_index=True)[1],

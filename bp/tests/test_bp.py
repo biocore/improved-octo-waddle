@@ -45,9 +45,8 @@ class BPTests(TestCase):
 
         for t, pos in zip((0, 1), (pos_0, pos_1)):
             for k in range(1, len(pos)):
-                # needed +t on expectation
-                print(t, k, self.BP.select(t, k))
-                self.assertEqual(self.BP.rank(t, self.BP.select(t, k)), k)# + t)
+                # needed +t on expectation, unclear at this time why.
+                self.assertEqual(self.BP.rank(t, self.BP.select(t, k)), k + t)
 
     def test_excess(self):
         # from fig 2
