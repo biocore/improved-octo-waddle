@@ -9,6 +9,13 @@
 ### NOTE: some doctext strings are copied and pasted from manuscript
 ### http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
 import numpy as np
+cimport numpy as np
+cimport cython
+from cython.parallel import prange
+from cpython cimport bool
+
+DTYPE = np.int64
+ctypedef np.int64_t DTYPE_t
 
 """root the tree root
 levelleftmost(d) / levelrightmost(d) leftmost/rightmost node with depth d
@@ -23,86 +30,188 @@ leafselect(k) kth leaf of the tree
 numleaves(i) number of leaves in the subtree of node i
 leftmostleaf(i) / rightmostleaf(i) leftmost/rightmost leaf of node i"""
 
-class BP(object):
-    def __init__(self, B):
+@cython.final
+cdef class BP:
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def __cinit__(self, np.ndarray[np.uint8_t, ndim=1] B):
+        cdef:
+            Py_ssize_t i
+            np.ndarray[np.uint32_t, ndim=1] _e_index, _k_index_0, _k_index_1
+            np.ndarray[np.uint32_t, ndim=1] _closeopen_index
+            np.ndarray[np.uint32_t, ndim=2] _r_index
+
         assert B.sum() == (float(B.size) / 2)
 
+        
+        _r_index = np.vstack([np.cumsum((1 - B), dtype=np.uint32), 
+                              np.cumsum(B, dtype=np.uint32)])
+
+        # not assumed to be same length so can't stack
+        _k_index_0 = np.unique(_r_index[0], 
+                               return_index=True)[1].astype(np.uint32)
+        _k_index_1 = np.unique(_r_index[1], 
+                               return_index=True)[1].astype(np.uint32)
+
         self.B = B
+        self._r_index = _r_index
+        self._k_index_0 = _k_index_0
+        self._k_index_1 = _k_index_1
 
-        self._k_index = [np.unique((~self.B).cumsum(), return_index=True)[1],
-                         np.unique(self.B.cumsum(), return_index=True)[1] ]#- 1]
-        self._r_index = [(~self.B).cumsum(), self.B.cumsum()]
+        _e_index = np.empty(B.size, dtype=np.uint32)
+        for i in range(B.size):
+            _e_index[i] = self._excess(i)
+        self._e_index = _e_index
 
-    def rank(self, t, i):
+        self._closeopen_index = None
+
+    def setcloseopen(self, np.ndarray[np.uint32_t, ndim=1] closeopen):
+        self._closeopen_index = closeopen
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef inline np.uint32_t rank(self, Py_ssize_t t, Py_ssize_t i):
         """The number of occurrences of the bit t in B"""
-        return self._r_index[t][i]
+        return self._r_index[t, i]
 
-    def select(self, t, k):
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef inline np.uint32_t select(self, Py_ssize_t t, Py_ssize_t k):
         """The position in B of the kth occurrence of the bit t."""
-        return self._k_index[t][k]
+        if t:
+            return self._k_index_1[k]
+        else:
+            return self._k_index_0[k]
 
-    def excess(self, i):
-        """the number of opening minus closing parentheses in B[1, i]"""
-        # same as: self.rank(1, i) - self.rank(0, i)
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cdef inline np.uint32_t _excess(self, Py_ssize_t i):
+        """Actually compute excess"""
         if i < 0:
             return 0  # wasn't stated as needed but appears so given testing
         return (2 * self.rank(1, i) - i) - 1
 
-    def fwdsearch(self, i, d):
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef inline np.uint32_t excess(self, Py_ssize_t i):
+        """the number of opening minus closing parentheses in B[1, i]"""
+        # same as: self.rank(1, i) - self.rank(0, i)
+        return self._e_index[i]
+    
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef inline np.int32_t fwdsearch(self, Py_ssize_t i, int d):
         """Forward search for excess by depth"""
-        # cache excess, need to bench on large trees as it may be slower as it avoids shortcut
-        # (self._e[i+1:] == (self._e[i] + d)).get_first_true_value()
+        cdef:
+            int j, n = self.B.size
+            np.int32_t b ### buffer exception probably from here
+            np.ndarray[np.uint32_t, ndim=1] e_index
 
-        # but, definite cython target
-        for j in range(i + 1, len(self.B)):
-            if self.excess(j) == (self.excess(i) + d):
+        e_index = self._e_index
+        b = e_index[i] + d
+
+        for j in range(i + 1, n):
+            if e_index[j] == b:
                 return j
-        return -1 # wasn't stated as needed but appears so given testing
 
-    def bwdsearch(self, i, d):
+        return -1  # wasn't stated as needed but appears so given testing
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef inline Py_ssize_t bwdsearch(self, Py_ssize_t i, int d):
         """Backward search for excess by depth"""
-        # cache excess
-        # (self._e[:i] == (self._e[i] + d)).get_last_true_value()
-        for j in range(0, i)[::-1]:
-            if self.excess(j) == (self.excess(i) + d):
-                return j
-        return -1 # wasn't stated as needed but appears so given testing
+        cdef:
+            int j
+            np.int32_t b ### buffer exception probably from here
+            np.ndarray[np.uint32_t, ndim=1] e_index
+    
+        e_index = self._e_index
+        b = e_index[i] + d
 
-    def close(self, i):
+        for j in range(i - 1, -1, -1):
+            if e_index[j] == b:
+                return j
+
+        return -1
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef inline np.int32_t close(self, Py_ssize_t i):
         """The position of the closing parenthesis that matches B[i]"""
+        cdef:
+            np.ndarray[np.uint32_t, ndim=1] coi = self._closeopen_index
+
         if not self.B[i]:
             # identity: the close of a closed parenthesis is itself
             return i
 
-        return self.fwdsearch(i, -1)
+        if coi is not None:
+            return coi[i]
+        else:
+            return self.fwdsearch(i, -1)
 
-    def open(self, i):
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef inline np.int32_t open(self, Py_ssize_t i):
         """The position of the opening parenthesis that matches B[i]"""
-        if self.B[i]:
-            # identity: the open of an open parenthesis is itself
-            return i
+        cdef:
+            np.ndarray[np.uint32_t, ndim=1] coi = self._closeopen_index
 
-        if i <= 0:
+        if self.B[i] or i <= 0:
+            # identity: the open of an open parenthesis is itself
             # the open of 0 is open. A negative index cannot be open, so just return
             return i
-
         ### if bwdsearch returns -1, should check and dump None?
-        return self.bwdsearch(i, 0) + 1
+        if coi is not None:
+            return coi[i]
+        else:
+            return self.bwdsearch(i, 0) + 1
 
-    def enclose(self, i):
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef inline np.int32_t enclose(self, Py_ssize_t i):
         """The opening parenthesis of the smallest matching pair that contains position i"""
         if self.B[i]:
             return self.bwdsearch(i, -2) + 1
         else:
             return self.bwdsearch(i - 1, -2) + 1
 
-    def rmq(self, i, j):
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef np.uint32_t rmq(self, Py_ssize_t i, Py_ssize_t j):
         """The leftmost minimum excess in i -> j"""
-        return np.array([self.excess(k) for k in range(i, j + 1)]).argmin() + i
+        cdef:
+            Py_ssize_t k, min_k
+            np.uint32_t min_v, obs_v
 
-    def rMq(self, i, j):
+        min_k = i
+        min_v = self.excess(i)  # a value larger than what will be tested
+        for k in range(i, j + 1):
+            obs_v = self.excess(k)
+            if obs_v < min_v:
+                min_k = k
+                min_v = obs_v
+        return min_k
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef np.uint32_t rMq(self, Py_ssize_t i, Py_ssize_t j):
         """The leftmost maximmum excess in i -> j"""
-        return np.array([self.excess(k) for k in range(i, j + 1)]).argmax() + i
+        cdef:
+            Py_ssize_t k, max_k
+            np.uint32_t max_v, obs_v
+
+        max_k = i
+        max_v = self.excess(i)  # a value larger than what will be tested
+        for k in range(i, j + 1):
+            obs_v = self.excess(k)
+            if obs_v > max_v:
+                max_k = k
+                max_v = obs_v
+
+        return max_k
+
+        # return np.array([self.excess(k) for k in range(i, j + 1)]).argmax() + i
 
     def depth(self, i):
         """The depth of node i"""
@@ -116,9 +225,11 @@ class BP(object):
         """The parent of node i"""
         return self.enclose(i)
 
-    def isleaf(self, i):
+    cpdef inline np.uint8_t isleaf(self, Py_ssize_t i):
         """Whether the node is a leaf"""
         # publication describe this operation as "iff B[i+1] == 0" which is incorrect
+
+        # most likely there is an implicit conversion here
         return self.B[i] and (not self.B[i + 1])
 
     def fchild(self, i):
@@ -135,7 +246,11 @@ class BP(object):
         """The last child of i (i.e., the right child)
 
         lchild(i) = open(close(i) − 1) (if i is not a leaf)"""
-        pass
+        if self.B[i]:
+            if not self.isleaf(i):
+                return self.open(self.close(i) - 1)
+        else:
+            return self.lchild(self.open(i))
 
     def mincount(self, i, j):
         """number of occurrences of the minimum in excess(i), excess(i + 1), . . . , excess(j)."""
@@ -210,9 +325,10 @@ class BP(object):
         if self.B[i]:
             return self.rank(0, self.close(i))
         else:
+            ### i believe this is incorrect
             return self.rank(0, i)
 
-    def postorderselect(self, k):
+    cpdef inline np.uint32_t postorderselect(self, Py_ssize_t k):
         """The node with postorder k"""
         # postorderselect(k) = open(select0(k)),
         return self.open(self.select(0, k))
@@ -311,3 +427,59 @@ class BP(object):
         """the height of i (distance to its deepest node)"""
         # height(i) = excess(deepestnode(i)) − excess(i).
         return self.excess(self.deepestnode(i)) - self.excess(self.open(i))
+
+    cpdef np.ndarray[np.uint8_t, ndim=1] shear(self, np.ndarray[np.uint32_t, ndim=1] tips):
+        cdef:
+            Py_ssize_t i, n = tips.size
+            np.uint32_t p, t
+            np.ndarray[np.uint8_t, ndim=1] mask
+
+        mask = np.zeros(self.B.size, dtype=np.uint8)
+        mask[self.root()] = 1
+        mask[self.close(self.root())] = 1
+
+        for i in range(n):
+            t = tips[i]
+
+            mask[t] = 1
+            mask[t + 1] = 1 # close
+
+            p = self.parent(t)
+            while mask[p] == 0 and p != 0:
+                mask[p] = 1
+                mask[self.close(p)] = 1
+
+                p = self.parent(p)
+
+        return mask
+
+    cpdef np.ndarray[np.uint8_t, ndim=1] collapse(self, np.ndarray[np.uint8_t, ndim=1] mask, 
+                                                  np.ndarray[np.double_t, ndim=1] agg_out):
+        cdef:
+            Py_ssize_t i, n = self.B.sum()
+            np.uint32_t current, first, last
+            np.ndarray[np.uint8_t, ndim=1] collapse_mask
+
+        collapse_mask = np.zeros(self.B.size, dtype=np.uint8)
+        collapse_mask[self.root()] = 1
+        collapse_mask[self.close(self.root())] = 1
+
+        for i in range(self.B.sum()):
+            current = self.preorderselect(i)
+
+            if mask[current] == 0:
+                pass
+            elif self.isleaf(current):
+                collapse_mask[current] = 1
+                collapse_mask[self.close(current)] = 1
+            else:
+                first = self.fchild(current)
+                last = self.lchild(current)
+
+                if first == last:
+                    agg_out[first] = agg_out[first] + agg_out[current]
+                else:
+                    collapse_mask[current] = 1
+                    collapse_mask[self.close(current)] = 1
+
+        return collapse_mask

@@ -9,6 +9,7 @@
 from unittest import TestCase, main
 
 import numpy as np
+import numpy.testing as npt
 
 from bp import BP
 
@@ -16,12 +17,12 @@ from bp import BP
 class BPTests(TestCase):
     def setUp(self):
         #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21
-        self.fig1_B = np.array([1, 1, 1, 0, 1, 0, 1, 1 ,0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0], dtype=bool)
+        self.fig1_B = np.array([1, 1, 1, 0, 1, 0, 1, 1 ,0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0], dtype=np.uint8)
         self.BP = BP(self.fig1_B)
 
     def test_rank(self):
         counts_1 = self.fig1_B.cumsum()
-        counts_0 = (~self.fig1_B).cumsum()
+        counts_0 = (1 - self.fig1_B).cumsum()
         for exp, t in zip((counts_1, counts_0), (1, 0)):
             for idx, e in enumerate(exp):
 
@@ -29,7 +30,7 @@ class BPTests(TestCase):
 
     def test_select(self):
         pos_1 = np.unique(self.fig1_B.cumsum(), return_index=True)[1] #- 1
-        pos_0 = np.unique((~self.fig1_B).cumsum(), return_index=True)[1]
+        pos_0 = np.unique((1 - self.fig1_B).cumsum(), return_index=True)[1]
 
         for exp, t in zip((pos_1, pos_0), (1, 0)):
             for k in range(1, len(exp)):
@@ -41,7 +42,7 @@ class BPTests(TestCase):
 
     def test_rank_select_property(self):
         pos_1 = np.unique(self.fig1_B.cumsum(), return_index=True)[1] #- 1
-        pos_0 = np.unique((~self.fig1_B).cumsum(), return_index=True)[1]
+        pos_0 = np.unique((1 - self.fig1_B).cumsum(), return_index=True)[1]
 
         for t, pos in zip((0, 1), (pos_0, pos_1)):
             for k in range(1, len(pos)):
@@ -64,7 +65,8 @@ class BPTests(TestCase):
         exp = [2, 4, 7, 6, 1, 11, 15, 17, 14, 13, 0]
         for i, e in zip(np.argwhere(self.fig1_B == 0).squeeze(), exp):
             self.assertEqual(self.BP.open(i), e)
-            self.assertEqual(self.BP.excess(self.BP.open(i) - 1), self.BP.excess(i))
+            self.assertEqual(self.BP.excess(self.BP.open(i)) - 1,
+                             self.BP.excess(i))
 
     def test_enclose(self):
         # i > 0 and i < (len(B) - 1)
@@ -157,6 +159,9 @@ class BPTests(TestCase):
         exp = [1, 2, None, None, None, None, 7, None, None, 7, 2, None, None, 14, 15, None, None, None, None, 15, 14, 1]
         for i, e in enumerate(exp):
             self.assertEqual(self.BP.fchild(i), e)
+
+    def test_lchild(self):
+        self.fail()
 
     def test_mincount(self):
         #       (  (  (  )  (  )  (  (  )  )   )   (   )   (   (   (   )   (   )   )   )   )
@@ -351,6 +356,37 @@ class BPTests(TestCase):
         exp = [3, 2, 0, 0, 0, 0, 1, 0, 0, 1, 2, 0, 0, 2, 1, 0, 0, 0, 0, 1, 2, 3]
         self._testinator(exp, self.BP.height)
 
+    def test_shear(self):
+        #       (  (  (  )  (  )  (  (  )  )   )   (   )   (   (   (   )   (   )   )   )   )
+        #i      0  1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20  21
+        in_ = np.array([4, 7, 11, 15, 17], dtype=np.uint32)
+        exp = np.array([1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                        1, 1, 1, 1])
+        obs = self.BP.shear(in_)
+        npt.assert_equal(exp, obs)
+
+        in_ = np.array([15, 17], dtype=np.uint32)
+        exp = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+                        1, 1, 1, 1])
+        obs = self.BP.shear(in_)
+        npt.assert_equal(obs, exp)
+        # test using a close? nontip?
+
+    def test_collapse(self):
+        in_ = np.ones(self.BP.B.size, dtype=np.uint8)
+        agg = np.array([0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1,
+                        0, 0, 0, 0], dtype=float)
+        exp = np.array([1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1,
+                        1, 1, 0, 1])
+        exp_agg = np.array([0, 1, 1, 0, 1, 0, 1, 2, 0, 0, 0, 1, 0, 1, 2, 1, 0,
+                            1, 0, 0, 0, 0], dtype=float)
+
+        obs = self.BP.collapse(in_, agg)
+        npt.assert_equal(obs, exp)
+        npt.assert_equal(agg, exp_agg)
+
+    def test_to_tree_array(self):
+        self.fail()
 
 if __name__ == '__main__':
     main()
