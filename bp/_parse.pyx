@@ -2,7 +2,7 @@
 # cython: profile=True
 
 from ._bp cimport BP
-
+import time
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -41,53 +41,54 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
 cpdef parse_newick(unicode data):
     cdef:
         np.uint32_t ptr, open_ptr
-        Py_ssize_t token_ptr, tmp
+        Py_ssize_t token_ptr, tmp, lag
         object topology, open_, isleaf
-        unicode token
-        np.ndarray[np.uint32_t, ndim=1] closeopen
+        unicode token, last_token
         np.ndarray[object, ndim=1] names
         np.ndarray[np.double_t, ndim=1] lengths
 
-    ##### uint32 for anything index in BP
     ##### probably can cache tip indices
     ##### probably can cache parent indices
 
     topology = _newick_to_bp(data)
 
-    #open_ = topology.open
-    #isleaf = topology.isleaf
-
-    closeopen = np.zeros(len(topology.B), dtype=np.uint32)
     names = np.full(len(topology.B), None, dtype=object)
     lengths = np.zeros(len(topology.B), dtype=np.double)
 
     ptr = 0
     token_ptr = _ctoken(data, 0)
     token = data[0:token_ptr]
+    last_token = None
 
+    # lag reflects the scenario where ((x))y, where the label y gets may end
+    # up being associated with an earlier unnamed vertex. lag represents the
+    # offset between the topology pointer and the token pointer effectively.
+    lag = 0
     while token != ';':
         if token == '(':
             # an open parenthesis never has metadata associated with it
             ptr += 1
         
+        if (token == ')' or token == ',') and last_token == ')':
+            lag += 1
+
         elif token not in '(),:;':
+            ptr += lag
+            lag = 0
+
             open_ptr = topology.open(ptr)
             _set_node_metadata(open_ptr, token, names, lengths)
+
             if topology.isleaf(ptr):
-                # we have open, mapping close
-                closeopen[ptr] = ptr + 1
-                closeopen[ptr + 1] = ptr
                 ptr += 2
             else:
-                closeopen[ptr] = open_ptr
-                closeopen[open_ptr] = ptr
                 ptr += 1
 
+        last_token = token
         tmp = _ctoken(data, token_ptr)
         token = data[token_ptr:tmp]
         token_ptr = tmp
     
-    topology.setcloseopen(closeopen)
     return topology, names, lengths
 
 
@@ -171,6 +172,8 @@ cdef inline int _ccheck(Py_UCS4 c):
     elif c == u')':
         return 1
     elif c == u',':
+        return 1
+    elif c == u';':
         return 1
     else:
         return 0
