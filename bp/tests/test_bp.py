@@ -360,33 +360,34 @@ class BPTests(TestCase):
         #       (  (  (  )  (  )  (  (  )  )   )   (   )   (   (   (   )   (   )   )   )   )
         #i      0  1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20  21
         in_ = np.array([4, 7, 11, 15, 17], dtype=np.uint32)
-        exp = np.array([1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                        1, 1, 1, 1])
-        obs = self.BP.shear(in_)
+        exp = np.array([1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0,
+                        0, 0], dtype=np.uint32)
+        obs = self.BP.shear(in_).B
         npt.assert_equal(exp, obs)
 
         in_ = np.array([15, 17], dtype=np.uint32)
-        exp = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
-                        1, 1, 1, 1])
-        obs = self.BP.shear(in_)
+        exp = np.array([1, 1, 1, 1, 0, 1, 0, 0, 0, 0], dtype=np.uint32)
+        obs = self.BP.shear(in_).B
         npt.assert_equal(obs, exp)
-        # test using a close? nontip?
 
     def test_collapse(self):
-        in_ = np.ones(self.BP.B.size, dtype=np.uint8)
-        agg = np.array([0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1,
-                        0, 0, 0, 0], dtype=float)
-        exp = np.array([1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1,
-                        1, 1, 0, 1])
-        exp_agg = np.array([0, 1, 1, 0, 1, 0, 1, 2, 0, 0, 0, 1, 0, 1, 2, 1, 0,
-                            1, 0, 0, 0, 0], dtype=float)
+        exp = np.array([1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0],
+                       dtype=np.uint8)
 
-        obs = self.BP.collapse(in_, agg)
+        obs = self.BP.collapse().B
         npt.assert_equal(obs, exp)
-        npt.assert_equal(agg, exp_agg)
+
+        bp = BP(np.array([1, 1, 1, 0, 0, 1, 0, 0], dtype=np.uint8))
+        exp = np.array([1, 1, 0, 1, 0, 0])
+        obs = bp.collapse().B
+
+        npt.assert_equal(obs, exp)
 
     def test_to_tree_array(self):
         self.fail()
+
+    def test_tips(self):
+        self.fail("such a useful traversal")
 
 if __name__ == '__main__':
     main()

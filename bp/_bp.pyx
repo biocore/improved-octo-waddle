@@ -14,58 +14,111 @@ cimport cython
 from cython.parallel import prange
 from cpython cimport bool
 
-DTYPE = np.int64
-ctypedef np.int64_t DTYPE_t
-
-"""root the tree root
-levelleftmost(d) / levelrightmost(d) leftmost/rightmost node with depth d
-lca(i, j) the lowest common ancestor of two nodes i, j
-deepestnode(i) the (first) deepest node in the subtree of i
-height(i) the height of i (distance to its deepest node)
-degree(i) q = number of children of node i
-child(i, q) q-th child of node i
-childrank(i) q = number of siblings to the left of node i
-leafrank(i) number of leaves to the left and up to node i
-leafselect(k) kth leaf of the tree
-numleaves(i) number of leaves in the subtree of node i
-leftmostleaf(i) / rightmostleaf(i) leftmost/rightmost leaf of node i"""
 
 @cython.final
 cdef class BP:
+    """A balanced parentheses succinct data structure tree representation
+
+    The basis for this implementation is the data structure described by
+    Cordova and Navarro [1]. In some instances, some docstring text was copied
+    verbatim from the manuscript. This does not implement the bucket-based
+    trees, although that would be a very interesting next step. 
+
+    A node in this data structure is represented by 2 bits, an open parenthesis
+    and a close parenthesis. The implementation uses a numpy uint8 type where
+    an open parenthesis is a 1 and a close is a 0. In general, operations on
+    this tree are best suited for passing in the opening parenthesis index, so
+    for instance, if you'd like to use BP.isleaf to determine if a node is a 
+    leaf, the operation is defined only for using the opening parenthesis. At 
+    this time, there is some ambiguity over what methods can handle a closing
+    parenthesis.
+
+    Node attributes, such as names, are stored external to this data structure.
+
+    The motivator for this data structure is pure performance both in space and
+    time. As such, there is minimal sanity checking. It is advised to use this
+    structure with care, and ideally within a framework which can assure 
+    sanity. 
+
+    References
+    ----------
+    [1] http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
+    """
+
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def __cinit__(self, np.ndarray[np.uint8_t, ndim=1] B):
+    def __cinit__(self, np.ndarray[np.uint8_t, ndim=1] B,
+                  np.ndarray[np.uint32_t, ndim=1] closeopen=None):
         cdef:
             Py_ssize_t i
             np.ndarray[np.uint32_t, ndim=1] _e_index, _k_index_0, _k_index_1
             np.ndarray[np.uint32_t, ndim=1] _closeopen_index
             np.ndarray[np.uint32_t, ndim=2] _r_index
 
+        # the tree is only valid if it is balanaced
         assert B.sum() == (float(B.size) / 2)
+        self.B = B
 
-        
+        # construct a rank index. These operations are performed frequently,
+        # and easy to cache at a relatively minor memory expense
         _r_index = np.vstack([np.cumsum((1 - B), dtype=np.uint32), 
                               np.cumsum(B, dtype=np.uint32)])
+        self._r_index = _r_index
 
-        # not assumed to be same length so can't stack
+        # construct a select index. These operations are performed frequently,
+        # and easy to cache at a relatively minor memory expense. It cannot be
+        # assumed that open and close will be same length so can't stack
         _k_index_0 = np.unique(_r_index[0], 
                                return_index=True)[1].astype(np.uint32)
+        self._k_index_0 = _k_index_0
         _k_index_1 = np.unique(_r_index[1], 
                                return_index=True)[1].astype(np.uint32)
-
-        self.B = B
-        self._r_index = _r_index
-        self._k_index_0 = _k_index_0
         self._k_index_1 = _k_index_1
 
+        # construct an excess index. These operations are performed a lot, and
+        # similarly can to rank and select, can be cached at a minimal expense.
         _e_index = np.empty(B.size, dtype=np.uint32)
         for i in range(B.size):
             _e_index[i] = self._excess(i)
         self._e_index = _e_index
 
-        self._closeopen_index = None
+        # The closeopen index is not provided at construction as it can be 
+        # determined at parse with very minimal overhead. 
+        # TODO: expand constructor to allow optionally taking the closeopen 
+        # cache
+        if closeopen is not None:
+            self._closeopen_index = closeopen
+        else:
+            self._set_closeopen_cache()
+        #self._closeopen_index = None
 
-    def setcloseopen(self, np.ndarray[np.uint32_t, ndim=1] closeopen):
+    #def setcloseopen(self, np.ndarray[np.uint32_t, ndim=1] closeopen):
+    #    """Set the open/close cache"""
+    #    self._closeopen_index = closeopen
+
+    cdef inline void _set_closeopen_cache(self):
+        cdef:
+            Py_ssize_t i, j, n, m
+            np.ndarray[np.uint32_t, ndim=1] closeopen
+            np.ndarray[np.uint8_t, ndim=1] b
+        
+        b = self.B
+        n = b.size
+        closeopen = np.zeros(n, dtype=np.uint32)
+
+        for i in range(n):
+            # if we haven't already cached it (cheaper than open/close call)
+            # note: idx 0 is valid, but it will be on idx -1 and correspond to
+            # root so this is safe.
+            if closeopen[i] == 0:
+                if b[i]:
+                    j = self.close(i)
+                else:
+                    j = self.open(i)
+
+                closeopen[i] = j
+                closeopen[j] = i
+        
         self._closeopen_index = closeopen
 
     @cython.boundscheck(False)
@@ -428,7 +481,7 @@ cdef class BP:
         # height(i) = excess(deepestnode(i)) − excess(i).
         return self.excess(self.deepestnode(i)) - self.excess(self.open(i))
 
-    cpdef np.ndarray[np.uint8_t, ndim=1] shear(self, np.ndarray[np.uint32_t, ndim=1] tips):
+    cpdef BP shear(self, np.ndarray[np.uint32_t, ndim=1] tips):
         cdef:
             Py_ssize_t i, n = tips.size
             np.uint32_t p, t
@@ -451,35 +504,51 @@ cdef class BP:
 
                 p = self.parent(p)
 
-        return mask
+        return self._mask_from_self(mask)
 
-    cpdef np.ndarray[np.uint8_t, ndim=1] collapse(self, np.ndarray[np.uint8_t, ndim=1] mask, 
-                                                  np.ndarray[np.double_t, ndim=1] agg_out):
+    cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask):
+        cdef:
+            Py_ssize_t i, k, n = mask.size
+            np.ndarray[np.uint8_t, ndim=1] b, new_b
+            #np.ndarray[np.double_t, ndim=1] new_lengths
+            #np.ndarray new_names
+
+        k = 0
+        b = self.B
+        new_b = np.empty(mask.sum(), dtype=np.uint8)
+
+        for i in range(n):
+            if mask[i]:
+                new_b[k] = b[i]
+                k += 1
+
+        return BP(new_b)
+
+    cpdef BP collapse(self):
         cdef:
             Py_ssize_t i, n = self.B.sum()
             np.uint32_t current, first, last
             np.ndarray[np.uint8_t, ndim=1] collapse_mask
 
-        collapse_mask = np.zeros(self.B.size, dtype=np.uint8)
-        collapse_mask[self.root()] = 1
-        collapse_mask[self.close(self.root())] = 1
+        mask = np.zeros(self.B.size, dtype=np.uint8)
+        mask[self.root()] = 1
+        mask[self.close(self.root())] = 1
 
         for i in range(self.B.sum()):
             current = self.preorderselect(i)
 
-            if mask[current] == 0:
-                pass
-            elif self.isleaf(current):
-                collapse_mask[current] = 1
-                collapse_mask[self.close(current)] = 1
+            if self.isleaf(current):
+                mask[current] = 1
+                mask[self.close(current)] = 1
             else:
                 first = self.fchild(current)
                 last = self.lchild(current)
 
                 if first == last:
-                    agg_out[first] = agg_out[first] + agg_out[current]
+                    pass
+                    #agg_out[first] = agg_out[first] + agg_out[current]
                 else:
-                    collapse_mask[current] = 1
-                    collapse_mask[self.close(current)] = 1
+                    mask[current] = 1
+                    mask[self.close(current)] = 1
 
-        return collapse_mask
+        return self._mask_from_self(mask)

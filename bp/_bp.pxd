@@ -22,6 +22,7 @@ cdef class BP:
     cpdef np.uint32_t rMq(self, Py_ssize_t i, Py_ssize_t j)
     cpdef inline np.uint8_t isleaf(self, Py_ssize_t i)
     cpdef inline np.uint32_t postorderselect(self, Py_ssize_t k)
-    cpdef np.ndarray[np.uint8_t, ndim=1] shear(self, np.ndarray[np.uint32_t, ndim=1] tips)
-    cpdef np.ndarray[np.uint8_t, ndim=1] collapse(self, np.ndarray[np.uint8_t, ndim=1] mask, 
-                                                  np.ndarray[np.double_t, ndim=1] agg_out)
+    cpdef BP shear(self, np.ndarray[np.uint32_t, ndim=1] tips)
+    cpdef BP collapse(self)
+    cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask)
+    cdef inline void _set_closeopen_cache(self)
