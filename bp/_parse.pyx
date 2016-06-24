@@ -41,8 +41,8 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
 cpdef parse_newick(unicode data):
     cdef:
         np.uint32_t ptr, open_ptr
-        Py_ssize_t token_ptr, tmp, lag
-        object topology, open_, isleaf
+        Py_ssize_t token_ptr, tmp, lag, datalen
+        object topology
         unicode token, last_token
         np.ndarray[object, ndim=1] names
         np.ndarray[np.double_t, ndim=1] lengths
@@ -50,13 +50,14 @@ cpdef parse_newick(unicode data):
     ##### probably can cache tip indices
     ##### probably can cache parent indices
 
+    datalen = len(data)
     topology = _newick_to_bp(data)
 
     names = np.full(len(topology.B), None, dtype=object)
     lengths = np.zeros(len(topology.B), dtype=np.double)
 
     ptr = 0
-    token_ptr = _ctoken(data, 0)
+    token_ptr = _ctoken(data, datalen, 0)
     token = data[0:token_ptr]
     last_token = None
 
@@ -68,8 +69,9 @@ cpdef parse_newick(unicode data):
         if token == '(':
             # an open parenthesis never has metadata associated with it
             ptr += 1
-        
+
         if (token == ')' or token == ',') and last_token == ')':
+            # determine if there are unnamed/unlengthed nodes 
             lag += 1
 
         elif token not in '(),:;':
@@ -85,7 +87,7 @@ cpdef parse_newick(unicode data):
                 ptr += 1
 
         last_token = token
-        tmp = _ctoken(data, token_ptr)
+        tmp = _ctoken(data, datalen, token_ptr)
         token = data[token_ptr:tmp]
         token_ptr = tmp
     
@@ -181,18 +183,36 @@ cdef inline int _ccheck(Py_UCS4 c):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef inline Py_ssize_t _ctoken(unicode data, Py_ssize_t start):
-    cdef:
-        Py_ssize_t idx, datalen
-        Py_UCS4 c
+cdef inline int _is_quote(Py_UCS4 c):
+    if c == u'"':
+        return 1
+    elif c == u"'":
+        return 1
+    else:
+        return 0
 
-    datalen = len(data)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef inline Py_ssize_t _ctoken(unicode data, Py_ssize_t datalen, Py_ssize_t start):
+    cdef:
+        Py_ssize_t idx, in_quote = 0
+        Py_UCS4 c
 
     if start == (datalen - 1):
         return start + 1
 
     for idx in range(start, datalen):
         c = data[idx]
+
+        if in_quote:
+            if _is_quote(c):
+                in_quote = 0
+            continue
+        else:
+            if _is_quote(c):
+                in_quote = 1
+                continue
 
         if _ccheck(c):
             if idx == start:

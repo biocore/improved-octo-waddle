@@ -31,6 +31,7 @@ def to_skbio_treenode(bp):
             parent = topo.preorder(topo.parent(node_idx)) - 1
             nodes[parent].append(nodes[i])
 
+    root.length = None
     return root
 
 

@@ -125,6 +125,19 @@ class NewickTests(TestCase):
         npt.assert_equal(obs_bp.B, np.asarray(exp_bp, dtype=bool))
         npt.assert_equal(obs_n, np.asarray(exp_n, dtype=object))
 
+    def test_parse_newick_name_with_semicolon(self):
+        in_ = "((a,(b,c):5)'d','e; foo':10,((f))g)r;"
+
+        exp_bp = [1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0]
+        exp_n = ['r', 'd', 'a', None, None, 'b', None, 'c', None, None, None,
+                 'e; foo', None, 'g', None, 'f', None, None, None, None]
+        exp_l = [0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        obs_bp, obs_n, obs_l = parse_newick(in_)
+
+        npt.assert_equal(obs_bp.B, np.asarray(exp_bp, dtype=bool))
+        npt.assert_equal(obs_n, np.asarray(exp_n, dtype=object))
+
 
 if __name__ == '__main__':
     main()

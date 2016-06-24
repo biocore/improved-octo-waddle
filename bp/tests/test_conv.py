@@ -17,12 +17,11 @@ class ConversionTests(TestCase):
     def test_to_skbio_treenode(self):
         obs = to_skbio_treenode(self.bp)
         for o, e in zip(obs.traverse(), self.sktn.traverse()):
-            self.assertEqual(o.name, e.name)
-
             if e.length is None:
-                self.assertEqual(o.length, 0.0)
+                self.assertEqual(o.length, None if e.is_root() else 0.0)
             else:
                 self.assertEqual(o.length, e.length)
+            self.assertEqual(o.name, e.name)
 
         self.assertEqual(obs.ascii_art(), self.sktn.ascii_art())
 
