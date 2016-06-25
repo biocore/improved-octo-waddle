@@ -378,13 +378,27 @@ class BPTests(TestCase):
         self._testinator(exp, self.BP.height)
 
     def test_shear(self):
+        #       r  2  3     4     5  6             7       8   9  10      11
         #       (  (  (  )  (  )  (  (  )  )   )   (   )   (   (   (   )   (   )   )   )   )
         #i      0  1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20  21
+        names = np.array(['r', '2', '3', None, '4', None, '5', '6', None, None, None, '7', None, '8', '9', '10', None,
+                          '11', None, None, None, None])
+        lengths = np.array([0, 1, 2, 0, 3, 0, 4, 5, 0, 0, 0, 6, 0, 7, 8, 9, 0, 10, 0, 0, 0, 0], dtype=np.double)
+        self.BP.set_names(names)
+        self.BP.set_lengths(lengths)
+
         in_ = np.array([4, 7, 11, 15, 17], dtype=np.uint32)
         exp = np.array([1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0,
                         0, 0], dtype=np.uint32)
-        obs = self.BP.shear(in_).B
-        npt.assert_equal(exp, obs)
+        exp_n = np.array(['r', '2', '4', None, '5', '6', None, None, None, '7', None, '8', '9', '10', None, '11', None,
+                          None, None, None])
+        exp_l = np.array([0, 1, 3, 0, 4, 5, 0, 0, 0, 6, 0, 7, 8, 9, 0, 10, 0, 0, 0, 0], dtype=np.double)
+        obs = self.BP.shear(in_)
+        npt.assert_equal(exp, obs.B)
+
+        for i in range(len(obs.B)):
+            self.assertEqual(obs.name(i), exp_n[i])
+            self.assertEqual(obs.length(i), exp_l[i])
 
         in_ = np.array([15, 17], dtype=np.uint32)
         exp = np.array([1, 1, 1, 1, 0, 1, 0, 0, 0, 0], dtype=np.uint32)
@@ -392,11 +406,23 @@ class BPTests(TestCase):
         npt.assert_equal(obs, exp)
 
     def test_collapse(self):
+        names = np.array(['r', '2', '3', None, '4', None, '5', '6', None, None, None, '7', None, '8', '9', '10', None,
+                          '11', None, None, None, None])
+        lengths = np.array([0, 1, 2, 0, 3, 0, 4, 5, 0, 0, 0, 6, 0, 7, 8, 9, 0, 10, 0, 0, 0, 0], dtype=np.double)
+        self.BP.set_names(names)
+        self.BP.set_lengths(lengths)
+
         exp = np.array([1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0],
                        dtype=np.uint8)
+        exp_n = ['r', '2', '3', None, '4', None, '6', None, None, '7', None, '9', '10', None, '11', None, None, None]
+        exp_l = [0, 1, 2, 0, 3, 0, 9, 0, 0, 6, 0, 15, 9, 0, 10, 0, 0, 0]
 
-        obs = self.BP.collapse().B
-        npt.assert_equal(obs, exp)
+        obs = self.BP.collapse()
+
+        npt.assert_equal(obs.B, exp)
+        for i in range(len(obs.B)):
+            self.assertEqual(obs.name(i), exp_n[i])
+            self.assertEqual(obs.length(i), exp_l[i])
 
         bp = BP(np.array([1, 1, 1, 0, 0, 1, 0, 0], dtype=np.uint8))
         exp = np.array([1, 1, 0, 1, 0, 0])

@@ -33,5 +33,5 @@ cdef class BP:
     cpdef inline np.uint32_t postorderselect(self, Py_ssize_t k)
     cpdef BP shear(self, np.ndarray[np.uint32_t, ndim=1] tips)
     cpdef BP collapse(self)
-    cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask)
+    cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask, np.ndarray[np.double_t, ndim=1] lengths)
     cdef inline void _set_closeopen_cache(self)

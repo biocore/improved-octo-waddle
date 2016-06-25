@@ -540,25 +540,31 @@ cdef class BP:
 
                 p = self.parent(p)
 
-        return self._mask_from_self(mask)
+        return self._mask_from_self(mask, self._lengths)
 
-    cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask):
+    cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask, np.ndarray[np.double_t, ndim=1] lengths):
         cdef:
-            Py_ssize_t i, k, n = mask.size
+            Py_ssize_t i, k, n = mask.size, mask_sum = mask.sum()
             np.ndarray[np.uint8_t, ndim=1] b, new_b
-            #np.ndarray[np.double_t, ndim=1] new_lengths
-            #np.ndarray new_names
+            np.ndarray[object, ndim=1] names, new_names
+            np.ndarray[np.double_t, ndim=1] new_lengths
 
         k = 0
         b = self.B
-        new_b = np.empty(mask.sum(), dtype=np.uint8)
+        names = self._names
+
+        new_b = np.empty(mask_sum, dtype=np.uint8)
+        new_names = np.empty(mask_sum, dtype=object)
+        new_lengths = np.empty(mask_sum, dtype=np.double)
 
         for i in range(n):
             if mask[i]:
                 new_b[k] = b[i]
+                new_names[k] = names[i]
+                new_lengths[k] = lengths[i]
                 k += 1
 
-        return BP(new_b)
+        return BP(new_b, names=new_names, lengths=new_lengths)
 
     cpdef BP collapse(self):
         cdef:
@@ -569,6 +575,8 @@ cdef class BP:
         mask = np.zeros(self.B.size, dtype=np.uint8)
         mask[self.root()] = 1
         mask[self.close(self.root())] = 1
+
+        new_lengths = self._lengths.copy()
 
         for i in range(self.B.sum()):
             current = self.preorderselect(i)
@@ -581,10 +589,9 @@ cdef class BP:
                 last = self.lchild(current)
 
                 if first == last:
-                    pass
-                    #agg_out[first] = agg_out[first] + agg_out[current]
+                    new_lengths[first] = new_lengths[first] + new_lengths[current]
                 else:
                     mask[current] = 1
                     mask[self.close(current)] = 1
 
-        return self._mask_from_self(mask)
+        return self._mask_from_self(mask, new_lengths)
