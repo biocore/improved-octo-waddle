@@ -1,6 +1,5 @@
 from unittest import TestCase, main
-from bp._parse import (parse_newick)
-#                       _set_node_metadata)
+from bp import parse_newick
 
 
 import numpy as np

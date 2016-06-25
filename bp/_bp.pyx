@@ -84,8 +84,6 @@ cdef class BP:
 
         # The closeopen index is not provided at construction as it can be 
         # determined at parse with very minimal overhead. 
-        # TODO: expand constructor to allow optionally taking the closeopen 
-        # cache
         if closeopen is not None:
             self._closeopen_index = closeopen
         else:

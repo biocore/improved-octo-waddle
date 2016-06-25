@@ -31,8 +31,8 @@ USE_CYTHON = os.environ.get('USE_CYTHON', True)
 ext = '.pyx' if USE_CYTHON else '.c'
 extensions = [Extension("bp._bp",
                         ["bp/_bp" + ext]),
-              Extension("bp._parse",
-                        ["bp/_parse" + ext])]
+              Extension("bp._io",
+                        ["bp/_io" + ext])]
 
 if USE_CYTHON:
     from Cython.Build import cythonize
