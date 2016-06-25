@@ -3,12 +3,21 @@ cimport cython
 from cpython cimport bool
 
 @cython.final
+cdef class BPNode:
+    cdef:
+        public unicode name
+        public np.double_t length
+
+@cython.final
 cdef class BP:
     cdef:
         public np.ndarray B 
         np.ndarray _r_index, _k_index_0, _k_index_1, _e_index
-        np.ndarray _closeopen_index
+        np.ndarray _closeopen_index, _names, _lengths
 
+    cpdef inline unicode name(self, Py_ssize_t i)
+    cpdef inline np.double_t length(self, Py_ssize_t i)
+    cpdef inline BPNode get_node(self, Py_ssize_t i)
     cpdef inline np.uint32_t rank(self, Py_ssize_t t, Py_ssize_t i)
     cpdef inline np.uint32_t select(self, Py_ssize_t t, Py_ssize_t k)
     cdef inline np.uint32_t _excess(self, Py_ssize_t i)

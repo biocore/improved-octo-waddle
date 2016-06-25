@@ -9,26 +9,25 @@ def to_skbio_treenode(bp):
 
     Parameters
     ----------
-    bp : tuple
-        Tuple of (BP, np.array of str, np.array of double)
+    bp : BP
+        A BP tree
 
     Returns
     -------
     skbio.TreeNode
         The tree represented as an skbio.TreeNode
     """
-    topo, names, lengths = bp
-    nodes = [skbio.TreeNode() for i in range(sum(topo.B))]
+    nodes = [skbio.TreeNode() for i in range(sum(bp.B))]
     root = nodes[0]
 
-    for i in range(sum(topo.B)):
-        node_idx = topo.preorderselect(i)
-        nodes[i].name = names[node_idx]
-        nodes[i].length = lengths[node_idx]
+    for i in range(sum(bp.B)):
+        node_idx = bp.preorderselect(i)
+        nodes[i].name = bp.name(node_idx)
+        nodes[i].length = bp.length(node_idx)
 
-        if node_idx != topo.root():
+        if node_idx != bp.root():
             # preorder starts at 1 annoyingly
-            parent = topo.preorder(topo.parent(node_idx)) - 1
+            parent = bp.preorder(bp.parent(node_idx)) - 1
             nodes[parent].append(nodes[i])
 
     root.length = None
@@ -68,4 +67,4 @@ def from_skbio_treenode(tree):
             seen.add(n)
 
         ptr += 1
-    return (BP(topo), names, lengths)
+    return BP(topo, names=names, lengths=lengths)

@@ -90,8 +90,10 @@ cpdef parse_newick(unicode data):
         tmp = _ctoken(data, datalen, token_ptr)
         token = data[token_ptr:tmp]
         token_ptr = tmp
-    
-    return topology, names, lengths
+
+    topology.set_names(names)
+    topology.set_lengths(lengths)
+    return topology
 
 
 @cython.boundscheck(False)

@@ -161,7 +161,30 @@ class BPTests(TestCase):
             self.assertEqual(self.BP.fchild(i), e)
 
     def test_lchild(self):
-        self.fail()
+        exp = [self.BP.preorderselect(7),
+               self.BP.preorderselect(4),
+               None,
+               None,
+               None,
+               None,
+               self.BP.preorderselect(5),
+               None,
+               None,
+               self.BP.preorderselect(5),
+               self.BP.preorderselect(4),
+               None,
+               None,
+               self.BP.preorderselect(8),
+               self.BP.preorderselect(10),
+               None,
+               None,
+               None,
+               None,
+               self.BP.preorderselect(10),
+               self.BP.preorderselect(8),
+               self.BP.preorderselect(7)]
+        for i, e in enumerate(exp):
+            self.assertEqual(self.BP.lchild(i), e)
 
     def test_mincount(self):
         #       (  (  (  )  (  )  (  (  )  )   )   (   )   (   (   (   )   (   )   )   )   )
@@ -226,8 +249,6 @@ class BPTests(TestCase):
             self.assertEqual(self.BP.preorder(i), e)
 
     def test_preorderselect(self):
-        #self.fail("preorderselect is returning the closing position, _probably_ should return opening")
-        #exp = [-1, 0, 1, 3, 5, 6, 10, 12, 13, 14, 16]
         exp = [0, 1, 2, 4, 6, 7, 11, 13, 14, 15, 17]
         for k, e in enumerate(exp):
             self.assertEqual(self.BP.preorderselect(k), e)
@@ -383,11 +404,65 @@ class BPTests(TestCase):
 
         npt.assert_equal(obs, exp)
 
-    def test_to_tree_array(self):
-        self.fail()
+    def test_get_node_unset(self):
+        for i in range(self.BP.B.size):
+            n = self.BP.get_node(i)
+            self.assertEqual(n.name, None)
+            self.assertEqual(n.length, 0.0)
 
-    def test_tips(self):
-        self.fail("such a useful traversal")
+    def test_name_unset(self):
+        for i in range(self.BP.B.size):
+            self.assertEqual(self.BP.name(i), None)
+
+    def test_length_unset(self):
+        for i in range(self.BP.B.size):
+            self.assertEqual(self.BP.length(i), 0.0)
+
+    def test_name_length_set(self):
+        names = np.full(self.BP.B.size, None, dtype=object)
+        lengths = np.zeros(self.BP.B.size, dtype=np.double)
+
+        names[0] = 'root'
+        names[self.BP.preorderselect(7)] = 'other'
+
+        lengths[1] = 1.23
+        lengths[self.BP.preorderselect(5)] = 5.43
+
+        self.BP.set_names(names)
+        self.BP.set_lengths(lengths)
+
+        self.assertEqual(self.BP.name(0), 'root')
+        self.assertEqual(self.BP.name(1), None)
+        self.assertEqual(self.BP.name(13), 'other')
+        self.assertEqual(self.BP.length(1), 1.23)
+        self.assertEqual(self.BP.length(5), 0.0)
+        self.assertEqual(self.BP.length(7), 5.43)
+
+    def test_get_node_set(self):
+        names = np.full(self.BP.B.size, None, dtype=object)
+        lengths = np.zeros(self.BP.B.size, dtype=np.double)
+
+        names[0] = 'root'
+        names[self.BP.preorderselect(7)] = 'other'
+
+        lengths[1] = 1.23
+        lengths[self.BP.preorderselect(6)] = 5.43
+        lengths[self.BP.preorderselect(7)] = 2.
+
+        self.BP.set_names(names)
+        self.BP.set_lengths(lengths)
+
+        obs_0 = self.BP.get_node(0)
+        obs_13 = self.BP.get_node(13)
+        obs_11 = self.BP.get_node(11)
+        obs_1 = self.BP.get_node(1)
+
+        self.assertEqual(obs_0.name, 'root')
+        self.assertEqual(obs_13.name, 'other')
+        self.assertEqual(obs_13.length, 2.)
+        self.assertEqual(obs_11.length, 5.43)
+        self.assertEqual(obs_1.length, 1.23)
+
 
 if __name__ == '__main__':
     main()

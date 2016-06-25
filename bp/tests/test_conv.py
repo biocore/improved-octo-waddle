@@ -26,12 +26,13 @@ class ConversionTests(TestCase):
         self.assertEqual(obs.ascii_art(), self.sktn.ascii_art())
 
     def test_from_skbio_treenode(self):
-        obs_bp, obs_names, obs_lengths = from_skbio_treenode(self.sktn)
-        exp_bp, exp_names, exp_lengths = self.bp
+        obs_bp = from_skbio_treenode(self.sktn)
+        exp_bp = self.bp
 
         npt.assert_equal(obs_bp.B, exp_bp.B)
-        npt.assert_equal(obs_names, exp_names)
-        npt.assert_equal(obs_lengths, exp_lengths)
+        for i in range(len(self.bp.B)):
+            self.assertEqual(exp_bp.name(i), obs_bp.name(i))
+            self.assertEqual(exp_bp.length(i), obs_bp.length(i))
 
 
 if __name__ == '__main__':

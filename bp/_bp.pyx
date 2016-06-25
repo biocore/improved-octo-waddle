@@ -11,8 +11,22 @@
 import numpy as np
 cimport numpy as np
 cimport cython
-from cython.parallel import prange
-from cpython cimport bool
+
+
+@cython.final
+cdef class BPNode:
+    """A version of a node
+
+    Attributes
+    ----------
+    name : unicode
+        The name of the node
+    length : np.double_t
+        A branch length from this node to a parent
+    """
+    def __cinit__(self, unicode name, np.double_t length):
+        self.name = name
+        self.length = length
 
 
 @cython.final
@@ -48,11 +62,15 @@ cdef class BP:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def __cinit__(self, np.ndarray[np.uint8_t, ndim=1] B,
-                  np.ndarray[np.uint32_t, ndim=1] closeopen=None):
+                  np.ndarray[np.uint32_t, ndim=1] closeopen=None,
+                  np.ndarray[object, ndim=1] names=None,
+                  np.ndarray[np.double_t, ndim=1] lengths=None):
         cdef:
             Py_ssize_t i
             np.ndarray[np.uint32_t, ndim=1] _e_index, _k_index_0, _k_index_1
             np.ndarray[np.uint32_t, ndim=1] _closeopen_index
+            np.ndarray[object, ndim=1] _names
+            np.ndarray[np.double_t, ndim=1] _lengths
             np.ndarray[np.uint32_t, ndim=2] _r_index
 
         # the tree is only valid if it is balanaced
@@ -88,11 +106,31 @@ cdef class BP:
             self._closeopen_index = closeopen
         else:
             self._set_closeopen_cache()
-        #self._closeopen_index = None
 
-    #def setcloseopen(self, np.ndarray[np.uint32_t, ndim=1] closeopen):
-    #    """Set the open/close cache"""
-    #    self._closeopen_index = closeopen
+        if names is not None:
+            self._names = names
+        else:
+            self._names = np.full(self.B.size, None, dtype=object)
+
+        if lengths is not None:
+            self._lengths = lengths
+        else:
+            self._lengths = np.zeros(self.B.size, dtype=np.double)
+
+    def set_names(self, np.ndarray[object, ndim=1] names):
+        self._names = names
+
+    def set_lengths(self, np.ndarray[np.double_t, ndim=1] names):
+        self._lengths = names
+
+    cpdef inline unicode name(self, Py_ssize_t i):
+        return self._names[i]
+
+    cpdef inline np.double_t length(self, Py_ssize_t i):
+        return self._lengths[i]
+
+    cpdef inline BPNode get_node(self, Py_ssize_t i):
+        return BPNode(self._names[i], self._lengths[i])
 
     cdef inline void _set_closeopen_cache(self):
         cdef:

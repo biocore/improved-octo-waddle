@@ -79,11 +79,13 @@ class NewickTests(TestCase):
                  None, None, 'e', None, None]
         exp_l = [0, 1, 2, 0, 0, 0, 0, 20, 4, 0, 0, 0, 0, 0, 0, 0]
 
-        obs_bp, obs_n, obs_l = parse_newick(in_)
+        obs_bp = parse_newick(in_)
 
         npt.assert_equal(obs_bp.B, np.asarray(exp_bp, dtype=bool))
-        npt.assert_equal(obs_n, np.asarray(exp_n, dtype=object))
-        npt.assert_equal(obs_l, exp_l)
+
+        for i, (e_n, e_l) in enumerate(zip(exp_n, exp_l)):
+            self.assertEqual(obs_bp.name(i), e_n)
+            self.assertEqual(obs_bp.length(i), e_l)
 
     def test_parse_newick_complex(self):
         in_ = "(((a:1,b:2.5)c:6,d:8,(e),(f,g,(h:1,i:2)j:1)k:1.2)l,m:2)r;"
@@ -95,11 +97,15 @@ class NewickTests(TestCase):
                  'i', None, None, None, None, 'm', None, None]
         exp_l = [0, 0, 6, 1, 0, 2.5, 0, 0, 8, 0, 0, 0, 0, 0, 1.2, 0, 0, 0, 0,
                  1, 1, 0, 2, 0, 0, 0, 0, 2, 0, 0]
-        obs_bp, obs_n, obs_l = parse_newick(in_)
+
+        obs_bp = parse_newick(in_)
 
         npt.assert_equal(obs_bp.B, np.asarray(exp_bp, dtype=bool))
-        npt.assert_equal(obs_n, np.asarray(exp_n, dtype=object))
-        npt.assert_equal(obs_l, exp_l)
+
+        for i, (e_n, e_l) in enumerate(zip(exp_n, exp_l)):
+            print(i, e_n, obs_bp.name(i))
+            self.assertEqual(obs_bp.name(i), e_n)
+            self.assertEqual(obs_bp.length(i), e_l)
 
     def test_parse_newick_singledesc(self):
         in_ = "(((a)b)c,((d)e)f)r;"
@@ -107,10 +113,13 @@ class NewickTests(TestCase):
         exp_bp = [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0 ,0, 0, 0]
         exp_n = ['r', 'c', 'b', 'a', None, None, None, 'f', 'e', 'd', None,
                  None, None, None]
-        obs_bp, obs_n, obs_l = parse_newick(in_)
+
+        obs_bp = parse_newick(in_)
 
         npt.assert_equal(obs_bp.B, np.asarray(exp_bp, dtype=bool))
-        npt.assert_equal(obs_n, np.asarray(exp_n, dtype=object))
+
+        for i, e_n in enumerate(exp_n):
+            self.assertEqual(obs_bp.name(i), e_n)
 
     def test_parse_newick_unnamed_singledesc(self):
         in_ = "((a,b)c,d,(e))r;"
@@ -119,10 +128,12 @@ class NewickTests(TestCase):
         exp_n = ['r', 'c', 'a', None, 'b', None, None, 'd', None, None, 'e',
                  None, None, None]
 
-        obs_bp, obs_n, obs_l = parse_newick(in_)
+        obs_bp = parse_newick(in_)
 
         npt.assert_equal(obs_bp.B, np.asarray(exp_bp, dtype=bool))
-        npt.assert_equal(obs_n, np.asarray(exp_n, dtype=object))
+
+        for i, e_n in enumerate(exp_n):
+            self.assertEqual(obs_bp.name(i), e_n)
 
     def test_parse_newick_name_with_semicolon(self):
         in_ = "((a,(b,c):5)'d','e; foo':10,((f))g)r;"
@@ -130,12 +141,15 @@ class NewickTests(TestCase):
         exp_bp = [1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0]
         exp_n = ['r', 'd', 'a', None, None, 'b', None, 'c', None, None, None,
                  'e; foo', None, 'g', None, 'f', None, None, None, None]
-        exp_l = [0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0]
+        exp_l = [0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0]
 
-        obs_bp, obs_n, obs_l = parse_newick(in_)
+        obs_bp = parse_newick(in_)
 
         npt.assert_equal(obs_bp.B, np.asarray(exp_bp, dtype=bool))
-        npt.assert_equal(obs_n, np.asarray(exp_n, dtype=object))
+
+        for i, (e_n, e_l) in enumerate(zip(exp_n, exp_l)):
+            self.assertEqual(obs_bp.name(i), e_n)
+            self.assertEqual(obs_bp.length(i), e_l)
 
 
 if __name__ == '__main__':
