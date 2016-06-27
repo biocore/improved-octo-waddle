@@ -414,7 +414,6 @@ cdef class BP:
         if self.B[i]:
             return self.rank(0, self.close(i))
         else:
-            ### i believe this is incorrect
             return self.rank(0, i)
 
     cpdef inline np.uint32_t postorderselect(self, Py_ssize_t k):
@@ -595,3 +594,17 @@ cdef class BP:
                     mask[self.close(current)] = 1
 
         return self._mask_from_self(mask, new_lengths)
+
+    cpdef inline np.uint32_t ntips(self):
+        cdef:
+            Py_ssize_t i = 0
+            np.uint32_t count = 0
+
+        while i < (self.B.size - 1):
+            if self.B[i] and not self.B[i+1]:
+                count += 1
+                i += 1
+            i += 1
+
+        return count
+

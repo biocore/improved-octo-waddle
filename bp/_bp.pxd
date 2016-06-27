@@ -14,7 +14,7 @@ cdef class BP:
         public np.ndarray B 
         np.ndarray _r_index, _k_index_0, _k_index_1, _e_index
         np.ndarray _closeopen_index, _names, _lengths
-
+# pxd is not inline with pyx...
     cpdef inline unicode name(self, Py_ssize_t i)
     cpdef inline np.double_t length(self, Py_ssize_t i)
     cpdef inline BPNode get_node(self, Py_ssize_t i)
@@ -35,3 +35,4 @@ cdef class BP:
     cpdef BP collapse(self)
     cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask, np.ndarray[np.double_t, ndim=1] lengths)
     cdef inline void _set_closeopen_cache(self)
+    cpdef inline np.uint32_t ntips(self)

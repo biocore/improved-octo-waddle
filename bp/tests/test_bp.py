@@ -11,7 +11,7 @@ from unittest import TestCase, main
 import numpy as np
 import numpy.testing as npt
 
-from bp import BP
+from bp import BP, parse_newick
 
 
 class BPTests(TestCase):
@@ -43,9 +43,8 @@ class BPTests(TestCase):
     def test_rank_select_property(self):
         pos_1 = np.unique(self.fig1_B.cumsum(), return_index=True)[1] #- 1
         pos_0 = np.unique((1 - self.fig1_B).cumsum(), return_index=True)[1]
-
         for t, pos in zip((0, 1), (pos_0, pos_1)):
-            for k in range(1, len(pos)):
+            for k in range(len(pos)):
                 # needed +t on expectation, unclear at this time why.
                 self.assertEqual(self.BP.rank(t, self.BP.select(t, k)), k + t)
 
@@ -259,9 +258,9 @@ class BPTests(TestCase):
             self.assertEqual(self.BP.postorder(i), e)
 
     def test_postorderselect(self):
-        exp = [0, 2, 4, 7, 6, 1, 11, 15, 17, 14, 13, 0]
+        exp = [2, 4, 7, 6, 1, 11, 15, 17, 14, 13, 0]
         for k, e in enumerate(exp):
-            self.assertEqual(self.BP.postorderselect(k), e)
+            self.assertEqual(self.BP.postorderselect(k + 1), e)
 
     def test_isancestor(self):
         exp = {(0, 0): False,  # identity test
@@ -376,6 +375,11 @@ class BPTests(TestCase):
         # height(i) = excess(deepestnode(i)) − excess(i).
         exp = [3, 2, 0, 0, 0, 0, 1, 0, 0, 1, 2, 0, 0, 2, 1, 0, 0, 0, 0, 1, 2, 3]
         self._testinator(exp, self.BP.height)
+
+    def test_ntips(self):
+        exp = 6
+        obs = self.BP.ntips()
+        self.assertEqual(obs, exp)
 
     def test_shear(self):
         #       r  2  3     4     5  6             7       8   9  10      11

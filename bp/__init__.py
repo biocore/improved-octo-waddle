@@ -7,6 +7,6 @@
 # ----------------------------------------------------------------------------
 from ._bp import BP
 from ._io import parse_newick
-from ._conv import to_skbio_treenode, from_skbio_treenode
+from ._conv import to_skbio_treenode, from_skbio_treenode, to_skbio_treearray
 
-__all__ = ['BP', 'parse_newick', 'to_skbio_treenode', 'from_skbio_treenode']
+__all__ = ['BP', 'parse_newick', 'to_skbio_treenode', 'from_skbio_treenode', to_skbio_treearray]

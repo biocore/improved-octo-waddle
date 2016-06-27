@@ -863,6 +863,7 @@ struct __pyx_vtabstruct_2bp_3_bp_BP {
   struct __pyx_obj_2bp_3_bp_BP *(*collapse)(struct __pyx_obj_2bp_3_bp_BP *, int __pyx_skip_dispatch);
   struct __pyx_obj_2bp_3_bp_BP *(*_mask_from_self)(struct __pyx_obj_2bp_3_bp_BP *, PyArrayObject *, PyArrayObject *);
   void (*_set_closeopen_cache)(struct __pyx_obj_2bp_3_bp_BP *);
+  __pyx_t_5numpy_uint32_t (*ntips)(struct __pyx_obj_2bp_3_bp_BP *, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_2bp_3_bp_BP *__pyx_vtabptr_2bp_3_bp_BP;
 
