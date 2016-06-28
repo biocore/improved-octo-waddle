@@ -155,30 +155,30 @@ class BPTests(TestCase):
             self.assertEqual(self.BP.isleaf(i), e)
 
     def test_fchild(self):
-        exp = [1, 2, None, None, None, None, 7, None, None, 7, 2, None, None, 14, 15, None, None, None, None, 15, 14, 1]
+        exp = [1, 2, 0, 0, 0, 0, 7, 0, 0, 7, 2, 0, 0, 14, 15, 0, 0, 0, 0, 15, 14, 1]
         for i, e in enumerate(exp):
             self.assertEqual(self.BP.fchild(i), e)
 
     def test_lchild(self):
         exp = [self.BP.preorderselect(7),
                self.BP.preorderselect(4),
-               None,
-               None,
-               None,
-               None,
+               0,
+               0,
+               0,
+               0,
                self.BP.preorderselect(5),
-               None,
-               None,
+               0,
+               0,
                self.BP.preorderselect(5),
                self.BP.preorderselect(4),
-               None,
-               None,
+               0,
+               0,
                self.BP.preorderselect(8),
                self.BP.preorderselect(10),
-               None,
-               None,
-               None,
-               None,
+               0,
+               0,
+               0,
+               0,
                self.BP.preorderselect(10),
                self.BP.preorderselect(8),
                self.BP.preorderselect(7)]
@@ -233,12 +233,12 @@ class BPTests(TestCase):
             self.assertEqual(self.BP.minselect(i, j, q), e)
 
     def test_nsibling(self):
-        exp = [None, 11, 4, 4, 6, 6, None, None, None, None, 11, 13, 13, None, None, 17, 17, None, None, None, None, None]
+        exp = [0, 11, 4, 4, 6, 6, 0, 0, 0, 0, 11, 13, 13, 0, 0, 17, 17, 0, 0, 0, 0, 0]
         for i, e in enumerate(exp):
             self.assertEqual(self.BP.nsibling(i), e)
 
     def test_psibling(self):
-        exp = [None, None, None, None, 2, 2, 4, None, None, 4, None, 1, 1, 11, None, None, None, 15, 15, None, 11, None]
+        exp = [0, 0, 0, 0, 2, 2, 4, 0, 0, 4, 0, 1, 1, 11, 0, 0, 0, 15, 15, 0, 11, 0]
         for i, e in enumerate(exp):
             self.assertEqual(self.BP.psibling(i), e)
 
@@ -493,6 +493,8 @@ class BPTests(TestCase):
         self.assertEqual(obs_11.length, 5.43)
         self.assertEqual(obs_1.length, 1.23)
 
+    def test_shear_less_stupid(self):
+        self.fail("approx 1/3 time spent computing node indices for tips, 1/3 in shear and 1/3 in collapse")
 
 if __name__ == '__main__':
     main()

@@ -36,3 +36,7 @@ cdef class BP:
     cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask, np.ndarray[np.double_t, ndim=1] lengths)
     cdef inline void _set_closeopen_cache(self)
     cpdef inline np.uint32_t ntips(self)
+    cpdef np.uint32_t nsibling(self, Py_ssize_t i)
+    cpdef np.uint32_t psibling(self, Py_ssize_t i)
+    cpdef np.uint32_t lchild(self, Py_ssize_t i)
+    cpdef np.uint32_t fchild(self, Py_ssize_t i)

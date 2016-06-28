@@ -1,5 +1,5 @@
 # encoding: utf-8
-# cython: profile=True
+# cython: profile=True, boundscheck=False, wraparound=False
 
 from ._bp cimport BP
 import time
@@ -8,9 +8,7 @@ cimport numpy as np
 cimport cython
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef void _set_node_metadata(np.uint32_t ptr, unicode token, 
+cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
                              np.ndarray[object, ndim=1] names, 
                              np.ndarray[np.double_t, ndim=1] lengths):
     """Inplace update of names and lengths given token details"""
@@ -36,8 +34,6 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
     lengths[ptr] = length
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef parse_newick(unicode data):
     cdef:
         np.uint32_t ptr, open_ptr
@@ -96,8 +92,6 @@ cpdef parse_newick(unicode data):
     return topology
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef object _newick_to_bp(unicode data):
     """Convert newick to balanced parentheses
 
@@ -127,45 +121,50 @@ cdef object _newick_to_bp(unicode data):
         Py_UCS4 c, last_c
         np.ndarray[np.uint8_t, ndim=1] topology
         
-    single_descendent = False
+    potential_single_descendant = False
 
     topology = np.empty(len(data), dtype=np.uint8)
     topology_ptr = 0
     last_c = u'x'
 
     for i in range(len(data)):
-        # ignore non-structure
-
         c = data[i]
         if c == u'(':
+            # opening of a node
             topology[topology_ptr] = 1
             topology_ptr += 1
             last_c = c
-            single_descendent = True
+            potential_single_descendant = True
         elif c == u')':
-            if single_descendent or last_c == u',':
+            # closing of a node
+            if potential_single_descendant or last_c == u',':
+                # we have a single descendant or a last child (i.e., ",)")
                 topology[topology_ptr] = 1
                 topology[topology_ptr + 1] = 0
                 topology[topology_ptr + 2] = 0
                 topology_ptr += 3
-                single_descendent = False
+                potential_single_descendant = False
             else:
+                # it is possible to still have a single descendant in the case
+                # of a multiple single descendant: (...()...)
                 topology[topology_ptr] = 0
                 topology_ptr += 1
             last_c = c
         elif c == u',':
             if last_c != u')':
+                # we have a new tip
                 topology[topology_ptr] = 1
                 topology[topology_ptr + 1] = 0
                 topology_ptr += 2
-            single_descendent = False
+            potential_single_descendant = False
             last_c = c
-         
+        else:
+            # ignore non-structure
+            pass
+
     return BP(topology[:topology_ptr])
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline int _ccheck(Py_UCS4 c):
     """structure check"""
     cdef:
@@ -183,8 +182,6 @@ cdef inline int _ccheck(Py_UCS4 c):
         return 0
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline int _is_quote(Py_UCS4 c):
     if c == u'"':
         return 1
@@ -194,8 +191,6 @@ cdef inline int _is_quote(Py_UCS4 c):
         return 0
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline Py_ssize_t _ctoken(unicode data, Py_ssize_t datalen, Py_ssize_t start):
     cdef:
         Py_ssize_t idx, in_quote = 0

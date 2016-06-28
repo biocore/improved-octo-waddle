@@ -86,42 +86,43 @@ def to_skbio_treearray(bp):
     """
     class mock_node:
         def __init__(self, is_tip):
-            self._is_tip = is_tip
+            self.is_tip_ = is_tip
         def is_tip(self):
-            return self._is_tip
+            return self.is_tip_
 
     child_index = np.zeros((int(bp.B.sum()) - bp.ntips(), 3), dtype=np.uint32)
     length = np.zeros(bp.B.sum(), dtype=np.double)
     node_ids = np.zeros(bp.B.size, dtype=np.uint32)
 
     # TreeNode.assign_ids, decompose target
+    chi_ptr = 0
     cur_index = 0  # the index into node_ids
-    id_index = {}  # map a node's "id" to an object which indicates if it is a leaf or not
+    id_index = dict.fromkeys(set(range(bp.B.sum())))  # map a node's "id" to an object which indicates if it is a leaf or not
     for i in range(bp.B.sum()):
         node_idx = bp.postorderselect(i + 1)  # the index within the BP of the node
+
         if not bp.isleaf(node_idx):
-            id_index[i] = mock_node(False)
             fchild = bp.fchild(node_idx)
             lchild = bp.lchild(node_idx)
 
             sib_idx = fchild  # the sibling index wtihin the BP of the node
-            while sib_idx is not None and sib_idx <= lchild:
+            while sib_idx != 0 and sib_idx <= lchild:
                 node_ids[sib_idx] = cur_index
                 id_index[cur_index] = mock_node(bp.isleaf(sib_idx))
+                length[cur_index] = bp.length(sib_idx)
+
                 cur_index += 1
                 sib_idx = bp.nsibling(sib_idx)
 
+            child_index[chi_ptr] = [node_idx, node_ids[fchild], node_ids[lchild]]
+            chi_ptr += 1
+
+    # make sure to capture root
+    id_index[bp.B.sum() - 1] = mock_node(False)
+
     node_ids[0] = cur_index
-
-    # TreeNode.to_array, note, not capturing names and using a "nan_length_value" of 0.0
-    ch_ptr = 0
-    for i in range(bp.B.sum()):
-        node_idx = bp.postorderselect(i + 1)  # preorderselect does not need +1. Possible side effect due to caching
-
-        length[node_ids[node_idx]] = bp.length(node_idx)
-        if not bp.isleaf(node_idx):
-            child_index[ch_ptr] = [node_ids[node_idx], node_ids[bp.fchild(node_idx)], node_ids[bp.lchild(node_idx)]]
-            ch_ptr += 1
+    child_index[:, 0] = node_ids[child_index[:, 0]]
+    child_index = child_index[np.argsort(child_index[:, 0])]
 
     return {'child_index': child_index, 'length': length, 'id_index': id_index}
 

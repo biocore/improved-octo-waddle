@@ -1,3 +1,4 @@
+#cython: boundscheck=False, wraparound=False
 # ----------------------------------------------------------------------------
 # Copyright (c) 2013--, BP development team.
 #
@@ -59,8 +60,6 @@ cdef class BP:
     [1] http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
     """
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     def __cinit__(self, np.ndarray[np.uint8_t, ndim=1] B,
                   np.ndarray[np.uint32_t, ndim=1] closeopen=None,
                   np.ndarray[object, ndim=1] names=None,
@@ -148,23 +147,19 @@ cdef class BP:
             # root so this is safe.
             if closeopen[i] == 0:
                 if b[i]:
-                    j = self.close(i)
+                    j = self.fwdsearch(i, -1)
                 else:
-                    j = self.open(i)
+                    j = self.bwdsearch(i, 0) + 1
 
                 closeopen[i] = j
                 closeopen[j] = i
-        
+
         self._closeopen_index = closeopen
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef inline np.uint32_t rank(self, Py_ssize_t t, Py_ssize_t i):
         """The number of occurrences of the bit t in B"""
         return self._r_index[t, i]
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef inline np.uint32_t select(self, Py_ssize_t t, Py_ssize_t k):
         """The position in B of the kth occurrence of the bit t."""
         if t:
@@ -172,23 +167,17 @@ cdef class BP:
         else:
             return self._k_index_0[k]
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cdef inline np.uint32_t _excess(self, Py_ssize_t i):
         """Actually compute excess"""
         if i < 0:
             return 0  # wasn't stated as needed but appears so given testing
         return (2 * self.rank(1, i) - i) - 1
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef inline np.uint32_t excess(self, Py_ssize_t i):
         """the number of opening minus closing parentheses in B[1, i]"""
         # same as: self.rank(1, i) - self.rank(0, i)
         return self._e_index[i]
     
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef inline np.int32_t fwdsearch(self, Py_ssize_t i, int d):
         """Forward search for excess by depth"""
         cdef:
@@ -205,8 +194,6 @@ cdef class BP:
 
         return -1  # wasn't stated as needed but appears so given testing
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef inline Py_ssize_t bwdsearch(self, Py_ssize_t i, int d):
         """Backward search for excess by depth"""
         cdef:
@@ -223,41 +210,23 @@ cdef class BP:
 
         return -1
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef inline np.int32_t close(self, Py_ssize_t i):
         """The position of the closing parenthesis that matches B[i]"""
-        cdef:
-            np.ndarray[np.uint32_t, ndim=1] coi = self._closeopen_index
-
         if not self.B[i]:
             # identity: the close of a closed parenthesis is itself
             return i
 
-        if coi is not None:
-            return coi[i]
-        else:
-            return self.fwdsearch(i, -1)
+        return self._closeopen_index[i]
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef inline np.int32_t open(self, Py_ssize_t i):
         """The position of the opening parenthesis that matches B[i]"""
-        cdef:
-            np.ndarray[np.uint32_t, ndim=1] coi = self._closeopen_index
-
         if self.B[i] or i <= 0:
             # identity: the open of an open parenthesis is itself
             # the open of 0 is open. A negative index cannot be open, so just return
             return i
-        ### if bwdsearch returns -1, should check and dump None?
-        if coi is not None:
-            return coi[i]
-        else:
-            return self.bwdsearch(i, 0) + 1
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
+        return self._closeopen_index[i]
+
     cpdef inline np.int32_t enclose(self, Py_ssize_t i):
         """The opening parenthesis of the smallest matching pair that contains position i"""
         if self.B[i]:
@@ -265,8 +234,6 @@ cdef class BP:
         else:
             return self.bwdsearch(i - 1, -2) + 1
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef np.uint32_t rmq(self, Py_ssize_t i, Py_ssize_t j):
         """The leftmost minimum excess in i -> j"""
         cdef:
@@ -282,8 +249,6 @@ cdef class BP:
                 min_v = obs_v
         return min_k
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef np.uint32_t rMq(self, Py_ssize_t i, Py_ssize_t j):
         """The leftmost maximmum excess in i -> j"""
         cdef:
@@ -321,22 +286,34 @@ cdef class BP:
         # most likely there is an implicit conversion here
         return self.B[i] and (not self.B[i + 1])
 
-    def fchild(self, i):
+    cpdef np.uint32_t fchild(self, Py_ssize_t i):
         """The first child of i (i.e., the left child)
 
-        fchild(i) = i + 1 (if i is not a leaf)"""
+        fchild(i) = i + 1 (if i is not a leaf)
+
+        Returns 0 if the node is a leaf as the root cannot be a child by
+        definition.
+        """
         if self.B[i]:
-            if not self.isleaf(i):
+            if self.isleaf(i):
+                return 0
+            else:
                 return i + 1
         else:
             return self.fchild(self.open(i))
 
-    def lchild(self, i):
+    cpdef np.uint32_t lchild(self, Py_ssize_t i):
         """The last child of i (i.e., the right child)
 
-        lchild(i) = open(close(i) − 1) (if i is not a leaf)"""
+        lchild(i) = open(close(i) − 1) (if i is not a leaf)
+
+        Returns 0 if the node is a leaf as the root cannot be a child by
+        definition.
+        """
         if self.B[i]:
-            if not self.isleaf(i):
+            if self.isleaf(i):
+                return 0
+            else:
                 return self.open(self.close(i) - 1)
         else:
             return self.lchild(self.open(i))
@@ -356,43 +333,53 @@ cdef class BP:
         else:
             return i + index.nonzero()[0][q - 1]
 
-    def nsibling(self, i):
+    cpdef np.uint32_t nsibling(self, Py_ssize_t i):
         """The next sibling of i (i.e., the sibling to the right)
 
-        nsibling(i) = close(i) + 1 (if the result j holds B[j] = 0 then i has no next sibling)"""
+        nsibling(i) = close(i) + 1 (if the result j holds B[j] = 0 then i has no next sibling)
+
+        Will return 0 if there is no sibling. This makes sense as the root
+        cannot have a sibling by definition
+        """
+        cdef:
+            np.uint32_t pos
+
         if self.B[i]:
             pos = self.close(i) + 1
         else:
             pos = self.nsibling(self.open(i))
 
-        if pos is None:
-            return None
-        elif pos >= len(self.B):
-            return None
+        if pos >= len(self.B):
+            return 0
         elif self.B[pos]:
             return pos
         else:
-            return None
+            return 0
 
-    def psibling(self, i):
+    cpdef np.uint32_t psibling(self, Py_ssize_t i):
         """The previous sibling of i (i.e., the sibling to the left)
 
-        psibling(i) = open(i − 1) (if B[i − 1] = 1 then i has no previous sibling)"""
+        psibling(i) = open(i − 1) (if B[i − 1] = 1 then i has no previous sibling)
+
+        Will return 0 if there is no sibling. This makes sense as the root
+        cannot have a sibling by definition
+        """
+        cdef:
+            np.uint32_t pos
         if self.B[i]:
             if self.B[max(0, i - 1)]:
-                return None
+                return 0
+
             pos = self.open(i - 1)
         else:
             pos = self.psibling(self.open(i))
 
-        if pos is None:
-            return None
-        elif pos < 0:
-            return None
+        if pos < 0:
+            return 0
         elif self.B[pos]:
             return pos
         else:
-            return None
+            return 0
 
     def preorder(self, i):
         """Preorder rank of node i"""
