@@ -391,7 +391,7 @@ class BPTests(TestCase):
         self.BP.set_names(names)
         self.BP.set_lengths(lengths)
 
-        in_ = np.array([4, 7, 11, 15, 17], dtype=np.uint32)
+        in_ = {'4', '6', '7', '10', '11'}
         exp = np.array([1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0,
                         0, 0], dtype=np.uint32)
         exp_n = np.array(['r', '2', '4', None, '5', '6', None, None, None, '7', None, '8', '9', '10', None, '11', None,
@@ -404,7 +404,7 @@ class BPTests(TestCase):
             self.assertEqual(obs.name(i), exp_n[i])
             self.assertEqual(obs.length(i), exp_l[i])
 
-        in_ = np.array([15, 17], dtype=np.uint32)
+        in_ = {'10', '11'}
         exp = np.array([1, 1, 1, 1, 0, 1, 0, 0, 0, 0], dtype=np.uint32)
         obs = self.BP.shear(in_).B
         npt.assert_equal(obs, exp)
@@ -493,8 +493,6 @@ class BPTests(TestCase):
         self.assertEqual(obs_11.length, 5.43)
         self.assertEqual(obs_1.length, 1.23)
 
-    def test_shear_less_stupid(self):
-        self.fail("approx 1/3 time spent computing node indices for tips, 1/3 in shear and 1/3 in collapse")
 
 if __name__ == '__main__':
     main()

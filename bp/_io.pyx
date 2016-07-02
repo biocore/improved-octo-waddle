@@ -6,6 +6,7 @@ import time
 import numpy as np
 cimport numpy as np
 cimport cython
+np.import_array()
 
 
 cdef void _set_node_metadata(np.uint32_t ptr, unicode token,

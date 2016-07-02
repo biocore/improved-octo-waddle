@@ -1,4 +1,4 @@
-#cython: boundscheck=False, wraparound=False
+#cython: boundscheck=True, wraparound=True
 # ----------------------------------------------------------------------------
 # Copyright (c) 2013--, BP development team.
 #
@@ -9,9 +9,15 @@
 
 ### NOTE: some doctext strings are copied and pasted from manuscript
 ### http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
+
+from numpy import float64 as DOUBLE
+from numpy import intp as SIZE
+from numpy import uint8 as BOOL
+
 import numpy as np
 cimport numpy as np
 cimport cython
+np.import_array()
 
 
 @cython.final
@@ -25,7 +31,7 @@ cdef class BPNode:
     length : np.double_t
         A branch length from this node to a parent
     """
-    def __cinit__(self, unicode name, np.double_t length):
+    def __cinit__(self, unicode name, DOUBLE_t length):
         self.name = name
         self.length = length
 
@@ -60,17 +66,18 @@ cdef class BP:
     [1] http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
     """
 
-    def __cinit__(self, np.ndarray[np.uint8_t, ndim=1] B,
-                  np.ndarray[np.uint32_t, ndim=1] closeopen=None,
+    def __cinit__(self, np.ndarray[BOOL_t, ndim=1] B,
+                  np.ndarray[SIZE_t, ndim=1] closeopen=None,
                   np.ndarray[object, ndim=1] names=None,
-                  np.ndarray[np.double_t, ndim=1] lengths=None):
+                  np.ndarray[DOUBLE_t, ndim=1] lengths=None):
         cdef:
-            Py_ssize_t i
-            np.ndarray[np.uint32_t, ndim=1] _e_index, _k_index_0, _k_index_1
-            np.ndarray[np.uint32_t, ndim=1] _closeopen_index
+            SIZE_t i
+            np.ndarray[SIZE_t, ndim=1] _e_index, _k_index_0, _k_index_1
+            np.ndarray[SIZE_t, ndim=1] _closeopen_index
             np.ndarray[object, ndim=1] _names
-            np.ndarray[np.double_t, ndim=1] _lengths
-            np.ndarray[np.uint32_t, ndim=2] _r_index
+            np.ndarray[DOUBLE_t, ndim=1] _lengths
+            np.ndarray[SIZE_t, ndim=1] _r_index_0, _r_index_1
+            SIZE_t* excess_ptr
 
         # the tree is only valid if it is balanaced
         assert B.sum() == (float(B.size) / 2)
@@ -78,25 +85,27 @@ cdef class BP:
 
         # construct a rank index. These operations are performed frequently,
         # and easy to cache at a relatively minor memory expense
-        _r_index = np.vstack([np.cumsum((1 - B), dtype=np.uint32), 
-                              np.cumsum(B, dtype=np.uint32)])
-        self._r_index = _r_index
+        _r_index_0 = np.cumsum((1 - B), dtype=SIZE)
+        _r_index_1 = np.cumsum(B, dtype=SIZE)
+        self._r_index_0 = _r_index_0
+        self._r_index_1 = _r_index_1
 
         # construct a select index. These operations are performed frequently,
         # and easy to cache at a relatively minor memory expense. It cannot be
         # assumed that open and close will be same length so can't stack
-        _k_index_0 = np.unique(_r_index[0], 
-                               return_index=True)[1].astype(np.uint32)
+        _k_index_0 = np.unique(_r_index_0,
+                               return_index=True)[1].astype(SIZE)
         self._k_index_0 = _k_index_0
-        _k_index_1 = np.unique(_r_index[1], 
-                               return_index=True)[1].astype(np.uint32)
+        _k_index_1 = np.unique(_r_index_1,
+                               return_index=True)[1].astype(SIZE)
         self._k_index_1 = _k_index_1
 
         # construct an excess index. These operations are performed a lot, and
         # similarly can to rank and select, can be cached at a minimal expense.
-        _e_index = np.empty(B.size, dtype=np.uint32)
+        _e_index = np.empty(B.size, dtype=SIZE)
+        excess_ptr = <SIZE_t*>_e_index.data
         for i in range(B.size):
-            _e_index[i] = self._excess(i)
+            excess_ptr[i] = self._excess(i)
         self._e_index = _e_index
 
         # The closeopen index is not provided at construction as it can be 
@@ -114,131 +123,153 @@ cdef class BP:
         if lengths is not None:
             self._lengths = lengths
         else:
-            self._lengths = np.zeros(self.B.size, dtype=np.double)
+            self._lengths = np.zeros(self.B.size, dtype=DOUBLE)
 
     def set_names(self, np.ndarray[object, ndim=1] names):
         self._names = names
 
-    def set_lengths(self, np.ndarray[np.double_t, ndim=1] names):
-        self._lengths = names
+    def set_lengths(self, np.ndarray[DOUBLE_t, ndim=1] lengths):
+        self._lengths = lengths
 
-    cpdef inline unicode name(self, Py_ssize_t i):
+    cpdef inline unicode name(self, SIZE_t i):
         return self._names[i]
 
-    cpdef inline np.double_t length(self, Py_ssize_t i):
-        return self._lengths[i]
+    cpdef inline DOUBLE_t length(self, SIZE_t i):
+        cdef DOUBLE_t* length_ptr = <DOUBLE_t*>self._lengths.data
+        return length_ptr[i]
 
-    cpdef inline BPNode get_node(self, Py_ssize_t i):
-        return BPNode(self._names[i], self._lengths[i])
+    cpdef inline BPNode get_node(self, SIZE_t i):
+        cdef DOUBLE_t* length_ptr = <DOUBLE_t*>self._lengths.data
+
+        # might be possible to do a ptr to _names, see
+        # https://github.com/h5py/h5py/blob/master/h5py/_conv.pyx#L177
+        return BPNode(self._names[i], length_ptr[i])
 
     cdef inline void _set_closeopen_cache(self):
         cdef:
-            Py_ssize_t i, j, n, m
-            np.ndarray[np.uint32_t, ndim=1] closeopen
-            np.ndarray[np.uint8_t, ndim=1] b
+            SIZE_t i, j, n, m
+            np.ndarray[SIZE_t, ndim=1] closeopen
+            BOOL_t* b_ptr = <BOOL_t*> self.B.data
+            SIZE_t* closeopen_ptr
         
-        b = self.B
-        n = b.size
-        closeopen = np.zeros(n, dtype=np.uint32)
+        n = self.B.size
+
+        closeopen = np.zeros(n, dtype=SIZE)
+        closeopen_ptr = <SIZE_t*>closeopen.data
 
         for i in range(n):
             # if we haven't already cached it (cheaper than open/close call)
             # note: idx 0 is valid, but it will be on idx -1 and correspond to
             # root so this is safe.
-            if closeopen[i] == 0:
-                if b[i]:
+            if closeopen_ptr[i] == 0:
+                if b_ptr[i]:
                     j = self.fwdsearch(i, -1)
                 else:
                     j = self.bwdsearch(i, 0) + 1
 
-                closeopen[i] = j
-                closeopen[j] = i
+                closeopen_ptr[i] = j
+                closeopen_ptr[j] = i
 
         self._closeopen_index = closeopen
 
-    cpdef inline np.uint32_t rank(self, Py_ssize_t t, Py_ssize_t i):
+    cpdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i):
         """The number of occurrences of the bit t in B"""
-        return self._r_index[t, i]
+        cdef SIZE_t* _r_index_1_ptr = <SIZE_t*> self._r_index_1.data
+        cdef SIZE_t* _r_index_0_ptr = <SIZE_t*> self._r_index_0.data
 
-    cpdef inline np.uint32_t select(self, Py_ssize_t t, Py_ssize_t k):
-        """The position in B of the kth occurrence of the bit t."""
         if t:
-            return self._k_index_1[k]
+            return _r_index_1_ptr[i]
         else:
-            return self._k_index_0[k]
+            return _r_index_0_ptr[i]
 
-    cdef inline np.uint32_t _excess(self, Py_ssize_t i):
+    cpdef inline SIZE_t select(self, SIZE_t t, SIZE_t k):
+        """The position in B of the kth occurrence of the bit t."""
+        cdef SIZE_t* _k_index_1_ptr = <SIZE_t*> self._k_index_1.data
+        cdef SIZE_t* _k_index_0_ptr = <SIZE_t*> self._k_index_0.data
+
+        if t:
+            return _k_index_1_ptr[k]
+        else:
+            return _k_index_0_ptr[k]
+
+    cdef inline SIZE_t _excess(self, SIZE_t i):
         """Actually compute excess"""
         if i < 0:
             return 0  # wasn't stated as needed but appears so given testing
         return (2 * self.rank(1, i) - i) - 1
 
-    cpdef inline np.uint32_t excess(self, Py_ssize_t i):
+    cpdef inline SIZE_t excess(self, SIZE_t i):
         """the number of opening minus closing parentheses in B[1, i]"""
         # same as: self.rank(1, i) - self.rank(0, i)
-        return self._e_index[i]
+        cdef SIZE_t* _e_index_ptr = <SIZE_t*> self._e_index.data
+        return _e_index_ptr[i]
     
-    cpdef inline np.int32_t fwdsearch(self, Py_ssize_t i, int d):
+    cpdef inline SIZE_t fwdsearch(self, SIZE_t i, int d):
         """Forward search for excess by depth"""
         cdef:
-            int j, n = self.B.size
-            np.int32_t b ### buffer exception probably from here
-            np.ndarray[np.uint32_t, ndim=1] e_index
+            SIZE_t j, n = self.B.size
+            SIZE_t b
+            SIZE_t* e_index_ptr = <SIZE_t*> self._e_index.data
 
-        e_index = self._e_index
-        b = e_index[i] + d
+        b = e_index_ptr[i] + d
 
         for j in range(i + 1, n):
-            if e_index[j] == b:
+            if e_index_ptr[j] == b:
                 return j
 
         return -1  # wasn't stated as needed but appears so given testing
 
-    cpdef inline Py_ssize_t bwdsearch(self, Py_ssize_t i, int d):
+    cpdef inline SIZE_t bwdsearch(self, SIZE_t i, int d):
         """Backward search for excess by depth"""
         cdef:
-            int j
-            np.int32_t b ### buffer exception probably from here
-            np.ndarray[np.uint32_t, ndim=1] e_index
-    
-        e_index = self._e_index
-        b = e_index[i] + d
+            SIZE_t j
+            SIZE_t b ### buffer exception probably from here
+            SIZE_t* e_index_ptr = <SIZE_t*> self._e_index.data
+
+        b = e_index_ptr[i] + d
 
         for j in range(i - 1, -1, -1):
-            if e_index[j] == b:
+            if e_index_ptr[j] == b:
                 return j
 
         return -1
 
-    cpdef inline np.int32_t close(self, Py_ssize_t i):
+    cpdef inline SIZE_t close(self, SIZE_t i):
         """The position of the closing parenthesis that matches B[i]"""
-        if not self.B[i]:
+        cdef BOOL_t* b_ptr = <BOOL_t*> self.B.data
+        cdef SIZE_t* co_ptr = <SIZE_t*> self._closeopen_index.data
+
+        if not b_ptr[i]:
             # identity: the close of a closed parenthesis is itself
             return i
 
-        return self._closeopen_index[i]
+        return co_ptr[i]
 
-    cpdef inline np.int32_t open(self, Py_ssize_t i):
+    cpdef inline SIZE_t open(self, SIZE_t i):
         """The position of the opening parenthesis that matches B[i]"""
-        if self.B[i] or i <= 0:
+        cdef BOOL_t* b_ptr = <BOOL_t*> self.B.data
+        cdef SIZE_t* co_ptr = <SIZE_t*> self._closeopen_index.data
+
+        if b_ptr[i] or i <= 0:
             # identity: the open of an open parenthesis is itself
             # the open of 0 is open. A negative index cannot be open, so just return
             return i
 
-        return self._closeopen_index[i]
+        return co_ptr[i]
 
-    cpdef inline np.int32_t enclose(self, Py_ssize_t i):
+    cpdef inline SIZE_t enclose(self, SIZE_t i):
         """The opening parenthesis of the smallest matching pair that contains position i"""
-        if self.B[i]:
+        cdef BOOL_t* b_ptr = <BOOL_t*> self.B.data
+        if b_ptr[i]:
             return self.bwdsearch(i, -2) + 1
         else:
             return self.bwdsearch(i - 1, -2) + 1
 
-    cpdef np.uint32_t rmq(self, Py_ssize_t i, Py_ssize_t j):
+    cpdef SIZE_t rmq(self, SIZE_t i, SIZE_t j):
         """The leftmost minimum excess in i -> j"""
         cdef:
-            Py_ssize_t k, min_k
-            np.uint32_t min_v, obs_v
+            SIZE_t k, min_k
+            SIZE_t min_v, obs_v
 
         min_k = i
         min_v = self.excess(i)  # a value larger than what will be tested
@@ -249,11 +280,11 @@ cdef class BP:
                 min_v = obs_v
         return min_k
 
-    cpdef np.uint32_t rMq(self, Py_ssize_t i, Py_ssize_t j):
+    cpdef SIZE_t rMq(self, SIZE_t i, SIZE_t j):
         """The leftmost maximmum excess in i -> j"""
         cdef:
-            Py_ssize_t k, max_k
-            np.uint32_t max_v, obs_v
+            SIZE_t k, max_k
+            SIZE_t max_v, obs_v
 
         max_k = i
         max_v = self.excess(i)  # a value larger than what will be tested
@@ -267,26 +298,32 @@ cdef class BP:
 
         # return np.array([self.excess(k) for k in range(i, j + 1)]).argmax() + i
 
-    def depth(self, i):
-        """The depth of node i"""
-        return self.excess(i)
+    def __reduce__(self):
+        return (BP, (self.B, self._closeopen_index, self._names, self._lengths))
 
-    def root(self):
+    cpdef SIZE_t depth(self, SIZE_t i):
+        """The depth of node i"""
+        cdef SIZE_t* _e_index_ptr = <SIZE_t*> self._e_index.data
+        return _e_index_ptr[i]
+
+    cpdef SIZE_t root(self):
         """The root of the tree"""
         return 0
 
-    def parent(self, i):
+    cpdef SIZE_t parent(self, SIZE_t i):
         """The parent of node i"""
         return self.enclose(i)
 
-    cpdef inline np.uint8_t isleaf(self, Py_ssize_t i):
+    cpdef inline BOOL_t isleaf(self, SIZE_t i):
         """Whether the node is a leaf"""
         # publication describe this operation as "iff B[i+1] == 0" which is incorrect
 
         # most likely there is an implicit conversion here
-        return self.B[i] and (not self.B[i + 1])
+        cdef BOOL_t* B = <BOOL_t*> self.B.data
 
-    cpdef np.uint32_t fchild(self, Py_ssize_t i):
+        return B[i] and (not B[i + 1])
+
+    cpdef SIZE_t fchild(self, SIZE_t i):
         """The first child of i (i.e., the left child)
 
         fchild(i) = i + 1 (if i is not a leaf)
@@ -294,7 +331,8 @@ cdef class BP:
         Returns 0 if the node is a leaf as the root cannot be a child by
         definition.
         """
-        if self.B[i]:
+        cdef BOOL_t* b_ptr = <BOOL_t*> self.B.data
+        if b_ptr[i]:
             if self.isleaf(i):
                 return 0
             else:
@@ -302,7 +340,7 @@ cdef class BP:
         else:
             return self.fchild(self.open(i))
 
-    cpdef np.uint32_t lchild(self, Py_ssize_t i):
+    cpdef SIZE_t lchild(self, SIZE_t i):
         """The last child of i (i.e., the right child)
 
         lchild(i) = open(close(i) − 1) (if i is not a leaf)
@@ -310,7 +348,8 @@ cdef class BP:
         Returns 0 if the node is a leaf as the root cannot be a child by
         definition.
         """
-        if self.B[i]:
+        cdef BOOL_t* b_ptr = <BOOL_t*> self.B.data
+        if b_ptr[i]:
             if self.isleaf(i):
                 return 0
             else:
@@ -333,7 +372,7 @@ cdef class BP:
         else:
             return i + index.nonzero()[0][q - 1]
 
-    cpdef np.uint32_t nsibling(self, Py_ssize_t i):
+    cpdef SIZE_t nsibling(self, SIZE_t i):
         """The next sibling of i (i.e., the sibling to the right)
 
         nsibling(i) = close(i) + 1 (if the result j holds B[j] = 0 then i has no next sibling)
@@ -342,21 +381,22 @@ cdef class BP:
         cannot have a sibling by definition
         """
         cdef:
-            np.uint32_t pos
+            SIZE_t pos
+        cdef BOOL_t* b_ptr = <BOOL_t*> self.B.data
 
-        if self.B[i]:
+        if b_ptr[i]:
             pos = self.close(i) + 1
         else:
             pos = self.nsibling(self.open(i))
 
         if pos >= len(self.B):
             return 0
-        elif self.B[pos]:
+        elif b_ptr[pos]:
             return pos
         else:
             return 0
 
-    cpdef np.uint32_t psibling(self, Py_ssize_t i):
+    cpdef SIZE_t psibling(self, SIZE_t i):
         """The previous sibling of i (i.e., the sibling to the left)
 
         psibling(i) = open(i − 1) (if B[i − 1] = 1 then i has no previous sibling)
@@ -366,8 +406,10 @@ cdef class BP:
         """
         cdef:
             np.uint32_t pos
-        if self.B[i]:
-            if self.B[max(0, i - 1)]:
+        cdef BOOL_t* b_ptr = <BOOL_t*> self.B.data
+
+        if b_ptr[i]:
+            if b_ptr[max(0, i - 1)]:
                 return 0
 
             pos = self.open(i - 1)
@@ -376,7 +418,7 @@ cdef class BP:
 
         if pos < 0:
             return 0
-        elif self.B[pos]:
+        elif b_ptr[pos]:
             return pos
         else:
             return 0
@@ -389,8 +431,7 @@ cdef class BP:
         else:
             return self.preorder(self.open(i))
 
-
-    def preorderselect(self, k):
+    cpdef inline SIZE_t preorderselect(self, SIZE_t k):
         """The node with preorder k"""
         # preorderselect(k) = select1(k),
         return self.select(1, k)
@@ -403,7 +444,7 @@ cdef class BP:
         else:
             return self.rank(0, i)
 
-    cpdef inline np.uint32_t postorderselect(self, Py_ssize_t k):
+    cpdef inline SIZE_t postorderselect(self, SIZE_t k):
         """The node with postorder k"""
         # postorderselect(k) = open(select0(k)),
         return self.open(self.select(0, k))
@@ -503,92 +544,131 @@ cdef class BP:
         # height(i) = excess(deepestnode(i)) − excess(i).
         return self.excess(self.deepestnode(i)) - self.excess(self.open(i))
 
-    cpdef BP shear(self, np.ndarray[np.uint32_t, ndim=1] tips):
+    cpdef BP shear(self, set tips):
+        """Remove all nodes from the tree except tips and ancestors of tips
+
+        Parameters
+        ----------
+        tips : set of str
+            The set of tip names to retain
+
+        Returns
+        -------
+        BP
+            A new BP tree corresponding to only the described tips and their
+            ancestors.
+        """
         cdef:
-            Py_ssize_t i, n = tips.size
-            np.uint32_t p, t
-            np.ndarray[np.uint8_t, ndim=1] mask
+            np.ndarray[SIZE_t, ndim=1] tip_indices
+            SIZE_t i, n = len(tips)
+            SIZE_t p, t
+            np.ndarray[BOOL_t, ndim=1] mask
+            BOOL_t* mask_ptr
 
-        mask = np.zeros(self.B.size, dtype=np.uint8)
-        mask[self.root()] = 1
-        mask[self.close(self.root())] = 1
+        mask = np.zeros(self.B.size, dtype=BOOL)
+        mask_ptr = <BOOL_t*>mask.data
 
-        for i in range(n):
-            t = tips[i]
+        mask_ptr[self.root()] = 1
+        mask_ptr[self.close(self.root())] = 1
 
-            mask[t] = 1
-            mask[t + 1] = 1 # close
+        for i in range(self.B.size):
+            # isleaf is only defined on the open parenthesis
+            if self.isleaf(i):
+                if self.name(i) in tips:
+                    mask_ptr[i] = 1
+                    mask_ptr[i + 1] = 1 # close
 
-            p = self.parent(t)
-            while mask[p] == 0 and p != 0:
-                mask[p] = 1
-                mask[self.close(p)] = 1
+                    p = self.parent(i)
+                    while p != 0 and mask_ptr[p] == 0:
+                        mask_ptr[p] = 1
+                        mask_ptr[self.close(p)] = 1
 
-                p = self.parent(p)
+                        p = self.parent(p)
 
         return self._mask_from_self(mask, self._lengths)
 
-    cdef BP _mask_from_self(self, np.ndarray[np.uint8_t, ndim=1] mask, np.ndarray[np.double_t, ndim=1] lengths):
+    cdef BP _mask_from_self(self, np.ndarray[BOOL_t, ndim=1] mask, np.ndarray[DOUBLE_t, ndim=1] lengths):
         cdef:
-            Py_ssize_t i, k, n = mask.size, mask_sum = mask.sum()
-            np.ndarray[np.uint8_t, ndim=1] b, new_b
-            np.ndarray[object, ndim=1] names, new_names
-            np.ndarray[np.double_t, ndim=1] new_lengths
+            SIZE_t i, k, n = mask.size, mask_sum = mask.sum()
+            np.ndarray[BOOL_t, ndim=1] new_b
+            np.ndarray[object, ndim=1] new_names
+            np.ndarray[object, ndim=1] names = self._names
+            np.ndarray[DOUBLE_t, ndim=1] new_lengths
+            BOOL_t* b_ptr
+            BOOL_t* new_b_ptr
+            BOOL_t* mask_ptr
+            DOUBLE_t* lengths_ptr
+            DOUBLE_t* new_lengths_ptr
 
         k = 0
-        b = self.B
-        names = self._names
 
-        new_b = np.empty(mask_sum, dtype=np.uint8)
+        b_ptr = <BOOL_t*> self.B.data
+        lengths_ptr = <DOUBLE_t*> lengths.data
+
+        new_b = np.empty(mask_sum, dtype=BOOL)
         new_names = np.empty(mask_sum, dtype=object)
-        new_lengths = np.empty(mask_sum, dtype=np.double)
+        new_lengths = np.empty(mask_sum, dtype=DOUBLE)
+
+        new_b_ptr = <BOOL_t*> new_b.data
+        new_lengths_ptr = <DOUBLE_t*> new_lengths.data
+
+        mask_ptr = <BOOL_t*>mask.data
 
         for i in range(n):
-            if mask[i]:
-                new_b[k] = b[i]
+            if mask_ptr[i]:
+                new_b_ptr[k] = b_ptr[i]
                 new_names[k] = names[i]
-                new_lengths[k] = lengths[i]
+                new_lengths_ptr[k] = lengths_ptr[i]
                 k += 1
 
         return BP(new_b, names=new_names, lengths=new_lengths)
 
     cpdef BP collapse(self):
         cdef:
-            Py_ssize_t i, n = self.B.sum()
-            np.uint32_t current, first, last
-            np.ndarray[np.uint8_t, ndim=1] collapse_mask
+            SIZE_t i, n = self.B.sum()
+            SIZE_t current, first, last
+            np.ndarray[BOOL_t, ndim=1] mask
+            np.ndarray[DOUBLE_t, ndim=1] new_lengths
+            BOOL_t* mask_ptr
+            DOUBLE_t* new_lengths_ptr
 
-        mask = np.zeros(self.B.size, dtype=np.uint8)
-        mask[self.root()] = 1
-        mask[self.close(self.root())] = 1
+        mask = np.zeros(self.B.size, dtype=BOOL)
+        mask_ptr = <BOOL_t*>mask.data
+
+        mask_ptr[self.root()] = 1
+        mask_ptr[self.close(self.root())] = 1
 
         new_lengths = self._lengths.copy()
+        new_lengths_ptr = <DOUBLE_t*>new_lengths.data
 
         for i in range(self.B.sum()):
             current = self.preorderselect(i)
 
             if self.isleaf(current):
-                mask[current] = 1
-                mask[self.close(current)] = 1
+                mask_ptr[current] = 1
+                mask_ptr[self.close(current)] = 1
             else:
                 first = self.fchild(current)
                 last = self.lchild(current)
 
                 if first == last:
-                    new_lengths[first] = new_lengths[first] + new_lengths[current]
+                    new_lengths_ptr[first] = new_lengths_ptr[first] + new_lengths_ptr[current]
                 else:
-                    mask[current] = 1
-                    mask[self.close(current)] = 1
+                    mask_ptr[current] = 1
+                    mask_ptr[self.close(current)] = 1
 
         return self._mask_from_self(mask, new_lengths)
 
-    cpdef inline np.uint32_t ntips(self):
+    cpdef inline SIZE_t ntips(self):
         cdef:
-            Py_ssize_t i = 0
-            np.uint32_t count = 0
+            SIZE_t i = 0
+            SIZE_t count = 0
+            SIZE_t n = self.B.size
+            BOOL_t* B_ptr
 
-        while i < (self.B.size - 1):
-            if self.B[i] and not self.B[i+1]:
+        B_ptr = <BOOL_t*>self.B.data
+        while i < (n - 1):
+            if B_ptr[i] and not B_ptr[i+1]:
                 count += 1
                 i += 1
             i += 1

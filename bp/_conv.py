@@ -80,23 +80,27 @@ def to_skbio_treearray(bp):
 
     Returns
     -------
+    ### TODO: revise
     tuple   ### needs to be a dict keyed by ['length'] and ['child_index']
         np.array of child index positions
         np.array of branch lengths in index order with respect to child index positions
     """
     class mock_node:
-        def __init__(self, is_tip):
+        def __init__(self, id, is_tip):
             self.is_tip_ = is_tip
+            self.id = id
+
         def is_tip(self):
             return self.is_tip_
 
-    child_index = np.zeros((int(bp.B.sum()) - bp.ntips(), 3), dtype=np.uint32)
+    child_index = np.zeros((int(bp.B.sum()) - bp.ntips(), 3), dtype=np.int64)
     length = np.zeros(bp.B.sum(), dtype=np.double)
     node_ids = np.zeros(bp.B.size, dtype=np.uint32)
+    name = np.full(bp.B.sum(), None, dtype=object)
 
     # TreeNode.assign_ids, decompose target
     chi_ptr = 0
-    cur_index = 0  # the index into node_ids
+    cur_index = 0  # the index into node_ids, equivalent to TreeNode.assign_ids
     id_index = dict.fromkeys(set(range(bp.B.sum())))  # map a node's "id" to an object which indicates if it is a leaf or not
     for i in range(bp.B.sum()):
         node_idx = bp.postorderselect(i + 1)  # the index within the BP of the node
@@ -108,8 +112,9 @@ def to_skbio_treearray(bp):
             sib_idx = fchild  # the sibling index wtihin the BP of the node
             while sib_idx != 0 and sib_idx <= lchild:
                 node_ids[sib_idx] = cur_index
-                id_index[cur_index] = mock_node(bp.isleaf(sib_idx))
+                id_index[cur_index] = mock_node(cur_index, bp.isleaf(sib_idx))
                 length[cur_index] = bp.length(sib_idx)
+                name[cur_index] = bp.name(sib_idx)
 
                 cur_index += 1
                 sib_idx = bp.nsibling(sib_idx)
@@ -118,11 +123,12 @@ def to_skbio_treearray(bp):
             chi_ptr += 1
 
     # make sure to capture root
-    id_index[bp.B.sum() - 1] = mock_node(False)
+    id_index[bp.B.sum() - 1] = mock_node(cur_index, False)
 
     node_ids[0] = cur_index
     child_index[:, 0] = node_ids[child_index[:, 0]]
     child_index = child_index[np.argsort(child_index[:, 0])]
 
-    return {'child_index': child_index, 'length': length, 'id_index': id_index}
+    return {'child_index': child_index, 'length': length, 'id_index': id_index,
+            'name': name}
 

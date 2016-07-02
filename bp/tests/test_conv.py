@@ -42,18 +42,20 @@ class ConversionTests(TestCase):
         exp_length = np.array([1, 2, 3, 5, 4, 6, 8, 9, 7, 10, 0.0], dtype=np.double)
         exp_id_index = {0: True, 1: True, 2: True, 3: True, 4: False, 5: False, 6: True, 7: True, 8: False, 9: False,
                         10: False}
+        exp_name = np.array(['a', 'b', 'c', 'd', 'x', 'y', 'e', 'f', 'z', 'z', None])
         obs = to_skbio_treearray(t)
 
         obs_child_index = obs['child_index']
         obs_length = obs['length']
         obs_id_index = obs['id_index']
+        obs_name = obs['name']
 
         npt.assert_equal(obs_child_index, exp_child_index)
         npt.assert_equal(obs_length, exp_length)
         self.assertEqual(obs_id_index.keys(), exp_id_index.keys())
+        npt.assert_equal(obs_name, exp_name)
 
         for k in obs_id_index:
-            print(k)
             self.assertEqual(obs_id_index[k].is_tip(), exp_id_index[k])
 
 if __name__ == '__main__':
