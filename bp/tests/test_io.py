@@ -103,7 +103,6 @@ class NewickTests(TestCase):
         npt.assert_equal(obs_bp.B, np.asarray(exp_bp, dtype=bool))
 
         for i, (e_n, e_l) in enumerate(zip(exp_n, exp_l)):
-            print(i, e_n, obs_bp.name(i))
             self.assertEqual(obs_bp.name(i), e_n)
             self.assertEqual(obs_bp.length(i), e_l)
 

@@ -32,7 +32,11 @@ ext = '.pyx' if USE_CYTHON else '.c'
 extensions = [Extension("bp._bp",
                         ["bp/_bp" + ext]),
               Extension("bp._io",
-                        ["bp/_io" + ext])]
+                        ["bp/_io" + ext]),
+              Extension("bp._binary_tree",
+                        ["bp/_binary_tree" + ext]),
+              Extension("bp._rmM_tree",
+                        ["bp/_rmM_tree" + ext])]
 
 if USE_CYTHON:
     from Cython.Build import cythonize
