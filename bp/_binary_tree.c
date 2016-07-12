@@ -3959,7 +3959,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":24
+/* "bp/_binary_tree.pxd":12
  * 
  * 
  * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -3970,7 +3970,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
 static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
 
-  /* "bp/_binary_tree.pxd":26
+  /* "bp/_binary_tree.pxd":14
  * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:
  *     """Is v the root"""
  *     return v == 0             # <<<<<<<<<<<<<<
@@ -3980,7 +3980,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_ro
   __pyx_r = (__pyx_v_v == 0);
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":24
+  /* "bp/_binary_tree.pxd":12
  * 
  * 
  * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -3993,7 +3993,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_ro
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":29
+/* "bp/_binary_tree.pxd":17
  * 
  * 
  * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4005,7 +4005,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_le
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
   long __pyx_t_1;
 
-  /* "bp/_binary_tree.pxd":31
+  /* "bp/_binary_tree.pxd":19
  * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:
  *     """Is v a left child of some node"""
  *     return 0 if bt_is_root(v) else v % 2             # <<<<<<<<<<<<<<
@@ -4020,7 +4020,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_le
   __pyx_r = __pyx_t_1;
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":29
+  /* "bp/_binary_tree.pxd":17
  * 
  * 
  * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4033,7 +4033,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_le
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":34
+/* "bp/_binary_tree.pxd":22
  * 
  * 
  * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4045,7 +4045,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_ri
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
   long __pyx_t_1;
 
-  /* "bp/_binary_tree.pxd":36
+  /* "bp/_binary_tree.pxd":24
  * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:
  *     """Is v a right child of some node"""
  *     return 0 if bt_is_root(v) else 1 - (v % 2)             # <<<<<<<<<<<<<<
@@ -4060,7 +4060,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_ri
   __pyx_r = __pyx_t_1;
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":34
+  /* "bp/_binary_tree.pxd":22
  * 
  * 
  * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4073,7 +4073,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_ri
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":39
+/* "bp/_binary_tree.pxd":27
  * 
  * 
  * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4085,7 +4085,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_paren
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
   long __pyx_t_1;
 
-  /* "bp/_binary_tree.pxd":41
+  /* "bp/_binary_tree.pxd":29
  * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:
  *     """Get the index of the parent of v"""
  *     return 0 if bt_is_root(v) else (v - 1) // 2             # <<<<<<<<<<<<<<
@@ -4100,7 +4100,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_paren
   __pyx_r = __pyx_t_1;
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":39
+  /* "bp/_binary_tree.pxd":27
  * 
  * 
  * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4113,7 +4113,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_paren
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":44
+/* "bp/_binary_tree.pxd":32
  * 
  * 
  * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4124,7 +4124,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_paren
 static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
 
-  /* "bp/_binary_tree.pxd":46
+  /* "bp/_binary_tree.pxd":34
  * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:
  *     """Get the index of the left child of v"""
  *     return 2 * v + 1             # <<<<<<<<<<<<<<
@@ -4134,7 +4134,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_
   __pyx_r = ((2 * __pyx_v_v) + 1);
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":44
+  /* "bp/_binary_tree.pxd":32
  * 
  * 
  * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4147,7 +4147,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":49
+/* "bp/_binary_tree.pxd":37
  * 
  * 
  * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4158,7 +4158,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_
 static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
 
-  /* "bp/_binary_tree.pxd":51
+  /* "bp/_binary_tree.pxd":39
  * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:
  *     """Get the index of the right child of v"""
  *     return 2 * v + 2             # <<<<<<<<<<<<<<
@@ -4168,7 +4168,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right
   __pyx_r = ((2 * __pyx_v_v) + 2);
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":49
+  /* "bp/_binary_tree.pxd":37
  * 
  * 
  * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4181,7 +4181,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":54
+/* "bp/_binary_tree.pxd":42
  * 
  * 
  * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4192,7 +4192,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right
 static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_sibling(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
 
-  /* "bp/_binary_tree.pxd":56
+  /* "bp/_binary_tree.pxd":44
  * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:
  *     """Get the index of the left sibling of v"""
  *     return v - 1             # <<<<<<<<<<<<<<
@@ -4202,7 +4202,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_
   __pyx_r = (__pyx_v_v - 1);
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":54
+  /* "bp/_binary_tree.pxd":42
  * 
  * 
  * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4215,7 +4215,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":59
+/* "bp/_binary_tree.pxd":47
  * 
  * 
  * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4226,7 +4226,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_
 static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right_sibling(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
 
-  /* "bp/_binary_tree.pxd":61
+  /* "bp/_binary_tree.pxd":49
  * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:
  *     """Get the index of the right sibling of v"""
  *     return v + 1             # <<<<<<<<<<<<<<
@@ -4236,7 +4236,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right
   __pyx_r = (__pyx_v_v + 1);
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":59
+  /* "bp/_binary_tree.pxd":47
  * 
  * 
  * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
@@ -4249,7 +4249,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":64
+/* "bp/_binary_tree.pxd":52
  * 
  * 
  * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
@@ -4260,7 +4260,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right
 static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_leaf(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
 
-  /* "bp/_binary_tree.pxd":66
+  /* "bp/_binary_tree.pxd":54
  * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:
  *     """Determine if v is a leaf"""
  *     return (v >= pow(2, height) - 1)             # <<<<<<<<<<<<<<
@@ -4270,7 +4270,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_le
   __pyx_r = (__pyx_v_v >= (pow(2.0, __pyx_v_height) - 1.0));
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":64
+  /* "bp/_binary_tree.pxd":52
  * 
  * 
  * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
@@ -4283,7 +4283,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_le
   return __pyx_r;
 }
 
-/* "bp/_binary_tree.pxd":69
+/* "bp/_binary_tree.pxd":57
  * 
  * 
  * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
@@ -4294,7 +4294,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_le
 static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_node_from_left(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_pos, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
   __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
 
-  /* "bp/_binary_tree.pxd":71
+  /* "bp/_binary_tree.pxd":59
  * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:
  *     """Get the index from the left of a node at a given height"""
  *     return <SIZE_t>(pow(2, height)) - 1 + pos             # <<<<<<<<<<<<<<
@@ -4304,7 +4304,7 @@ static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_node_
   __pyx_r = ((((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, __pyx_v_height)) - 1) + __pyx_v_pos);
   goto __pyx_L0;
 
-  /* "bp/_binary_tree.pxd":69
+  /* "bp/_binary_tree.pxd":57
  * 
  * 
  * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
@@ -4577,7 +4577,7 @@ PyMODINIT_FUNC PyInit__binary_tree(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "bp/_binary_tree.pxd":69
+  /* "bp/_binary_tree.pxd":57
  * 
  * 
  * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:             # <<<<<<<<<<<<<<

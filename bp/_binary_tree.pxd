@@ -1,15 +1,3 @@
-#from bp._bp cimport SIZE_t
-#
-#cdef inline SIZE_t bt_is_root(SIZE_t v) nogil
-#cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil
-#cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil
-#cdef inline SIZE_t bt_parent(SIZE_t v) nogil
-#cdef inline SIZE_t bt_left_child(SIZE_t v) nogil
-#cdef inline SIZE_t bt_right_child(SIZE_t v) nogil
-#cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil
-#cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil
-#cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil
-#cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
