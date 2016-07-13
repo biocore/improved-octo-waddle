@@ -155,19 +155,56 @@ cdef np.ndarray construct_rmM_tree(np.ndarray[BOOL_t, ndim=1] B):
     return enmM
 
 
-def scan_block(bp, i, k, b, d):
+def scan_block_forward(bp, i, k, b, d):
     # i and k are currently needed to handle the situation where 
     # k_start < i < k_end. It should be possible to resolve using partial 
     # excess.
+
+    # lower_bound is block boundary or right of i
     lower_bound = int(max(k, 0) * b)
-    lower_bound = max(i, lower_bound)
+    lower_bound = max(i + 1, lower_bound)
+
+    # upper_bound is block boundary or end of tree
     upper_bound = int(min((k + 1) * b, bp.B.size))
+
     for j in range(lower_bound, upper_bound):
         if bp.excess(j) == d:
             return j
     return -1
 
-def test_scan_block():
+def scan_block_backward(bp, i, k, b, d):
+    # i and k are currently needed to handle the situation where 
+    # k_start < i < k_end. It should be possible to resolve using partial 
+    # excess.
+
+    # range stop is exclusive, so need to set "stop" at -1 of boundary
+    lower_bound = int(max(k, 0) * b) - 1  # is it possible for k to be < 0?
+    
+    # include the right most position of the k-1 block so we can identify
+    # closures spanning blocks. Not positive if this is correct, however if the
+    # block is "()((", and we're searching for the opening paired with ")", 
+    # we need to go to evaluate the excess prior to the first "(", at least as
+    # "open" is defined in Cordova and Navarro
+    if lower_bound >= 0:
+        lower_bound -= 1
+    
+    # upper bound is block boundary or left of i, whichever is less
+    # note that this is an inclusive boundary since this is a backward search
+    upper_bound = int(min((k + 1) * b, bp.B.size)) - 1
+    upper_bound = min(i - 1, upper_bound)
+    
+    print("\tscan: [%d, %d)" % (upper_bound, lower_bound))
+
+    if upper_bound <= 0:
+        return -1
+
+    for j in range(upper_bound, lower_bound, -1):
+        if bp.excess(j) == d:
+            return j
+
+    return -1
+
+def test_scan_block_forward():
     bp = parse_newick('((a,b,(c)),d,((e,f)));')
     
     # [(open, close), ...]
@@ -185,7 +222,7 @@ def test_scan_block():
 
     for k, exp_results in exp_b_4:
         for idx, exp_result in exp_results:
-            obs_result = scan_block(bp, idx, k, b, bp.excess(idx) + d)
+            obs_result = scan_block_forward(bp, idx, k, b, bp.excess(idx) + d)
             assert obs_result == exp_result
 
     b = 8
@@ -198,7 +235,42 @@ def test_scan_block():
     
     for k, exp_results in exp_b_8:
         for idx, exp_result in exp_results:
-            obs_result = scan_block(bp, idx, k, b, bp.excess(idx) + d)
+            obs_result = scan_block_forward(bp, idx, k, b, bp.excess(idx) + d)
+            assert obs_result == exp_result
+
+
+def test_scan_block_backward():
+    bp = parse_newick('((a,b,(c)),d,((e,f)));')
+    
+    # adding +1 to simluate "open" so calls on open parentheses are weird
+    # [(open, close), ...]
+    b = 4
+    d = 0
+    exp_b_4 = [(0, ((0, 0), (1, 0), (2, 0), (3, 2))),
+               (1, ((4, 0), (5, 4), (6, 5), (7, 0))),
+               (2, ((8, 0), (9, 0), (10, 0), (11, 10))),  
+               (3, ((12, 0), (13, 12), (14, 0), (15, 0))),
+               (4, ((16, 0), (17, 16), (18, 17), (19, 0))),
+               (5, ((20, 0), (21, 0)))]
+
+    for k, exp_results in exp_b_4:
+        for idx, exp_result in exp_results:
+            obs_result = scan_block_backward(bp, idx, k, b, bp.excess(idx) + d)
+            obs_result += 1  # simulating open
+            assert obs_result == exp_result
+
+    b = 8
+    exp_b_8 = [(0, ((0, 0), (1, 0), (2, 0), (3, 2), 
+                    (4, 3), (5, 4), (6, 5), (7, 0))),
+               (1, ((8, 0), (9, 0), (10, 0), (11, 10),
+                    (12, 11), (13, 12), (14, 9), (15, 8))),
+               (2, ((16, 0), (17, 16), (18, 17), (19, 0), 
+                    (20, 0), (21, 0)))]                   
+    
+    for k, exp_results in exp_b_8:
+        for idx, exp_result in exp_results:
+            obs_result = scan_block_backward(bp, idx, k, b, bp.excess(idx) + d)
+            obs_result += 1  # simulating open
             assert obs_result == exp_result
 
 
@@ -217,7 +289,7 @@ def fwdsearch(bp, enmM, i, d):
     original_d = d  # retain the original distance for final checking
 
     # see if our result is in our current block
-    result = scan_block(bp, i, k, b, bp.excess(i) + d)
+    result = scan_block_forward(bp, i, k, b, bp.excess(i) + d)
 
     # determine which node our block corresponds too
     #node = (pow(2, height) - 1) + k
@@ -227,7 +299,7 @@ def fwdsearch(bp, enmM, i, d):
     if result == -1 and bt_is_left_child(node):
         node = bt_right_sibling(node)
         k = node - (pow(2, height) - 1)
-        result = scan_block(bp, i, k, b, bp.excess(i) + d)
+        result = scan_block_forward(bp, i, k, b, bp.excess(i) + d)
 
     # if we do not have a result, we need to begin traversal of the tree
     if result == -1:
@@ -267,9 +339,91 @@ def fwdsearch(bp, enmM, i, d):
         k = node - (pow(2, height) - 1)
 
         # scan for a result using the original d
-        result = scan_block(bp, i, k, b, bp.excess(i) + original_d)
+        result = scan_block_forward(bp, i, k, b, bp.excess(i) + original_d)
 
     return result
+
+
+def bwdsearch(bp, enmM, i, d):
+    cdef int e_idx = 0  # e is total excess
+    cdef int n_idx = 1  # n is number of times the minimum appears
+    cdef int m_idx = 2  # m is minimum excess
+    cdef int M_idx = 3  # M is maximum excess
+   
+    ### could benefit from stashing details in a struct/object
+    b = <int>ceil(ln(<double> bp.B.size) * ln(ln(<double> bp.B.size)))
+    n_tip = <int>ceil(bp.B.size / <double> b)
+    height = <int>ceil(log2(n_tip))
+    
+    k = i // b  # get the block of parentheses to check
+    original_d = d  # retain the original distance for final checking
+
+    # see if our result is in our current block
+    result = scan_block_backward(bp, i, k, b, bp.excess(i) + d)
+
+    # determine which node our block corresponds too
+    #node = (pow(2, height) - 1) + k
+    node = bt_node_from_left(k, height)
+
+    # special case: check sibling
+    if result == -1 and bt_is_right_child(node):
+        node = bt_left_sibling(node)
+        k = node - (pow(2, height) - 1)
+        result = scan_block_backward(bp, i, k, b, bp.excess(i) + original_d)
+    
+    # if we do not have a result, we need to begin traversal of the tree
+    if result == -1:
+        # adjust for partial excess
+        #d = d - (min(enmM[node, e_idx], 0) + bp.excess(i))
+        #d = d - (enmM[node, e_idx] - bp.excess(i))
+        #d = d - (max(enmM[node, e_idx], 0) - bp.excess(i))
+        #d = bp.excess(i) + d
+        d = d - (bp.excess(k * b) - bp.excess(i))
+
+        # walk up the tree
+        while not bt_is_root(node):
+            # right nodes cannot contain the solution as we are searching left
+            # As such, if we are the right node already, evaluate its sibling.
+            if bt_is_right_child(node):
+                node = bt_left_sibling(node)
+                if enmM[node, m_idx] <= d  <= enmM[node, M_idx]:
+                    break
+            
+            # if we did not find a valid node, adjust for the relative
+            # excess of the current node, and ascend to the parent
+            d = d - enmM[node, e_idx]
+            node = bt_parent(node)
+
+        # if we did not hit the root, then we have a possible solution
+        if not bt_is_root(node):
+            # descend until we hit a leaf node
+            while not bt_is_leaf(node, height):
+                node = bt_right_child(node)
+                print("\teval down right, %d <= %d <= %d" % (enmM[node, m_idx], d, enmM[node, M_idx]))
+
+                # evaluate right, if not found, pick left
+                if not (enmM[node, m_idx] <= d <= enmM[node, M_idx]):
+                    node = bt_left_sibling(node)
+
+        else:
+            # no solution
+            return -1
+
+        # we have found a block with contains our solution. convert from the
+        # node index back into the block index
+        k = node - (pow(2, height) - 1)
+
+        # scan for a result using the original d
+        result = scan_block_backward(bp, i, k, b, bp.excess(i) + original_d)
+
+    # special case: check sibling
+    if result == -1 and bt_is_right_child(node):
+        node = bt_left_sibling(node)
+        k = node - (pow(2, height) - 1)
+        result = scan_block_backward(bp, i, k, b, bp.excess(i) + original_d)
+        
+    return result
+
 
 def test_construct_rmM_tree():
     cdef np.ndarray tree
@@ -317,3 +471,42 @@ def test_fwdsearch():
     for open_, exp_close in exp:
         obs_close = fwdsearch(bp, enmM, open_, -1)
         assert obs_close == exp_close
+
+
+def test_bwdsearch():
+    cdef BP bp
+    bp = parse_newick('((a,b,(c)),d,((e,f)));')
+    enmM = construct_rmM_tree(bp.B)
+
+    # simulating open so only testing closed parentheses. 
+    # [(close_idx, open_idx), ...]
+    exp = [(21, 0), (8, 7), (9, 6), (10, 1), (3, 2), (5, 4), (12, 11),
+           (16, 15), (20, 13), (19, 14), (18, 17)]
+
+    for close_, exp_open in exp:
+        print("bwd query: %d" % close_)
+        obs_open = bwdsearch(bp, enmM, close_, 0) + 1
+        print("\tresult: %d %d" % (obs_open, exp_open))
+        assert obs_open == exp_open
+
+
+    # slightly modified version of fig2 with an extra child forcing a test
+    # of the direct sibling check with negative partial excess
+
+    # this translates into:
+    # 012345678901234567890123
+    # ((()()(()))()((()()())))
+    bp = parse_newick('((a,b,(c)),d,((e,f,g)));')
+    enmM = construct_rmM_tree(bp.B)
+
+    # simulating open so only testing closed parentheses. 
+    # [(close_idx, open_idx), ...]
+    exp = [(23, 0), (10, 1), (3, 2), (5, 4), (9, 6), (8, 7), (12, 11),
+           (22, 13), (21, 14), (16, 15), (18, 17), (20, 19)]
+
+    for close_, exp_open in exp:
+        print("bwd query: %d" % close_)
+        obs_open = bwdsearch(bp, enmM, close_, 0) + 1
+        print("\tresult: %d %d" % (obs_open, exp_open))
+        assert obs_open == exp_open
+
