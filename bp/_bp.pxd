@@ -19,6 +19,7 @@ cdef class BP:
         public np.ndarray B 
         np.ndarray _r_index_0, _r_index_1, _k_index_0, _k_index_1, _e_index
         np.ndarray _closeopen_index, _names, _lengths
+        SIZE_t[:, :] _rmm
         SIZE_t size
 
     cpdef inline unicode name(self, SIZE_t i)
@@ -28,7 +29,9 @@ cdef class BP:
     cpdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) nogil
     cdef inline  SIZE_t _excess(self, SIZE_t i) 
     cpdef inline SIZE_t excess(self, SIZE_t i) nogil
+    cpdef inline SIZE_t fwdsearch_rmm(self, SIZE_t i, int d) nogil
     cpdef inline SIZE_t fwdsearch(self, SIZE_t i, int d) nogil
+    cpdef inline SIZE_t bwdsearch_rmm(self, SIZE_t i, int d) nogil
     cpdef inline SIZE_t bwdsearch(self, SIZE_t i, int d) nogil
     cpdef inline SIZE_t close(self, SIZE_t i) nogil
     cpdef inline SIZE_t open(self, SIZE_t i) nogil
