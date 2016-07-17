@@ -16,6 +16,14 @@ def test_rank():
     for exp, t in zip((counts_1, counts_0), (1, 0)):
         for idx, e in enumerate(exp):
             npt.assert_equal(obj.rank(t, idx), e)
+
+def test_rank_rmm():
+    cdef BP obj = get_test_obj()
+    counts_1 = fig1_B.cumsum()
+    counts_0 = (1 - fig1_B).cumsum()
+    for exp, t in zip((counts_1, counts_0), (1, 0)):
+        for idx, e in enumerate(exp):
+            npt.assert_equal(obj.rank_rmm(t, idx), e)
     
 def test_select():
     cdef BP obj = get_test_obj()
@@ -25,6 +33,15 @@ def test_select():
     for exp, t in zip((pos_1, pos_0), (1, 0)):
         for k in range(1, len(exp)):
             npt.assert_equal(obj.select(t, k), exp[k])
+
+def test_select_rmm():
+    cdef BP obj = get_test_obj()
+    pos_1 = np.unique(fig1_B.cumsum(), return_index=True)[1] #- 1
+    pos_0 = np.unique((1 - fig1_B).cumsum(), return_index=True)[1]
+
+    for exp, t in zip((pos_1, pos_0), (1, 0)):
+        for k in range(1, len(exp)):
+            npt.assert_equal(obj.select_rmm(t, k), exp[k])
 
 def test_rank_property():
     cdef BP obj = get_test_obj()
@@ -297,7 +314,9 @@ def test_rmm():
     # http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
     bp = parse_newick('((a,b,(c)),d,((e,f)));')
     exp = np.array([[0, 1, 0, 1, 1, 0, 0, 1, 2, 1, 1, 2, 0],
-                    [4, 4, 4, 4, 4, 4, 0, 3, 4, 3, 4, 4, 1]], dtype=np.intp).T
+                    [4, 4, 4, 4, 4, 4, 0, 3, 4, 3, 4, 4, 1],
+                    #[0, 4, -4, 4, 0, -4, 0, 2, 2, -2, 2, -2, -2]], dtype=np.intp).T
+                    [0, 0, 10, 0, 6, 10, 0, 0, 3, 6, 7, 10, 11]], dtype=np.intp).T
     obs = mM(bp.B, bp.B.size)
 
     assert exp.shape[0] == obs.mM.shape[0]
@@ -305,4 +324,6 @@ def test_rmm():
     
     for i in range(exp.shape[0]):
         for j in range(exp.shape[1]):
+            #if j == 2:
+            #    print(i, j, obs.mM[i, j], exp[i, j])
             assert obs.mM[i, j] == exp[i, j]    

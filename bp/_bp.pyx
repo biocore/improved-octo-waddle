@@ -47,8 +47,7 @@ cdef class mM:
     def __cinit__(self, BOOL_t[:] B, int B_size):
         self.m_idx = 0
         self.M_idx = 1
-        #self.r_idx = 2
-        #self.n_idx = 3
+        self.r_idx = 2
 
         self.rmm(B, B_size)
 
@@ -63,11 +62,12 @@ cdef class mM:
         cdef int upper_limit  # the upper limit of the bucket a parenthesis is in
         
         cdef SIZE_t[:, :] mM  # exact min/max per bucket
-        cdef int min_ = 0 # m, temporary when computing relative
-        cdef int max_ = 0 # M, temporary when computing relative
-        #cdef int r = 0  # the rank covered by the node
+        cdef int min_ = 0 # m, absolute minimum for a blokc
+        cdef int max_ = 0 # M, absolute maximum for a block
         #cdef int n = 0
-        cdef int excess = 0 # e, temporary when computing relative
+        cdef int excess = 0 # e, absolute excess
+        cdef int vbar
+        cdef int r = 0
 
         # build tip info
         self.b = <int>ceil(ln(<double> B_size) * ln(ln(<double> B_size)))
@@ -81,7 +81,7 @@ cdef class mM:
         with gil:
             # creation of a memoryview directly or via numpy requires the GIL:
             # http://stackoverflow.com/a/22238012
-            self.mM = np.zeros((self.n_total, 2), dtype=SIZE)
+            self.mM = np.zeros((self.n_total, 3), dtype=SIZE)
 
         # annoying, cannot do step in range if step is not known at runtime
         # see https://github.com/cython/cython/pull/520
@@ -95,12 +95,14 @@ cdef class mM:
             upper_limit = min(i + self.b, B_size)
             min_ = INT_MAX
             max_ = 0
-            r = (excess + self.b) // 2   ### need to think more on this
-
+            
+            self.mM[offset + self.n_internal, self.r_idx] = r
+            
             for j in range(lower_limit, upper_limit):
                 # G function, a +-1 method where if B[j] == 1 we +1, and if
                 # B[j] == 0 we -1
                 excess += -1 + (2 * B[j]) 
+                r += B[j]
 
                 if excess < min_:
                     min_ = excess
@@ -112,7 +114,7 @@ cdef class mM:
             
             self.mM[offset + self.n_internal, self.m_idx] = min_
             self.mM[offset + self.n_internal, self.M_idx] = max_
-            
+           
             i += self.b
 
         # compute for internal nodes of rmM tree in reverse level order starting 
@@ -133,13 +135,14 @@ cdef class mM:
                 elif rchild >= self.n_total:
                     self.mM[node, self.m_idx] = self.mM[lchild, self.m_idx] 
                     self.mM[node, self.M_idx] = self.mM[lchild, self.M_idx]
-
                 else:    
                     self.mM[node, self.m_idx] = min(self.mM[lchild, self.m_idx], 
                                                     self.mM[rchild, self.m_idx])
                     self.mM[node, self.M_idx] = max(self.mM[lchild, self.M_idx], 
                                                     self.mM[rchild, self.M_idx])
 
+                self.mM[node, self.r_idx] = self.mM[lchild, self.r_idx] 
+                
 
 @cython.final
 cdef class BPNode:
@@ -188,8 +191,8 @@ cdef class BP:
     """
 
     def __cinit__(self, np.ndarray[BOOL_t, ndim=1] B, 
-                  np.ndarray[object, ndim=1] names=None,
-                  np.ndarray[DOUBLE_t, ndim=1] lengths=None):
+                  np.ndarray[DOUBLE_t, ndim=1] lengths=None,
+                  np.ndarray[object, ndim=1] names=None):
         cdef SIZE_t i
         cdef SIZE_t size
         cdef SIZE_t[:] _e_index
@@ -270,32 +273,119 @@ cdef class BP:
     cpdef inline BPNode get_node(self, SIZE_t i):
         return BPNode(self._names[i], self._lengths[i])
 
-    cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) :
+    cpdef inline SIZE_t rank_rmm(self, SIZE_t t, SIZE_t i):
+        cdef int k
+        cdef int r = 0
+        cdef int lower_bound
+        cdef int upper_bound
+        cdef int j
+        cdef int node
+
+        #TODO: add method to mM for determining block from i
+        k = i // self._rmm.b  
+        
+        lower_bound = max(k, 0) * self._rmm.b
+
+        # upper_bound is block boundary or end of tree
+        upper_bound = min((k + 1) * self._rmm.b, self.size)
+        upper_bound = min(upper_bound, i + 1)
+
+        for j in range(lower_bound, upper_bound):
+            r += self.B[j]
+
+        node = bt_node_from_left(k, self._rmm.height)
+        r += self._rmm.mM[node, self._rmm.r_idx]
+
+        if t:
+            return r
+        else:
+            return (i - r) + 1
+         
+    cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
         """The number of occurrences of the bit t in B"""
         if t:
             return self._r_index_1[i]
         else:
             return self._r_index_0[i]
 
-    cdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) :
+    cpdef inline SIZE_t select_rmm(self, SIZE_t t, SIZE_t k):
+        node = 0
+
+        if t:
+            # works on test tree so far
+            while not bt_is_leaf(node, self._rmm.height):
+                rchild = bt_right_child(node)
+                if self._rmm.mM[rchild, self._rmm.r_idx] <= k:
+                    # special case: verify there are leaves in this path
+                    # TODO: can this be done more efficiently?
+                    if not bt_is_leaf(rchild, self._rmm.height) and bt_left_child(rchild) >= self._rmm.n_total:
+                        node = bt_left_child(node)
+                    else:
+                        node = rchild
+                else:
+                    node = bt_left_child(node)
+            
+            lower_bound = (node - self._rmm.n_internal) * self._rmm.b
+            upper_bound = min(lower_bound + self._rmm.b, self.size)
+            
+            r = 0
+            k = k - self._rmm.mM[node, self._rmm.r_idx]
+            for i in range(lower_bound, upper_bound):
+                if self.B[i] and k == r:
+                    return i
+                r += self.B[i]
+        else:
+            #####
+            ### HAMMER OUT THE LOGIC ON PAPER IDIOT
+            #############
+
+            lvl = self._rmm.height
+            while not bt_is_leaf(node, self._rmm.height):
+                rchild = bt_right_child(node)
+                vbar = 2**(lvl-1) * self._rmm.b
+                print(node, vbar, self._rmm.mM[rchild, self._rmm.r_idx])
+                if (vbar - self._rmm.mM[rchild, self._rmm.r_idx]) >= k:
+                    node = bt_left_child(node)
+                else:
+                    if not bt_is_leaf(rchild, self._rmm.height) and bt_left_child(rchild) >= self._rmm.n_total:
+                        node = bt_left_child(node)
+                    else:
+                        node = rchild
+                lvl -= 1
+
+            lower_bound = (node - self._rmm.n_internal) * self._rmm.b
+            upper_bound = min(lower_bound + self._rmm.b, self.size)
+            
+            r = 0
+            vbar = 2**(lvl-1) * self._rmm.b
+            k = k - (vbar - self._rmm.mM[node, self._rmm.r_idx])
+            print(r, k)
+            for i in range(lower_bound, upper_bound):
+                if not self.B[i] and k == r:
+                    return i
+                r += ~self.B[i]
+            
+        return -1
+
+    cdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) nogil:
         """The position in B of the kth occurrence of the bit t."""
         if t:
             return self._k_index_1[k]
         else:
             return self._k_index_0[k]
 
-    cdef SIZE_t _excess(self, SIZE_t i):
+    cdef SIZE_t _excess(self, SIZE_t i) nogil:
         """Actually compute excess"""
         if i < 0:
             return 0  # wasn't stated as needed but appears so given testing
         return (2 * self.rank(1, i) - i) - 1
 
-    cdef SIZE_t excess(self, SIZE_t i) :
+    cdef SIZE_t excess(self, SIZE_t i) nogil:
         """the number of opening minus closing parentheses in B[1, i]"""
         # same as: self.rank(1, i) - self.rank(0, i)
         return self._e_index[i]
     
-    cdef inline SIZE_t fwdsearch_naive(self, SIZE_t i, int d):
+    cdef inline SIZE_t fwdsearch_naive(self, SIZE_t i, int d) nogil:
         """Forward search for excess by depth"""
         cdef:
             SIZE_t j, n = self.size
@@ -309,7 +399,7 @@ cdef class BP:
 
         return -1  # wasn't stated as needed but appears so given testing
 
-    cdef inline SIZE_t bwdsearch_naive(self, SIZE_t i, int d):
+    cdef inline SIZE_t bwdsearch_naive(self, SIZE_t i, int d) nogil:
         """Backward search for excess by depth"""
         cdef:
             SIZE_t j
@@ -323,7 +413,7 @@ cdef class BP:
 
         return -1
 
-    cdef inline SIZE_t close(self, SIZE_t i) :
+    cdef inline SIZE_t close(self, SIZE_t i) nogil:
         """The position of the closing parenthesis that matches B[i]"""
         if not self._b_ptr[i]:
             # identity: the close of a closed parenthesis is itself
@@ -331,7 +421,7 @@ cdef class BP:
 
         return self.fwdsearch(i, -1)
 
-    cdef inline SIZE_t open(self, SIZE_t i) :
+    cdef inline SIZE_t open(self, SIZE_t i) nogil:
         """The position of the opening parenthesis that matches B[i]"""
         if self._b_ptr[i] or i <= 0:
             # identity: the open of an open parenthesis is itself
@@ -340,7 +430,7 @@ cdef class BP:
 
         return self.bwdsearch(i, 0) + 1
 
-    cdef inline SIZE_t enclose(self, SIZE_t i):# :
+    cdef inline SIZE_t enclose(self, SIZE_t i) nogil:
         """The opening parenthesis of the smallest matching pair that contains position i"""
         if self._b_ptr[i]:
             return self.bwdsearch(i, -2) + 1
@@ -383,26 +473,26 @@ cdef class BP:
     def __reduce__(self):
         return (BP, (self.B, self._names, self._lengths))
 
-    cdef SIZE_t depth(self, SIZE_t i) :
+    cdef SIZE_t depth(self, SIZE_t i) nogil:
         """The depth of node i"""
         return self._e_index[i]
 
-    cdef SIZE_t root(self) :
+    cdef SIZE_t root(self) nogil:
         """The root of the tree"""
         return 0
 
-    cdef SIZE_t parent(self, SIZE_t i):# :
+    cdef SIZE_t parent(self, SIZE_t i) nogil:
         """The parent of node i"""
         return self.enclose(i)
 
-    cdef BOOL_t isleaf(self, SIZE_t i) :
+    cdef BOOL_t isleaf(self, SIZE_t i) nogil:
         """Whether the node is a leaf"""
         # publication describe this operation as "iff B[i+1] == 0" which is incorrect
 
         # most likely there is an implicit conversion here
         return self._b_ptr[i] and (not self._b_ptr[i + 1])
 
-    cdef SIZE_t fchild(self, SIZE_t i) :
+    cdef SIZE_t fchild(self, SIZE_t i) nogil:
         """The first child of i (i.e., the left child)
 
         fchild(i) = i + 1 (if i is not a leaf)
@@ -418,7 +508,7 @@ cdef class BP:
         else:
             return self.fchild(self.open(i))
 
-    cdef SIZE_t lchild(self, SIZE_t i) :
+    cdef SIZE_t lchild(self, SIZE_t i) nogil:
         """The last child of i (i.e., the right child)
 
         lchild(i) = open(close(i) − 1) (if i is not a leaf)
@@ -449,7 +539,7 @@ cdef class BP:
         else:
             return i + index.nonzero()[0][q - 1]
 
-    cdef SIZE_t nsibling(self, SIZE_t i) :
+    cdef SIZE_t nsibling(self, SIZE_t i) nogil:
         """The next sibling of i (i.e., the sibling to the right)
 
         nsibling(i) = close(i) + 1 (if the result j holds B[j] = 0 then i has no next sibling)
@@ -471,7 +561,7 @@ cdef class BP:
         else:
             return 0
 
-    cdef SIZE_t psibling(self, SIZE_t i) :
+    cdef SIZE_t psibling(self, SIZE_t i) nogil:
         """The previous sibling of i (i.e., the sibling to the left)
 
         psibling(i) = open(i − 1) (if B[i − 1] = 1 then i has no previous sibling)
@@ -504,7 +594,7 @@ cdef class BP:
         else:
             return self.preorder(self.open(i))
 
-    cpdef SIZE_t preorderselect(self, SIZE_t k) :
+    cpdef SIZE_t preorderselect(self, SIZE_t k) nogil:
         """The node with preorder k"""
         # preorderselect(k) = select1(k),
         return self.select(1, k)
@@ -517,7 +607,7 @@ cdef class BP:
         else:
             return self.rank(0, i)
 
-    cpdef SIZE_t postorderselect(self, SIZE_t k) :
+    cpdef SIZE_t postorderselect(self, SIZE_t k) nogil:
         """The node with postorder k"""
         # postorderselect(k) = open(select0(k)),
         return self.open(self.select(0, k))
@@ -647,16 +737,16 @@ cdef class BP:
             # isleaf is only defined on the open parenthesis
             if self.isleaf(i):
                 if self.name(i) in tips:  # gil is required for set operation
-                    #with nogil:
-                    mask_ptr[i] = 1
-                    mask_ptr[i + 1] = 1 # close
+                    with nogil:
+                        mask_ptr[i] = 1
+                        mask_ptr[i + 1] = 1 # close
 
-                    p = self.parent(i)
-                    while p != 0 and mask_ptr[p] == 0:
-                        mask_ptr[p] = 1
-                        mask_ptr[self.close(p)] = 1
+                        p = self.parent(i)
+                        while p != 0 and mask_ptr[p] == 0:
+                            mask_ptr[p] = 1
+                            mask_ptr[self.close(p)] = 1
 
-                        p = self.parent(p)
+                            p = self.parent(p)
 
         return self._mask_from_self(mask, self._lengths)
 
@@ -716,32 +806,31 @@ cdef class BP:
         new_lengths = self._lengths.copy()
         new_lengths_ptr = <DOUBLE_t*>new_lengths.data
 
-        #with nogil:
-        for i in range(n):
-            current = self.preorderselect(i)
+        with nogil:
+            for i in range(n):
+                current = self.preorderselect(i)
 
-            if self.isleaf(current):
-                mask_ptr[current] = 1
-                mask_ptr[self.close(current)] = 1
-            else:
-                first = self.fchild(current)
-                last = self.lchild(current)
-
-                if first == last:
-                    new_lengths_ptr[first] = new_lengths_ptr[first] + \
-                            new_lengths_ptr[current]
-                else:
+                if self.isleaf(current):
                     mask_ptr[current] = 1
                     mask_ptr[self.close(current)] = 1
+                else:
+                    first = self.fchild(current)
+                    last = self.lchild(current)
+
+                    if first == last:
+                        new_lengths_ptr[first] = new_lengths_ptr[first] + \
+                                new_lengths_ptr[current]
+                    else:
+                        mask_ptr[current] = 1
+                        mask_ptr[self.close(current)] = 1
 
         return self._mask_from_self(mask, new_lengths)
 
-    cpdef inline SIZE_t ntips(self):
+    cpdef inline SIZE_t ntips(self) nogil:
         cdef:
             SIZE_t i = 0
             SIZE_t count = 0
             SIZE_t n = self.size
-            BOOL_t* B_ptr
 
         while i < (n - 1):
             if self._b_ptr[i] and not self._b_ptr[i+1]:
@@ -751,7 +840,7 @@ cdef class BP:
 
         return count
 
-    cdef int scan_block_forward(self, int i, int k, int b, int d):
+    cdef int scan_block_forward(self, int i, int k, int b, int d) nogil:
         """Scan a block forward from i
 
         Parameters
@@ -790,7 +879,7 @@ cdef class BP:
         
         return -1
 
-    cdef int scan_block_backward(self, int i, int k, int b, int d):
+    cdef int scan_block_backward(self, int i, int k, int b, int d) nogil:
         """Scan a block backward from i
 
         Parameters
@@ -843,7 +932,7 @@ cdef class BP:
 
         return -1
 
-    cdef SIZE_t fwdsearch(self, SIZE_t i, int d):
+    cdef SIZE_t fwdsearch(self, SIZE_t i, int d) nogil:
         """Search forward from i for desired excess
 
         Parameters
@@ -858,23 +947,22 @@ cdef class BP:
         int
             The index of the result, or -1 if no result was found
         """
-        cdef mM rmm = self._rmm
         cdef int k  # the block being interrogated
         cdef int result = -1 # the result of a scan within a block
         cdef int node  # the node within the binary tree being examined
         
         # get the block of parentheses to check
-        k = i // rmm.b  
+        k = i // self._rmm.b  
 
         # desired excess
         d += self._e_index[i]
 
         # determine which node our block corresponds too
-        node = bt_node_from_left(k, rmm.height)
+        node = bt_node_from_left(k, self._rmm.height)
         
         # see if our result is in our current block
-        if rmm.mM[node, rmm.m_idx] <= d <= rmm.mM[node, rmm.M_idx]:
-            result = self.scan_block_forward(i, k, rmm.b, d)
+        if self._rmm.mM[node, self._rmm.m_idx] <= d <= self._rmm.mM[node, self._rmm.M_idx]:
+            result = self.scan_block_forward(i, k, self._rmm.b, d)
         
         # if we do not have a result, we need to begin traversal of the tree
         if result == -1:
@@ -882,7 +970,7 @@ cdef class BP:
             while not bt_is_root(node):
                 if bt_is_left_child(node):
                     node = bt_right_sibling(node)
-                    if rmm.mM[node, rmm.m_idx] <= d  <= rmm.mM[node, rmm.M_idx]:
+                    if self._rmm.mM[node, self._rmm.m_idx] <= d  <= self._rmm.mM[node, self._rmm.M_idx]:
                         break
                 node = bt_parent(node)
             
@@ -890,23 +978,23 @@ cdef class BP:
                 return -1
 
             # descend until we hit a leaf node
-            while not bt_is_leaf(node, rmm.height):
+            while not bt_is_leaf(node, self._rmm.height):
                 node = bt_left_child(node)
 
                 # evaluate right, if not found, pick left
-                if not (rmm.mM[node, rmm.m_idx] <= d <= rmm.mM[node, rmm.M_idx]):
+                if not (self._rmm.mM[node, self._rmm.m_idx] <= d <= self._rmm.mM[node, self._rmm.M_idx]):
                     node = bt_right_sibling(node)
 
             # we have found a block with contains our solution. convert from the
             # node index back into the block index
-            k = node - <int>(pow(2, rmm.height) - 1)
+            k = node - <int>(pow(2, self._rmm.height) - 1)
 
             # scan for a result using the original d
-            result = self.scan_block_forward(i, k, rmm.b, d)
+            result = self.scan_block_forward(i, k, self._rmm.b, d)
 
         return result
 
-    cdef SIZE_t bwdsearch(self, SIZE_t i, int d):
+    cdef SIZE_t bwdsearch(self, SIZE_t i, int d) nogil:
         """Search backward from i for desired excess
 
         Parameters
@@ -981,6 +1069,63 @@ cdef class BP:
             
         return result
 
+    cdef DOUBLE_t unweighted_unifrac(self, SIZE_t[:] u, SIZE_t[:] v) nogil:
+        # interesting...
+        cdef BOOL_t[:] u_mask
+        cdef BOOL_t[:] v_mask
+        cdef BOOL_t[:] u_xor_v
+        cdef BOOL_t[:] u_or_v
+        cdef DOUBLE_t unique = 0.0
+        cdef DOUBLE_t total = 0.0
+        # can't use & for some reason, angers the gil with _lengths
+        cdef DOUBLE_t* lengths_ptr = <DOUBLE_t*>self._lengths.data
+        cdef SIZE_t i
+
+        with gil:
+            # or just malloc and free
+            u_mask = np.zeros(self.size, dtype=BOOL)
+            v_mask = np.zeros(self.size, dtype=BOOL)
+
+        u_mask[0] = 1
+        u_mask[self.size - 1] = 1
+
+        v_mask[0] = 1
+        v_mask[self.size - 1] = 1
+        
+        for i in range(self.size):
+            if u[i]:
+                u_mask[i] = 1
+                u_mask[self.close(i)] = 1
+
+                p = self.parent(i)
+                while p != 0 and u_mask[p] == 0:
+                    u_mask[p] = 1
+                    u_mask[self.close(p)] = 1
+
+                    p = self.parent(p)
+            
+            if v[i]:
+                v_mask[i] = 1
+                v_mask[self.close(i)] = 1
+
+                p = self.parent(i)
+                while p != 0 and v_mask[p] == 0:
+                    v_mask[p] = 1
+                    v_mask[self.close(p)] = 1
+
+                    p = self.parent(p)
+
+        for i in range(self.size):
+            if u_mask[i] ^ v_mask[i]:
+                unique += lengths_ptr[i]
+
+            if u_mask[i] | v_mask[i]:
+                total += lengths_ptr[i]
+
+        if total == 0.0:
+            return 0.0
+        else:
+            return unique / total
 ###
 ###
 #
