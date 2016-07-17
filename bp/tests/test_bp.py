@@ -20,62 +20,6 @@ class BPTests(TestCase):
         self.fig1_B = np.array([1, 1, 1, 0, 1, 0, 1, 1 ,0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0], dtype=np.uint8)
         self.BP = BP(self.fig1_B)
 
-    def test_rank(self):
-        counts_1 = self.fig1_B.cumsum()
-        counts_0 = (1 - self.fig1_B).cumsum()
-        for exp, t in zip((counts_1, counts_0), (1, 0)):
-            for idx, e in enumerate(exp):
-
-                self.assertEqual(self.BP.rank(t, idx), e)
-
-    def test_select(self):
-        pos_1 = np.unique(self.fig1_B.cumsum(), return_index=True)[1] #- 1
-        pos_0 = np.unique((1 - self.fig1_B).cumsum(), return_index=True)[1]
-
-        for exp, t in zip((pos_1, pos_0), (1, 0)):
-            for k in range(1, len(exp)):
-                self.assertEqual(self.BP.select(t, k), exp[k])
-
-    def test_rank_property(self):
-        for i in range(len(self.fig1_B)):
-            self.assertEqual(self.BP.rank(1, i) + self.BP.rank(0, i), i+1)
-
-    def test_rank_select_property(self):
-        pos_1 = np.unique(self.fig1_B.cumsum(), return_index=True)[1] #- 1
-        pos_0 = np.unique((1 - self.fig1_B).cumsum(), return_index=True)[1]
-        for t, pos in zip((0, 1), (pos_0, pos_1)):
-            for k in range(len(pos)):
-                # needed +t on expectation, unclear at this time why.
-                self.assertEqual(self.BP.rank(t, self.BP.select(t, k)), k + t)
-
-    def test_excess(self):
-        # from fig 2
-        exp = [1, 2, 3, 2, 3, 2, 3, 4, 3, 2, 1, 2, 1, 2, 3, 4, 3, 4, 3, 2, 1, 0]
-        for idx, e in enumerate(exp):
-            self.assertEqual(self.BP.excess(idx), e)
-
-    def test_close(self):
-        exp = [21, 10, 3, 5, 9, 8, 12, 20, 19, 16, 18]
-        for i, e in zip(np.argwhere(self.fig1_B == 1).squeeze(), exp):
-            self.assertEqual(self.BP.close(i), e)
-            self.assertEqual(self.BP.excess(self.BP.close(i)), self.BP.excess(i) - 1)
-
-    def test_open(self):
-        exp = [2, 4, 7, 6, 1, 11, 15, 17, 14, 13, 0]
-        for i, e in zip(np.argwhere(self.fig1_B == 0).squeeze(), exp):
-            self.assertEqual(self.BP.open(i), e)
-            self.assertEqual(self.BP.excess(self.BP.open(i)) - 1,
-                             self.BP.excess(i))
-
-    def test_enclose(self):
-        # i > 0 and i < (len(B) - 1)
-        exp = [0, 1, 1, 1, 1, 1, 6, 6, 1, 0, 0, 0, 0, 13, 14, 14, 14, 14, 13, 0]
-        for i, e in zip(range(1, len(self.fig1_B) - 1), exp):
-            self.assertEqual(self.BP.enclose(i), e)
-
-            # unable to get this condition to work. I _think_ this condition is inaccurate?
-            #self.assertEqual(self.BP.excess(self.BP.enclose(i) - 1), self.BP.excess(i) - 2)
-
     def test_rmq(self):
         #       (  (  (  )  (  )  (  (  )  )   )   (   )   (   (   (   )   (   )   )   )   )
         #excess 1  2  3  2  3  2  3  4  3  2   1   2   1   2   3   4   3   4   3   2   1   0
@@ -138,52 +82,11 @@ class BPTests(TestCase):
             for j in range(i+1, len(self.fig1_B)):
                 self.assertEqual(self.BP.rMq(i, j), exp[i][j - i])
 
-    def test_root(self):
-        self.assertEqual(self.BP.root(), 0)
-
     def test_depth(self):
         pass # depth(i) == excess(i)
 
     def test_parent(self):
         pass # parent(i) == enclose(i)
-
-    def test_isleaf(self):
-        ### should isleaf be True when queried with the closing parenthesis of a leaf?
-
-        exp = [0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0]
-        for i, e in enumerate(exp):
-            self.assertEqual(self.BP.isleaf(i), e)
-
-    def test_fchild(self):
-        exp = [1, 2, 0, 0, 0, 0, 7, 0, 0, 7, 2, 0, 0, 14, 15, 0, 0, 0, 0, 15, 14, 1]
-        for i, e in enumerate(exp):
-            self.assertEqual(self.BP.fchild(i), e)
-
-    def test_lchild(self):
-        exp = [self.BP.preorderselect(7),
-               self.BP.preorderselect(4),
-               0,
-               0,
-               0,
-               0,
-               self.BP.preorderselect(5),
-               0,
-               0,
-               self.BP.preorderselect(5),
-               self.BP.preorderselect(4),
-               0,
-               0,
-               self.BP.preorderselect(8),
-               self.BP.preorderselect(10),
-               0,
-               0,
-               0,
-               0,
-               self.BP.preorderselect(10),
-               self.BP.preorderselect(8),
-               self.BP.preorderselect(7)]
-        for i, e in enumerate(exp):
-            self.assertEqual(self.BP.lchild(i), e)
 
     def test_mincount(self):
         #       (  (  (  )  (  )  (  (  )  )   )   (   )   (   (   (   )   (   )   )   )   )
@@ -232,16 +135,6 @@ class BPTests(TestCase):
         for (i, j, q), e in exp.items():
             self.assertEqual(self.BP.minselect(i, j, q), e)
 
-    def test_nsibling(self):
-        exp = [0, 11, 4, 4, 6, 6, 0, 0, 0, 0, 11, 13, 13, 0, 0, 17, 17, 0, 0, 0, 0, 0]
-        for i, e in enumerate(exp):
-            self.assertEqual(self.BP.nsibling(i), e)
-
-    def test_psibling(self):
-        exp = [0, 0, 0, 0, 2, 2, 4, 0, 0, 4, 0, 1, 1, 11, 0, 0, 0, 15, 15, 0, 11, 0]
-        for i, e in enumerate(exp):
-            self.assertEqual(self.BP.psibling(i), e)
-
     def test_preorder(self):
         exp = [1, 2, 3, 3, 4, 4, 5, 6, 6, 5, 2, 7, 7, 8, 9, 10, 10, 11, 11, 9, 8, 1]
         for i, e in enumerate(exp):
@@ -277,22 +170,6 @@ class BPTests(TestCase):
         exp = [11, 5, 1, 1, 1, 1, 2, 1, 1, 2, 5, 1, 1, 4, 3, 1, 1, 1, 1, 3, 4, 11]
         for i, e in enumerate(exp):
             self.assertEqual(self.BP.subtree(i), e)
-
-    def test_fwdsearch(self):
-        exp = {(0, 0): 10,   # close of first child
-               (3, -2): 21,  # close of root
-               (11, 2): 15}  # from one tip to the next
-
-        for (i, d), e in exp.items():
-            self.assertEqual(self.BP.fwdsearch(i, d), e)
-
-    def test_bwdsearch(self):
-        exp = {(3, 0): 1,  # open of parent
-               (21, 4): 17,  # nested tip
-               (9, 2): 7}  # open of the node
-
-        for (i, d), e in exp.items():
-            self.assertEqual(self.BP.bwdsearch(i, d), e)
 
     def test_levelancestor(self):
         exp = {(2, 1): 1,  # first tip to its parent

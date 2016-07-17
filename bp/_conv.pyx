@@ -1,10 +1,11 @@
 import skbio
 import numpy as np
+cimport numpy as np
 
-from ._bp import BP
+from ._bp cimport BP
 
 
-def to_skbio_treenode(bp):
+def to_skbio_treenode(BP bp):
     """Convert BP to TreeNode
 
     Parameters
@@ -17,6 +18,8 @@ def to_skbio_treenode(bp):
     skbio.TreeNode
         The tree represented as an skbio.TreeNode
     """
+    cdef int i
+
     nodes = [skbio.TreeNode() for i in range(sum(bp.B))]
     root = nodes[0]
 
@@ -70,7 +73,7 @@ def from_skbio_treenode(tree):
     return BP(topo, names=names, lengths=lengths)
 
 
-def to_skbio_treearray(bp):
+def to_skbio_treearray(BP bp):
     """Convert to a tree array comparable to TreeNode.to_array
 
     Parameters
@@ -85,6 +88,8 @@ def to_skbio_treearray(bp):
         np.array of child index positions
         np.array of branch lengths in index order with respect to child index positions
     """
+    cdef int i
+
     class mock_node:
         def __init__(self, id, is_tip):
             self.is_tip_ = is_tip

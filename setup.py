@@ -27,20 +27,27 @@ classifiers = [s.strip() for s in classes.split('\n') if s]
 long_description = """An implementation of a balanced tree as described by
 Cordova and Navarro"""
 
+from Cython.Compiler.Options import directive_defaults
+
+#directive_defaults['linetrace'] = True
+#directive_defaults['binding'] = True
+
 USE_CYTHON = os.environ.get('USE_CYTHON', True)
 ext = '.pyx' if USE_CYTHON else '.c'
 extensions = [Extension("bp._bp",
-                        ["bp/_bp" + ext]),
+                        ["bp/_bp" + ext], ),
               Extension("bp._io",
-                        ["bp/_io" + ext]),
+                        ["bp/_io" + ext], ),
+              Extension("bp._conv",
+                        ["bp/_conv" + ext], ),
               Extension("bp._binary_tree",
-                        ["bp/_binary_tree" + ext]),
-              Extension("bp._rmM_tree",
-                        ["bp/_rmM_tree" + ext])]
+                        ["bp/_binary_tree" + ext], ),
+              Extension("bp.tests.test_bp_cy",
+                        ["bp/tests/test_bp_cy" + ext])]
 
 if USE_CYTHON:
     from Cython.Build import cythonize
-    extensions = cythonize(extensions)
+    extensions = cythonize(extensions)#, compiler_directives={'CYTHON_TRACE':1})
 setup(name='bp',
       version=0.1,
       description='Balanced parentheses',

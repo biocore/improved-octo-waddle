@@ -1,5 +1,5 @@
 # encoding: utf-8
-# cython: profile=True, boundscheck=False, wraparound=False
+# cython: profile=False, boundscheck=False, wraparound=False
 
 from ._bp cimport BP
 import time
@@ -39,7 +39,7 @@ cpdef parse_newick(unicode data):
     cdef:
         np.uint32_t ptr, open_ptr
         Py_ssize_t token_ptr, tmp, lag, datalen
-        object topology
+        BP topology
         unicode token, last_token
         np.ndarray[object, ndim=1] names
         np.ndarray[np.double_t, ndim=1] lengths
