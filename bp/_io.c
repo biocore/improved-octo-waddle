@@ -924,12 +924,11 @@ struct __pyx_obj_2bp_3_bp_mM {
   int m_idx;
   int M_idx;
   int r_idx;
-  int n_idx;
   __Pyx_memviewslice mM;
 };
 
 
-/* "_bp.pxd":24
+/* "_bp.pxd":23
  * 
  * @cython.final
  * cdef class BPNode:             # <<<<<<<<<<<<<<
@@ -943,7 +942,7 @@ struct __pyx_obj_2bp_3_bp_BPNode {
 };
 
 
-/* "_bp.pxd":30
+/* "_bp.pxd":29
  * 
  * @cython.final
  * cdef class BP:             # <<<<<<<<<<<<<<
@@ -1059,7 +1058,7 @@ struct __pyx_vtabstruct_2bp_3_bp_mM {
 static struct __pyx_vtabstruct_2bp_3_bp_mM *__pyx_vtabptr_2bp_3_bp_mM;
 
 
-/* "_bp.pxd":30
+/* "_bp.pxd":29
  * 
  * @cython.final
  * cdef class BP:             # <<<<<<<<<<<<<<
@@ -1071,8 +1070,10 @@ struct __pyx_vtabstruct_2bp_3_bp_BP {
   PyObject *(*name)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
   __pyx_t_2bp_3_bp_DOUBLE_t (*length)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
   struct __pyx_obj_2bp_3_bp_BPNode *(*get_node)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*rank_rmm)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
   __pyx_t_2bp_3_bp_SIZE_t (*rank)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*select)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t);
+  __pyx_t_2bp_3_bp_SIZE_t (*select_rmm)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
   __pyx_t_2bp_3_bp_SIZE_t (*_excess)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*excess)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*fwdsearch)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int);
@@ -1100,6 +1101,7 @@ struct __pyx_vtabstruct_2bp_3_bp_BP {
   __pyx_t_2bp_3_bp_SIZE_t (*root)(struct __pyx_obj_2bp_3_bp_BP *);
   int (*scan_block_forward)(struct __pyx_obj_2bp_3_bp_BP *, int, int, int, int);
   int (*scan_block_backward)(struct __pyx_obj_2bp_3_bp_BP *, int, int, int, int);
+  __pyx_t_2bp_3_bp_DOUBLE_t (*unweighted_unifrac)(struct __pyx_obj_2bp_3_bp_BP *, __Pyx_memviewslice, __Pyx_memviewslice);
 };
 static struct __pyx_vtabstruct_2bp_3_bp_BP *__pyx_vtabptr_2bp_3_bp_BP;
 
@@ -19022,9 +19024,9 @@ PyMODINIT_FUNC PyInit__io(void)
   __pyx_ptype_5numpy_ufunc = __Pyx_ImportType("numpy", "ufunc", sizeof(PyUFuncObject), 0); if (unlikely(!__pyx_ptype_5numpy_ufunc)) __PYX_ERR(1, 861, __pyx_L1_error)
   __pyx_ptype_2bp_3_bp_mM = __Pyx_ImportType("bp._bp", "mM", sizeof(struct __pyx_obj_2bp_3_bp_mM), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_mM)) __PYX_ERR(4, 9, __pyx_L1_error)
   __pyx_vtabptr_2bp_3_bp_mM = (struct __pyx_vtabstruct_2bp_3_bp_mM*)__Pyx_GetVtable(__pyx_ptype_2bp_3_bp_mM->tp_dict); if (unlikely(!__pyx_vtabptr_2bp_3_bp_mM)) __PYX_ERR(4, 9, __pyx_L1_error)
-  __pyx_ptype_2bp_3_bp_BPNode = __Pyx_ImportType("bp._bp", "BPNode", sizeof(struct __pyx_obj_2bp_3_bp_BPNode), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_BPNode)) __PYX_ERR(4, 24, __pyx_L1_error)
-  __pyx_ptype_2bp_3_bp_BP = __Pyx_ImportType("bp._bp", "BP", sizeof(struct __pyx_obj_2bp_3_bp_BP), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_BP)) __PYX_ERR(4, 30, __pyx_L1_error)
-  __pyx_vtabptr_2bp_3_bp_BP = (struct __pyx_vtabstruct_2bp_3_bp_BP*)__Pyx_GetVtable(__pyx_ptype_2bp_3_bp_BP->tp_dict); if (unlikely(!__pyx_vtabptr_2bp_3_bp_BP)) __PYX_ERR(4, 30, __pyx_L1_error)
+  __pyx_ptype_2bp_3_bp_BPNode = __Pyx_ImportType("bp._bp", "BPNode", sizeof(struct __pyx_obj_2bp_3_bp_BPNode), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_BPNode)) __PYX_ERR(4, 23, __pyx_L1_error)
+  __pyx_ptype_2bp_3_bp_BP = __Pyx_ImportType("bp._bp", "BP", sizeof(struct __pyx_obj_2bp_3_bp_BP), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_BP)) __PYX_ERR(4, 29, __pyx_L1_error)
+  __pyx_vtabptr_2bp_3_bp_BP = (struct __pyx_vtabstruct_2bp_3_bp_BP*)__Pyx_GetVtable(__pyx_ptype_2bp_3_bp_BP->tp_dict); if (unlikely(!__pyx_vtabptr_2bp_3_bp_BP)) __PYX_ERR(4, 29, __pyx_L1_error)
   /*--- Variable import code ---*/
   /*--- Function import code ---*/
   /*--- Execution code ---*/
