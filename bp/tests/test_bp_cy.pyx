@@ -17,13 +17,13 @@ def test_rank():
         for idx, e in enumerate(exp):
             npt.assert_equal(obj.rank(t, idx), e)
 
-def test_rank_rmm():
-    cdef BP obj = get_test_obj()
-    counts_1 = fig1_B.cumsum()
-    counts_0 = (1 - fig1_B).cumsum()
-    for exp, t in zip((counts_1, counts_0), (1, 0)):
-        for idx, e in enumerate(exp):
-            npt.assert_equal(obj.rank_rmm(t, idx), e)
+#def test_rank_rmm():
+#    cdef BP obj = get_test_obj()
+#    counts_1 = fig1_B.cumsum()
+#    counts_0 = (1 - fig1_B).cumsum()
+#    for exp, t in zip((counts_1, counts_0), (1, 0)):
+#        for idx, e in enumerate(exp):
+#            npt.assert_equal(obj.rank_rmm(t, idx), e)
     
 def test_select():
     cdef BP obj = get_test_obj()
@@ -313,10 +313,11 @@ def test_rmm():
     # this is from fig 2 of Cordova and Navarro:
     # http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
     bp = parse_newick('((a,b,(c)),d,((e,f)));')
-    exp = np.array([[0, 1, 0, 1, 1, 0, 0, 1, 2, 1, 1, 2, 0],
-                    [4, 4, 4, 4, 4, 4, 0, 3, 4, 3, 4, 4, 1],
-                    #[0, 4, -4, 4, 0, -4, 0, 2, 2, -2, 2, -2, -2]], dtype=np.intp).T
-                    [0, 0, 10, 0, 6, 10, 0, 0, 3, 6, 7, 10, 11]], dtype=np.intp).T
+    exp = np.array([[0, 1, 0, 1, 1, 0, 0, 1, 2, 1, 1, 2, 0],  # m
+                    [4, 4, 4, 4, 4, 4, 0, 3, 4, 3, 4, 4, 1],  # M
+                   #[0, 4, -4, 4, 0, -4, 0, 2, 2, -2, 2, -2, -2]], dtype=np.intp).T # partial excess
+                    [0, 0, 10, 0, 6, 10, 0, 0, 3, 6, 7, 10, 11], # r
+                    [11, 6, 11, 2, 6, 11, 0, 1, 2, 5, 6, 9, 11]], dtype=np.intp).T # k0
     obs = mM(bp.B, bp.B.size)
 
     assert exp.shape[0] == obs.mM.shape[0]
@@ -324,6 +325,6 @@ def test_rmm():
     
     for i in range(exp.shape[0]):
         for j in range(exp.shape[1]):
-            #if j == 2:
+            #if j == 3:
             #    print(i, j, obs.mM[i, j], exp[i, j])
             assert obs.mM[i, j] == exp[i, j]    

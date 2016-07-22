@@ -15,6 +15,7 @@ cdef class mM:
     cdef int m_idx  # m is minimum excess
     cdef int M_idx  # M is maximum excess
     cdef int r_idx  # rank
+    cdef int k0_idx
     cdef SIZE_t[:, ::1] mM
 
     cdef void rmm(self, BOOL_t[:] B, int B_size) nogil
@@ -30,8 +31,8 @@ cdef class BP:
     cdef:
         public np.ndarray B 
         BOOL_t* _b_ptr
-        SIZE_t[:] _r_index_0
-        SIZE_t[:] _r_index_1
+        #SIZE_t[:] _r_index_0
+        #SIZE_t[:] _r_index_1
         SIZE_t[:] _k_index_0
         SIZE_t[:] _k_index_1 
         SIZE_t[:] _e_index
@@ -43,9 +44,9 @@ cdef class BP:
     cpdef inline unicode name(self, SIZE_t i)
     cpdef inline DOUBLE_t length(self, SIZE_t i)
     cpdef inline BPNode get_node(self, SIZE_t i)
-    cpdef inline SIZE_t rank_rmm(self, SIZE_t t, SIZE_t i)
+    #cdef inline SIZE_t rank_rmm(self, SIZE_t t, SIZE_t i) nogil
     cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil
-    cdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) nogil
+    cpdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) nogil
     cpdef inline SIZE_t select_rmm(self, SIZE_t t, SIZE_t k)
     cdef SIZE_t _excess(self, SIZE_t i) nogil
     cdef SIZE_t excess(self, SIZE_t i) nogil

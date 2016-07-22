@@ -48,6 +48,7 @@ cdef class mM:
         self.m_idx = 0
         self.M_idx = 1
         self.r_idx = 2
+        self.k0_idx = 3
 
         self.rmm(B, B_size)
 
@@ -68,6 +69,7 @@ cdef class mM:
         cdef int excess = 0 # e, absolute excess
         cdef int vbar
         cdef int r = 0
+        cdef int k0 = 0
 
         # build tip info
         self.b = <int>ceil(ln(<double> B_size) * ln(ln(<double> B_size)))
@@ -81,7 +83,7 @@ cdef class mM:
         with gil:
             # creation of a memoryview directly or via numpy requires the GIL:
             # http://stackoverflow.com/a/22238012
-            self.mM = np.zeros((self.n_total, 3), dtype=SIZE)
+            self.mM = np.zeros((self.n_total, 4), dtype=SIZE)
 
         # annoying, cannot do step in range if step is not known at runtime
         # see https://github.com/cython/cython/pull/520
@@ -103,6 +105,7 @@ cdef class mM:
                 # B[j] == 0 we -1
                 excess += -1 + (2 * B[j]) 
                 r += B[j]
+                k0 += 1 - B[j]  # avoid if statement, inc if B[j] == 0
 
                 if excess < min_:
                     min_ = excess
@@ -114,7 +117,8 @@ cdef class mM:
             
             self.mM[offset + self.n_internal, self.m_idx] = min_
             self.mM[offset + self.n_internal, self.M_idx] = max_
-           
+            self.mM[offset + self.n_internal, self.k0_idx] = k0
+
             i += self.b
 
         # compute for internal nodes of rmM tree in reverse level order starting 
@@ -135,14 +139,17 @@ cdef class mM:
                 elif rchild >= self.n_total:
                     self.mM[node, self.m_idx] = self.mM[lchild, self.m_idx] 
                     self.mM[node, self.M_idx] = self.mM[lchild, self.M_idx]
+                    self.mM[node, self.k0_idx] = self.mM[lchild, self.k0_idx]
                 else:    
                     self.mM[node, self.m_idx] = min(self.mM[lchild, self.m_idx], 
                                                     self.mM[rchild, self.m_idx])
                     self.mM[node, self.M_idx] = max(self.mM[lchild, self.M_idx], 
                                                     self.mM[rchild, self.M_idx])
+                    self.mM[node, self.k0_idx] = max(self.mM[lchild, self.k0_idx], 
+                                                     self.mM[rchild, self.k0_idx])
 
                 self.mM[node, self.r_idx] = self.mM[lchild, self.r_idx] 
-                
+                    
 
 @cython.final
 cdef class BPNode:
@@ -159,6 +166,30 @@ cdef class BPNode:
         self.name = name
         self.length = length
 
+#def bench_rank(BP tree):
+#    # rank_rmm is ~10x slower, however, it has a 30x reduction in memory
+#    # required
+#    cdef int i
+#    import time
+#
+#    print("naive r index %d bytes" % (tree._r_index_0.nbytes + 
+#                                      tree._r_index_1.nbytes))
+#    start = time.time()
+#    for i in range(tree.size):
+#        tree.rank(0, i)
+#        tree.rank(1, i)
+#    print("rank(0/1, i): %0.6fs\n" % (time.time() - start))
+#
+#    print("rmm r data %d bytes" % (tree._rmm.mM.shape[0] * sizeof(SIZE_t)))
+#    start = time.time()
+#    for i in range(tree.size):
+#        tree.rank_rmm(0, i)
+#        tree.rank_rmm(1, i)
+#    print("rank_rmm(0/1, i): %0.6fs" % (time.time() - start))
+#
+#    for i in range(tree.size):
+#        assert tree.rank_rmm(0, i) == tree.rank(0, i)
+#        assert tree.rank_rmm(1, i) == tree.rank(1, i)
 
 @cython.final
 cdef class BP:
@@ -226,8 +257,6 @@ cdef class BP:
         #TODO: leverage rmm tree, and calculate rank on the fly
         _r_index_0 = np.cumsum((1 - B), dtype=SIZE)
         _r_index_1 = np.cumsum(B, dtype=SIZE)
-        self._r_index_0 = _r_index_0
-        self._r_index_1 = _r_index_1
 
         # construct a select index. These operations are performed frequently,
         # and easy to cache at a relatively minor memory expense. It cannot be
@@ -273,7 +302,7 @@ cdef class BP:
     cpdef inline BPNode get_node(self, SIZE_t i):
         return BPNode(self._names[i], self._lengths[i])
 
-    cpdef inline SIZE_t rank_rmm(self, SIZE_t t, SIZE_t i):
+    cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
         cdef int k
         cdef int r = 0
         cdef int lower_bound
@@ -284,90 +313,114 @@ cdef class BP:
         #TODO: add method to mM for determining block from i
         k = i // self._rmm.b  
         
-        lower_bound = max(k, 0) * self._rmm.b
+        #lower_bound = max(k, 0) * self._rmm.b
+        lower_bound = k * self._rmm.b
 
         # upper_bound is block boundary or end of tree
         upper_bound = min((k + 1) * self._rmm.b, self.size)
         upper_bound = min(upper_bound, i + 1)
 
+        # collect rank from within the block
         for j in range(lower_bound, upper_bound):
-            r += self.B[j]
-
+            r += self._b_ptr[j]
+        
+        # collect the rank at the left end of the block
         node = bt_node_from_left(k, self._rmm.height)
         r += self._rmm.mM[node, self._rmm.r_idx]
 
+        # TODO: can this if statement be removed?
         if t:
             return r
         else:
             return (i - r) + 1
          
-    cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
-        """The number of occurrences of the bit t in B"""
-        if t:
-            return self._r_index_1[i]
-        else:
-            return self._r_index_0[i]
+    #cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
+    #    """The number of occurrences of the bit t in B"""
+    #    if t:
+    #        return self._r_index_1[i]
+    #    else:
+    #        return self._r_index_0[i]
 
     cpdef inline SIZE_t select_rmm(self, SIZE_t t, SIZE_t k):
         node = 0
+        if k > self.B.sum():
+            return -1
 
         if t:
+            ### i think this mess can be resolved by caching in the rmm whether
+            ### a given node has leaves. if no, don't descend
+
+            print('in if')
             # works on test tree so far
             while not bt_is_leaf(node, self._rmm.height):
+                print('while loop')
                 rchild = bt_right_child(node)
+                print(node, bt_left_child(node), rchild, self._rmm.height, self._rmm.n_internal, self._rmm.n_tip, self._rmm.n_total)
+                if rchild >= self._rmm.n_total:
+                    print("a")
+                    lchild = bt_left_child(node)
+                    if lchild >= self._rmm.n_total:
+                        print("b")
+                        if bt_is_left_child(bt_parent(node)):
+                            node = bt_right_child(bt_parent(node))
+                        else:
+                            node = bt_left_sibling(node)
+                    else:
+                        print("c")
+                        node = lchild
+                    continue
+
                 if self._rmm.mM[rchild, self._rmm.r_idx] <= k:
+                    print('while if loop')
                     # special case: verify there are leaves in this path
                     # TODO: can this be done more efficiently?
                     if not bt_is_leaf(rchild, self._rmm.height) and bt_left_child(rchild) >= self._rmm.n_total:
+                        print('while nested if loop')
                         node = bt_left_child(node)
                     else:
+                        print('while nested else loop')
                         node = rchild
                 else:
+                    print('while else loop')
                     node = bt_left_child(node)
             
             lower_bound = (node - self._rmm.n_internal) * self._rmm.b
             upper_bound = min(lower_bound + self._rmm.b, self.size)
+            print(node, self._rmm.n_total, lower_bound, upper_bound, self._rmm.b, self._rmm.mM[node, self._rmm.r_idx])
             
-            r = 0
-            k = k - self._rmm.mM[node, self._rmm.r_idx]
+            r = -1
+            k_ = k - self._rmm.mM[node, self._rmm.r_idx]
+
             for i in range(lower_bound, upper_bound):
-                if self.B[i] and k == r:
-                    return i
                 r += self.B[i]
+                if self.B[i] and k_ == r:
+                    return i
         else:
-            #####
-            ### HAMMER OUT THE LOGIC ON PAPER IDIOT
-            #############
-
-            lvl = self._rmm.height
+            # this all feels wasteful... seems like there should be a cleaner
+            # solution here
             while not bt_is_leaf(node, self._rmm.height):
-                rchild = bt_right_child(node)
-                vbar = 2**(lvl-1) * self._rmm.b
-                print(node, vbar, self._rmm.mM[rchild, self._rmm.r_idx])
-                if (vbar - self._rmm.mM[rchild, self._rmm.r_idx]) >= k:
-                    node = bt_left_child(node)
-                else:
-                    if not bt_is_leaf(rchild, self._rmm.height) and bt_left_child(rchild) >= self._rmm.n_total:
-                        node = bt_left_child(node)
-                    else:
-                        node = rchild
-                lvl -= 1
+                lchild = bt_left_child(node)
 
+                if k <= self._rmm.mM[lchild, self._rmm.k0_idx]:
+                    node = lchild
+                else:
+                    node = bt_right_child(node)
+            
             lower_bound = (node - self._rmm.n_internal) * self._rmm.b
             upper_bound = min(lower_bound + self._rmm.b, self.size)
             
+            if bt_is_leaf(bt_left_sibling(node), self._rmm.height):
+                k -= self._rmm.mM[bt_left_sibling(node), self._rmm.k0_idx]
+
             r = 0
-            vbar = 2**(lvl-1) * self._rmm.b
-            k = k - (vbar - self._rmm.mM[node, self._rmm.r_idx])
-            print(r, k)
             for i in range(lower_bound, upper_bound):
+                r += 1 - self.B[i]
                 if not self.B[i] and k == r:
                     return i
-                r += ~self.B[i]
             
         return -1
 
-    cdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) nogil:
+    cpdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) nogil:
         """The position in B of the kth occurrence of the bit t."""
         if t:
             return self._k_index_1[k]
