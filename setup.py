@@ -62,5 +62,6 @@ setup(name='bp',
       setup_requires=['numpy >= 1.9.2'],
       install_requires=[
           'numpy >= 1.9.2',
-          'nose >= 1.3.7'],
+          'nose >= 1.3.7',
+          'cython >= 0.24.1'],
       long_description=long_description)
