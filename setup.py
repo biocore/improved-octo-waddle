@@ -45,6 +45,12 @@ extensions = [Extension("bp._bp",
               Extension("bp.tests.test_bp_cy",
                         ["bp/tests/test_bp_cy" + ext])]
 
+extensions.extend([Extension("bp._ba",
+                            ["bp/_ba" + ext], include_dirs=['BitArray/'],
+                             library_dirs=['BitArray/'],
+                             libraries=['bitarr'])])
+
+
 if USE_CYTHON:
     from Cython.Build import cythonize
     extensions = cythonize(extensions)#, compiler_directives={'CYTHON_TRACE':1})
