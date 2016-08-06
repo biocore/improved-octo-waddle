@@ -303,6 +303,24 @@ cdef class BP:
         return BPNode(self._names[i], self._lengths[i])
 
     cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
+        """Determine the rank order of the ith bit t
+
+        Rank is the order of the ith bit observed, from left to right. For
+        t=1, this is a preorder traversal of the tree.
+
+        Parameters
+        ----------
+        t : SIZE_t
+            The bit value, either 0 or 1 where 0 is a closing parenthesis and
+            1 is an opening.
+        i : SIZE_T
+            The position to evaluate
+
+        Returns
+        -------
+        SIZE_t
+            The rank order of the position.
+        """
         cdef int k
         cdef int r = 0
         cdef int lower_bound
@@ -313,7 +331,6 @@ cdef class BP:
         #TODO: add method to mM for determining block from i
         k = i // self._rmm.b  
         
-        #lower_bound = max(k, 0) * self._rmm.b
         lower_bound = k * self._rmm.b
 
         # upper_bound is block boundary or end of tree
@@ -524,7 +541,7 @@ cdef class BP:
         # return np.array([self.excess(k) for k in range(i, j + 1)]).argmax() + i
 
     def __reduce__(self):
-        return (BP, (self.B, self._names, self._lengths))
+        return (BP, (self.B, self._lengths, self._names))
 
     cdef SIZE_t depth(self, SIZE_t i) nogil:
         """The depth of node i"""
