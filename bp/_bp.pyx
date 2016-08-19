@@ -11,7 +11,7 @@
 ### http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
 
 from libc.math cimport ceil, log as ln, pow, log2
-
+import time
 #import numpy.testing as npt
 import numpy as np
 cimport numpy as np
@@ -29,6 +29,179 @@ DOUBLE = np.float64
 SIZE = np.intp
 BOOL = np.uint8
 
+cdef dict ghetto_bench_np(int n, int iterations):
+    cdef int i, j
+    cdef BOOL_t[:] v, v2
+    cdef np.ndarray[np.uint8_t, cast=True, ndim=1] v3
+    cdef double start, start2, start3
+    cdef double total, total2, total3
+    cdef SIZE_t[:] positions
+    cdef dict result
+
+    result = {}
+
+    start = time.time()
+    for i in range(iterations):
+        v = np.zeros(n, dtype=BOOL)
+        del v
+
+    print("allocation\t%0.2es" % ((time.time() - start) / <double>iterations))
+    result['allocation'] = (time.time() - start) / <double>iterations
+
+    v = np.zeros(n, dtype=BOOL)
+    start = time.time()
+    for i in range(iterations):
+        for j in range(n):
+            v[j] = 1 - v[j]
+    print("sequential toggles\t%0.2es" % ((time.time() - start) / <double>iterations))
+    result['sequential'] = (time.time() - start) / <double>iterations
+
+    total = 0.0
+    for i in range(iterations):
+        positions = np.random.randint(0, n, n)
+        start = time.time()
+        for j in range(n):
+            v[positions[j]] = 1 - v[positions[j]]
+        total += time.time() - start
+    print("random toggles %0.2es" % (total / <double>iterations))
+    result['random'] = (total / <double>iterations)
+
+    total = 0.0
+    for i in range(iterations):
+        positions = np.random.randint(0, n, n)
+        v = np.zeros(n, dtype=BOOL)
+        for j in range(n):
+            v[j] = positions[j] % 2
+
+        start = time.time()
+        for j in range(n):
+            if v[j]:
+                v[j] = 0
+        total += time.time() - start
+    print("random conditional toggle %0.2es" % (total / <double>iterations))
+    result['random conditional'] = (total / <double>iterations)
+
+    total = 0.0
+    total2 = 0.0
+    total3 = 0.0
+    for i in range(iterations):
+        positions = np.random.randint(0, n, n)
+        v = np.zeros(n, dtype=BOOL)
+        for j in range(n):
+            v[j] = positions[j] % 2
+        v2 = np.roll(v, 1)
+
+        start = time.time()
+        v3 = np.logical_or(v, v2)
+        total += time.time() - start
+        
+        start2 = time.time()
+        v3 = np.logical_xor(v, v2)
+        total2 += time.time() - start2
+       
+        start3 = time.time() 
+        v3 = np.logical_and(v, v2)
+        total3 += time.time() - start3
+    print("logical or %0.2es" % (total / <double>iterations))
+    print("logical xor %0.2es" % (total2 / <double>iterations))
+    print("logical and %0.2es" % (total3 / <double>iterations))
+    result['or'] = (total / <double>iterations)
+    result['xor'] = (total2 / <double>iterations)
+    result['and'] = (total3 / <double>iterations)
+    return result
+
+cdef dict ghetto_bench_ba(int n, int iterations):
+    cdef int i, j
+    cdef BIT_ARRAY* v
+    cdef BIT_ARRAY* v2 
+    cdef BIT_ARRAY* v3
+    cdef double start, start2, start3
+    cdef double total, total2, total3
+    cdef SIZE_t[:] positions
+    cdef dict result
+    result = {}
+    start = time.time()
+    for i in range(iterations):
+        v = bit_array_create(n)
+        bit_array_free(v)
+    print("allocation %0.2es" % ((time.time() - start) / <double>iterations))
+    result['allocation'] = (time.time() - start) / <double>iterations
+
+    v = bit_array_create(n)
+    start = time.time()
+    for i in range(iterations):
+        for j in range(n):
+            bit_array_set_bit(v, j)
+    print("sequential toggles %0.2es" % ((time.time() - start) / <double>iterations))
+    result['sequential'] = (time.time() - start) / <double>iterations
+
+    total = 0.0
+    for i in range(iterations):
+        positions = np.random.randint(0, n, n)
+        start = time.time()
+        for j in range(n):
+            bit_array_toggle_bit(v, positions[j])
+        total += time.time() - start
+    print("random toggles %0.2es" % (total / <double>iterations))
+    result['random'] = (total / <double>iterations)
+
+    total = 0.0
+    for i in range(iterations):
+        positions = np.random.randint(0, n, n)
+        
+        for j in range(n):
+            if positions[j] % 2:
+                bit_array_set_bit(v, j)
+
+        start = time.time()
+        for j in range(n):
+            if bit_array_get_bit(v, j):
+                bit_array_set_bit(v, j)
+        total += time.time() - start
+    print("random conditional toggle %0.2es" % (total / <double>iterations))
+    result['random conditional'] = (total / <double>iterations)
+
+    total = 0.0
+    total2 = 0.0
+    total3 = 0.0
+    v3 = bit_array_create(n)
+    for i in range(iterations):
+        positions = np.random.randint(0, n, n)
+        for j in range(n):
+            if positions[j] % 2:
+                bit_array_set_bit(v, j)
+        v2 = bit_array_clone(v)
+        bit_array_cycle_right(v2, 1)
+
+        start = time.time()
+        bit_array_or(v3, v, v2)
+        total += time.time() - start
+         
+        start2 = time.time()
+        bit_array_xor(v3, v, v2)
+        total2 += time.time() - start2
+       
+        start3 = time.time() 
+        bit_array_and(v3, v, v2)
+        total3 += time.time() - start3
+    print("logical or %0.2es" % (total / <double>iterations))
+    print("logical xor %0.2es" % (total2 / <double>iterations))
+    print("logical and %0.2es" % (total3 / <double>iterations))
+    result['or'] = (total / <double>iterations)
+    result['xor'] = (total2 / <double>iterations)
+    result['and'] = (total3 / <double>iterations)
+
+    bit_array_free(v)
+    bit_array_free(v2)
+    bit_array_free(v3)
+
+    return result
+
+def bench(int n, int iterations):
+    np_res = ghetto_bench_np(n, iterations)
+    ba_res = ghetto_bench_ba(n, iterations)
+
+    return np_res, ba_res
 
 cdef inline int min(int a, int b) nogil:
     if a > b:
@@ -831,11 +1004,8 @@ cdef class BP:
             DOUBLE_t* lengths_ptr
             DOUBLE_t* new_lengths_ptr
 
-        #mask_ptr = &mask[0]
         n = bit_array_length(mask)
         mask_sum = bit_array_num_bits_set(mask)
-        #for i in range(n):
-        #    mask_sum += mask_ptr[i]
         k = 0
 
         lengths_ptr = &lengths[0]
@@ -848,7 +1018,6 @@ cdef class BP:
         new_lengths_ptr = &new_lengths[0]
 
         for i in range(n):
-            #if mask_ptr[i]:
             if bit_array_get_bit(mask, i):
                 new_b_ptr[k] = self._b_ptr[i]
 
@@ -863,19 +1032,14 @@ cdef class BP:
         cdef:
             SIZE_t i, n = self.B.sum()
             SIZE_t current, first, last
-            #np.ndarray[BOOL_t, ndim=1] mask
             np.ndarray[DOUBLE_t, ndim=1] new_lengths
-            #BOOL_t* mask_ptr
             BIT_ARRAY* mask
             DOUBLE_t* new_lengths_ptr
             BP new_bp
-        #mask = np.zeros(self.B.size, dtype=BOOL)
-        #mask_ptr = <BOOL_t*>mask.data
+        
         mask = bit_array_create(self.B.size)
         bit_array_set_bit(mask, self.root())
         bit_array_set_bit(mask, self.close(self.root()))
-        #mask_ptr[self.root()] = 1
-        #mask_ptr[self.close(self.root())] = 1
 
         new_lengths = self._lengths.copy()
         new_lengths_ptr = <DOUBLE_t*>new_lengths.data
@@ -885,8 +1049,6 @@ cdef class BP:
                 current = self.preorderselect(i)
 
                 if self.isleaf(current):
-                    #mask_ptr[current] = 1
-                    #mask_ptr[self.close(current)] = 1
                     bit_array_set_bit(mask, current)
                     bit_array_set_bit(mask, self.close(current))
                 else:
@@ -897,8 +1059,6 @@ cdef class BP:
                         new_lengths_ptr[first] = new_lengths_ptr[first] + \
                                 new_lengths_ptr[current]
                     else:
-                        #mask_ptr[current] = 1
-                        #mask_ptr[self.close(current)] = 1
                         bit_array_set_bit(mask, current)
                         bit_array_set_bit(mask, self.close(current))
 
