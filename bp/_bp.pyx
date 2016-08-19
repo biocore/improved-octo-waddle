@@ -12,12 +12,13 @@
 
 from libc.math cimport ceil, log as ln, pow, log2
 
-import numpy.testing as npt
+#import numpy.testing as npt
 import numpy as np
 cimport numpy as np
 cimport cython
 
 from bp._binary_tree cimport * #bt_node_from_left, bt_left_child, bt_right_child
+from bp._ba cimport *
 
 np.import_array()
 
@@ -364,46 +365,31 @@ cdef class BP:
             return -1
 
         if t:
-            ### i think this mess can be resolved by caching in the rmm whether
-            ### a given node has leaves. if no, don't descend
-
-            print('in if')
-            # works on test tree so far
             while not bt_is_leaf(node, self._rmm.height):
-                print('while loop')
                 rchild = bt_right_child(node)
-                print(node, bt_left_child(node), rchild, self._rmm.height, self._rmm.n_internal, self._rmm.n_tip, self._rmm.n_total)
                 if rchild >= self._rmm.n_total:
-                    print("a")
                     lchild = bt_left_child(node)
                     if lchild >= self._rmm.n_total:
-                        print("b")
                         if bt_is_left_child(bt_parent(node)):
                             node = bt_right_child(bt_parent(node))
                         else:
                             node = bt_left_sibling(node)
                     else:
-                        print("c")
                         node = lchild
                     continue
 
                 if self._rmm.mM[rchild, self._rmm.r_idx] <= k:
-                    print('while if loop')
                     # special case: verify there are leaves in this path
                     # TODO: can this be done more efficiently?
                     if not bt_is_leaf(rchild, self._rmm.height) and bt_left_child(rchild) >= self._rmm.n_total:
-                        print('while nested if loop')
                         node = bt_left_child(node)
                     else:
-                        print('while nested else loop')
                         node = rchild
                 else:
-                    print('while else loop')
                     node = bt_left_child(node)
             
             lower_bound = (node - self._rmm.n_internal) * self._rmm.b
             upper_bound = min(lower_bound + self._rmm.b, self.size)
-            print(node, self._rmm.n_total, lower_bound, upper_bound, self._rmm.b, self._rmm.mM[node, self._rmm.r_idx])
             
             r = -1
             k_ = k - self._rmm.mM[node, self._rmm.r_idx]
@@ -794,48 +780,62 @@ cdef class BP:
         cdef:
             SIZE_t i, n = len(tips)
             SIZE_t p, t
-            BOOL_t[:] mask
-            BOOL_t* mask_ptr
+            #BOOL_t[:] mask
+            #BOOL_t* mask_ptr
+            BIT_ARRAY* mask
+            BP new_bp
 
-        mask = np.zeros(self.B.size, dtype=BOOL)
-        mask_ptr = &mask[0]
+        mask = bit_array_create(self.B.size)
+        bit_array_set_bit(mask, self.root())
+        bit_array_set_bit(mask, self.close(self.root()))
 
-        mask_ptr[self.root()] = 1
-        mask_ptr[self.close(self.root())] = 1
+        #mask = np.zeros(self.B.size, dtype=BOOL)
+        #mask_ptr = &mask[0]
+
+        #mask_ptr[self.root()] = 1
+        #mask_ptr[self.close(self.root())] = 1
 
         for i in range(self.B.size):
             # isleaf is only defined on the open parenthesis
             if self.isleaf(i):
                 if self.name(i) in tips:  # gil is required for set operation
                     with nogil:
-                        mask_ptr[i] = 1
-                        mask_ptr[i + 1] = 1 # close
+                        #mask_ptr[i] = 1
+                        #mask_ptr[i + 1] = 1 # close
+                        bit_array_set_bit(mask, i)
+                        bit_array_set_bit(mask, i + 1)
 
                         p = self.parent(i)
-                        while p != 0 and mask_ptr[p] == 0:
-                            mask_ptr[p] = 1
-                            mask_ptr[self.close(p)] = 1
+                        #while p != 0 and mask_ptr[p] == 0:
+                        while p != 0 and bit_array_get_bit(mask, p) == 0:
+                            #mask_ptr[p] = 1
+                            #mask_ptr[self.close(p)] = 1
+                            bit_array_set_bit(mask, p)
+                            bit_array_set_bit(mask, self.close(p))
 
                             p = self.parent(p)
 
-        return self._mask_from_self(mask, self._lengths)
+        new_bp = self._mask_from_self(mask, self._lengths)
+        bit_array_free(mask)
+        return new_bp
 
-    cdef BP _mask_from_self(self, BOOL_t[:] mask, 
+    cdef BP _mask_from_self(self, BIT_ARRAY* mask, 
                             np.ndarray[DOUBLE_t, ndim=1] lengths):
         cdef:
-            SIZE_t i, k, n = mask.size, mask_sum = 0
+            SIZE_t i, k, n, mask_sum
             np.ndarray[BOOL_t, ndim=1] new_b
             np.ndarray[object, ndim=1] new_names
             np.ndarray[object, ndim=1] names = self._names
             np.ndarray[DOUBLE_t, ndim=1] new_lengths
             BOOL_t* new_b_ptr
-            BOOL_t* mask_ptr
             DOUBLE_t* lengths_ptr
             DOUBLE_t* new_lengths_ptr
 
-        mask_ptr = &mask[0]
-        for i in range(n):
-            mask_sum += mask_ptr[i]
+        #mask_ptr = &mask[0]
+        n = bit_array_length(mask)
+        mask_sum = bit_array_num_bits_set(mask)
+        #for i in range(n):
+        #    mask_sum += mask_ptr[i]
         k = 0
 
         lengths_ptr = &lengths[0]
@@ -848,7 +848,8 @@ cdef class BP:
         new_lengths_ptr = &new_lengths[0]
 
         for i in range(n):
-            if mask_ptr[i]:
+            #if mask_ptr[i]:
+            if bit_array_get_bit(mask, i):
                 new_b_ptr[k] = self._b_ptr[i]
 
                 # since names is dtype=object, gil is required
@@ -862,16 +863,19 @@ cdef class BP:
         cdef:
             SIZE_t i, n = self.B.sum()
             SIZE_t current, first, last
-            np.ndarray[BOOL_t, ndim=1] mask
+            #np.ndarray[BOOL_t, ndim=1] mask
             np.ndarray[DOUBLE_t, ndim=1] new_lengths
-            BOOL_t* mask_ptr
+            #BOOL_t* mask_ptr
+            BIT_ARRAY* mask
             DOUBLE_t* new_lengths_ptr
-
-        mask = np.zeros(self.B.size, dtype=BOOL)
-        mask_ptr = <BOOL_t*>mask.data
-
-        mask_ptr[self.root()] = 1
-        mask_ptr[self.close(self.root())] = 1
+            BP new_bp
+        #mask = np.zeros(self.B.size, dtype=BOOL)
+        #mask_ptr = <BOOL_t*>mask.data
+        mask = bit_array_create(self.B.size)
+        bit_array_set_bit(mask, self.root())
+        bit_array_set_bit(mask, self.close(self.root()))
+        #mask_ptr[self.root()] = 1
+        #mask_ptr[self.close(self.root())] = 1
 
         new_lengths = self._lengths.copy()
         new_lengths_ptr = <DOUBLE_t*>new_lengths.data
@@ -881,8 +885,10 @@ cdef class BP:
                 current = self.preorderselect(i)
 
                 if self.isleaf(current):
-                    mask_ptr[current] = 1
-                    mask_ptr[self.close(current)] = 1
+                    #mask_ptr[current] = 1
+                    #mask_ptr[self.close(current)] = 1
+                    bit_array_set_bit(mask, current)
+                    bit_array_set_bit(mask, self.close(current))
                 else:
                     first = self.fchild(current)
                     last = self.lchild(current)
@@ -891,10 +897,14 @@ cdef class BP:
                         new_lengths_ptr[first] = new_lengths_ptr[first] + \
                                 new_lengths_ptr[current]
                     else:
-                        mask_ptr[current] = 1
-                        mask_ptr[self.close(current)] = 1
+                        #mask_ptr[current] = 1
+                        #mask_ptr[self.close(current)] = 1
+                        bit_array_set_bit(mask, current)
+                        bit_array_set_bit(mask, self.close(current))
 
-        return self._mask_from_self(mask, new_lengths)
+        new_bp = self._mask_from_self(mask, new_lengths)
+        bit_array_free(mask)
+        return new_bp
 
     cpdef inline SIZE_t ntips(self) nogil:
         cdef:

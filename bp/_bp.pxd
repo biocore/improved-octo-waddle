@@ -1,6 +1,8 @@
 cimport numpy as np
 cimport cython
 
+from bp._ba cimport BIT_ARRAY
+
 ctypedef np.npy_intp SIZE_t
 ctypedef np.npy_uint32 UINT32_t
 ctypedef np.npy_float64 DOUBLE_t
@@ -65,7 +67,7 @@ cdef class BP:
     cpdef inline SIZE_t preorderselect(self, SIZE_t k) nogil
     cpdef BP shear(self, set tips)
     cpdef BP collapse(self)
-    cdef BP _mask_from_self(self, BOOL_t[:] mask, np.ndarray[DOUBLE_t, ndim=1] lengths)
+    cdef BP _mask_from_self(self, BIT_ARRAY* mask, np.ndarray[DOUBLE_t, ndim=1] lengths)
     cpdef SIZE_t ntips(self) nogil
     cdef SIZE_t nsibling(self, SIZE_t i) nogil
     cdef SIZE_t psibling(self, SIZE_t i) nogil

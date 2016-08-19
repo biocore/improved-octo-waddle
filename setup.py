@@ -35,7 +35,10 @@ from Cython.Compiler.Options import directive_defaults
 USE_CYTHON = os.environ.get('USE_CYTHON', True)
 ext = '.pyx' if USE_CYTHON else '.c'
 extensions = [Extension("bp._bp",
-                        ["bp/_bp" + ext], ),
+                        ["bp/_bp" + ext],
+                        include_dirs=['BitArray/'],
+                        library_dirs=['BitArray/'],
+                        libraries=['bitarr']),
               Extension("bp._io",
                         ["bp/_io" + ext], ),
               Extension("bp._conv",
@@ -43,10 +46,15 @@ extensions = [Extension("bp._bp",
               Extension("bp._binary_tree",
                         ["bp/_binary_tree" + ext], ),
               Extension("bp.tests.test_bp_cy",
-                        ["bp/tests/test_bp_cy" + ext])]
+                        ["bp/tests/test_bp_cy" + ext],
+                        include_dirs=['BitArray/'],
+                        library_dirs=['BitArray/'],
+                        libraries=['bitarr']),
+              ]
 
 extensions.extend([Extension("bp._ba",
-                            ["bp/_ba" + ext], include_dirs=['BitArray/'],
+                            ["bp/_ba" + ext],
+                            include_dirs=['BitArray/'],
                              library_dirs=['BitArray/'],
                              libraries=['bitarr'])])
 
