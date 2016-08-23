@@ -17,14 +17,6 @@ def test_rank():
         for idx, e in enumerate(exp):
             npt.assert_equal(obj.rank(t, idx), e)
 
-#def test_rank_rmm():
-#    cdef BP obj = get_test_obj()
-#    counts_1 = fig1_B.cumsum()
-#    counts_0 = (1 - fig1_B).cumsum()
-#    for exp, t in zip((counts_1, counts_0), (1, 0)):
-#        for idx, e in enumerate(exp):
-#            npt.assert_equal(obj.rank_rmm(t, idx), e)
-    
 def test_select():
     cdef BP obj = get_test_obj()
     pos_1 = np.unique(fig1_B.cumsum(), return_index=True)[1] #- 1
@@ -34,14 +26,14 @@ def test_select():
         for k in range(1, len(exp)):
             npt.assert_equal(obj.select(t, k), exp[k])
 
-def test_select_rmm():
-    cdef BP obj = get_test_obj()
-    pos_1 = np.unique(fig1_B.cumsum(), return_index=True)[1] #- 1
-    pos_0 = np.unique((1 - fig1_B).cumsum(), return_index=True)[1]
-
-    for exp, t in zip((pos_1, pos_0), (1, 0)):
-        for k in range(1, len(exp)):
-            npt.assert_equal(obj.select_rmm(t, k), exp[k])
+#def test_select_rmm():
+#    cdef BP obj = get_test_obj()
+#    pos_1 = np.unique(fig1_B.cumsum(), return_index=True)[1] #- 1
+#    pos_0 = np.unique((1 - fig1_B).cumsum(), return_index=True)[1]
+#
+#    for exp, t in zip((pos_1, pos_0), (1, 0)):
+#        for k in range(1, len(exp)):
+#            npt.assert_equal(obj.select_rmm(t, k), exp[k])
 
 def test_rank_property():
     cdef BP obj = get_test_obj()

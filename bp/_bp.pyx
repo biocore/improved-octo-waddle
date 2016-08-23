@@ -340,30 +340,6 @@ cdef class BPNode:
         self.name = name
         self.length = length
 
-#def bench_rank(BP tree):
-#    # rank_rmm is ~10x slower, however, it has a 30x reduction in memory
-#    # required
-#    cdef int i
-#    import time
-#
-#    print("naive r index %d bytes" % (tree._r_index_0.nbytes + 
-#                                      tree._r_index_1.nbytes))
-#    start = time.time()
-#    for i in range(tree.size):
-#        tree.rank(0, i)
-#        tree.rank(1, i)
-#    print("rank(0/1, i): %0.6fs\n" % (time.time() - start))
-#
-#    print("rmm r data %d bytes" % (tree._rmm.mM.shape[0] * sizeof(SIZE_t)))
-#    start = time.time()
-#    for i in range(tree.size):
-#        tree.rank_rmm(0, i)
-#        tree.rank_rmm(1, i)
-#    print("rank_rmm(0/1, i): %0.6fs" % (time.time() - start))
-#
-#    for i in range(tree.size):
-#        assert tree.rank_rmm(0, i) == tree.rank(0, i)
-#        assert tree.rank_rmm(1, i) == tree.rank(1, i)
 
 @cython.final
 cdef class BP:
@@ -401,10 +377,6 @@ cdef class BP:
         cdef SIZE_t i
         cdef SIZE_t size
         cdef SIZE_t[:] _e_index
-        cdef SIZE_t[:] _k_index_0
-        cdef SIZE_t[:] _k_index_1
-        cdef SIZE_t[:] _r_index_0
-        cdef SIZE_t[:] _r_index_1
         cdef np.ndarray[object, ndim=1] _names
         cdef np.ndarray[DOUBLE_t, ndim=1] _lengths
 
@@ -425,23 +397,6 @@ cdef class BP:
             self._lengths = lengths
         else:
             self._lengths = np.zeros(self.B.size, dtype=DOUBLE)
-
-        # construct a rank index. These operations are performed frequently,
-        # and easy to cache at a relatively minor memory expense
-        #TODO: leverage rmm tree, and calculate rank on the fly
-        _r_index_0 = np.cumsum((1 - B), dtype=SIZE)
-        _r_index_1 = np.cumsum(B, dtype=SIZE)
-
-        # construct a select index. These operations are performed frequently,
-        # and easy to cache at a relatively minor memory expense. It cannot be
-        # assumed that open and close will be same length so can't stack
-        #TODO: leverage rmmtree, and calculate select on the fly
-        _k_index_0 = np.unique(_r_index_0,
-                               return_index=True)[1].astype(SIZE)
-        self._k_index_0 = _k_index_0
-        _k_index_1 = np.unique(_r_index_1,
-                               return_index=True)[1].astype(SIZE)
-        self._k_index_1 = _k_index_1
 
         # construct an excess index. These operations are performed a lot, and
         # similarly can to rank and select, can be cached at a minimal expense.
@@ -525,55 +480,78 @@ cdef class BP:
         else:
             return (i - r) + 1
          
-    #cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
-    #    """The number of occurrences of the bit t in B"""
-    #    if t:
-    #        return self._r_index_1[i]
-    #    else:
-    #        return self._r_index_0[i]
+    cdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) nogil:
+        """The position in B of the kth occurrence of the bit t.
+        
+        Select is the index of the ith bit observed, from left to right. For
+        t=1, this is a preorder traversal of the tree.
 
-    cpdef inline SIZE_t select_rmm(self, SIZE_t t, SIZE_t k):
-        node = 0
-        if k > self.B.sum():
-            return -1
+        Parameters
+        ----------
+        t : SIZE_t
+            The bit value, either 0 or 1 where 0 is a closing parenthesis and
+            1 is an opening.
+        k : SIZE_t
+            The kth occurance to search for
+
+        Returns
+        -------
+        SIZE_t
+            The index of the kth occurence the bit t, or -1 if it could not be
+            found.
+        """
+        cdef int r
+        cdef int i
+        cdef int k_
+        cdef int lower_bound
+        cdef int upper_bound
+        cdef int node
+        cdef int rchild
+        cdef int lchild
+
+        with gil:
+            if k > self.B.sum():
+                return -1
 
         if t:
+            # traverse the binary tree searching for the block which contains
+            # the desired k. The search is root to tip. Since we're looking for
+            # t of 1, we attempt to stay as far right as we can in the tree.
+            # for t of 1, we can identify the block using the rank index.
             while not bt_is_leaf(node, self._rmm.height):
                 rchild = bt_right_child(node)
-                if rchild >= self._rmm.n_total:
-                    lchild = bt_left_child(node)
-                    if lchild >= self._rmm.n_total:
-                        if bt_is_left_child(bt_parent(node)):
-                            node = bt_right_child(bt_parent(node))
-                        else:
-                            node = bt_left_sibling(node)
-                    else:
-                        node = lchild
+
+                # if the left leaf is >= the total nodes, we know that this
+                # node does not span any tips, and therefore does not span
+                # any blocks which contain our result
+                if bt_left_leaf(rchild, self._rmm.height) >= self._rmm.n_total:
+                    node = bt_left_child(node)
                     continue
 
+                # if we remain below threshold, continue right, otherwise
+                # we traverse left
                 if self._rmm.mM[rchild, self._rmm.r_idx] <= k:
-                    # special case: verify there are leaves in this path
-                    # TODO: can this be done more efficiently?
-                    if not bt_is_leaf(rchild, self._rmm.height) and bt_left_child(rchild) >= self._rmm.n_total:
-                        node = bt_left_child(node)
-                    else:
-                        node = rchild
+                    node = rchild
                 else:
                     node = bt_left_child(node)
             
+            # determine the lower and upper bounds of the block of bits to
+            # search
             lower_bound = (node - self._rmm.n_internal) * self._rmm.b
             upper_bound = min(lower_bound + self._rmm.b, self.size)
             
+            # "normalize" k to the block, and begin the search going forward
+            # for the index position of our k
             r = -1
             k_ = k - self._rmm.mM[node, self._rmm.r_idx]
-
             for i in range(lower_bound, upper_bound):
-                r += self.B[i]
-                if self.B[i] and k_ == r:
-                    return i
+                if self._b_ptr[i]:
+                    r += 1
+                    if k_ == r:
+                        return i
+
         else:
-            # this all feels wasteful... seems like there should be a cleaner
-            # solution here
+            # for t of 0, we attempt to go as far left in the tree as we can
             while not bt_is_leaf(node, self._rmm.height):
                 lchild = bt_left_child(node)
 
@@ -582,26 +560,23 @@ cdef class BP:
                 else:
                     node = bt_right_child(node)
             
+            # determine the lower and upper bounds of the block of bits to
+            # search
             lower_bound = (node - self._rmm.n_internal) * self._rmm.b
             upper_bound = min(lower_bound + self._rmm.b, self.size)
-            
+           
+            # TODO: can this check be dropped?
             if bt_is_leaf(bt_left_sibling(node), self._rmm.height):
                 k -= self._rmm.mM[bt_left_sibling(node), self._rmm.k0_idx]
 
             r = 0
             for i in range(lower_bound, upper_bound):
-                r += 1 - self.B[i]
-                if not self.B[i] and k == r:
-                    return i
+                if not self._b_ptr[i]:
+                    r += 1
+                    if k == r:
+                        return i
             
         return -1
-
-    cpdef inline SIZE_t select(self, SIZE_t t, SIZE_t k) nogil:
-        """The position in B of the kth occurrence of the bit t."""
-        if t:
-            return self._k_index_1[k]
-        else:
-            return self._k_index_0[k]
 
     cdef SIZE_t _excess(self, SIZE_t i) nogil:
         """Actually compute excess"""
