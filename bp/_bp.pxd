@@ -34,6 +34,8 @@ cdef class BP:
         public np.ndarray B 
         BOOL_t* _b_ptr
         SIZE_t[:] _e_index
+        SIZE_t[:] _k_index_0
+        SIZE_t[:] _k_index_1
         np.ndarray _names
         np.ndarray _lengths
         mM _rmm
