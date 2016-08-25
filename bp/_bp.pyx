@@ -29,179 +29,6 @@ DOUBLE = np.float64
 SIZE = np.intp
 BOOL = np.uint8
 
-cdef dict ghetto_bench_np(int n, int iterations):
-    cdef int i, j
-    cdef BOOL_t[:] v, v2
-    cdef np.ndarray[np.uint8_t, cast=True, ndim=1] v3
-    cdef double start, start2, start3
-    cdef double total, total2, total3
-    cdef SIZE_t[:] positions
-    cdef dict result
-
-    result = {}
-
-    start = time.time()
-    for i in range(iterations):
-        v = np.zeros(n, dtype=BOOL)
-        del v
-
-    print("allocation\t%0.2es" % ((time.time() - start) / <double>iterations))
-    result['allocation'] = (time.time() - start) / <double>iterations
-
-    v = np.zeros(n, dtype=BOOL)
-    start = time.time()
-    for i in range(iterations):
-        for j in range(n):
-            v[j] = 1 - v[j]
-    print("sequential toggles\t%0.2es" % ((time.time() - start) / <double>iterations))
-    result['sequential'] = (time.time() - start) / <double>iterations
-
-    total = 0.0
-    for i in range(iterations):
-        positions = np.random.randint(0, n, n)
-        start = time.time()
-        for j in range(n):
-            v[positions[j]] = 1 - v[positions[j]]
-        total += time.time() - start
-    print("random toggles %0.2es" % (total / <double>iterations))
-    result['random'] = (total / <double>iterations)
-
-    total = 0.0
-    for i in range(iterations):
-        positions = np.random.randint(0, n, n)
-        v = np.zeros(n, dtype=BOOL)
-        for j in range(n):
-            v[j] = positions[j] % 2
-
-        start = time.time()
-        for j in range(n):
-            if v[j]:
-                v[j] = 0
-        total += time.time() - start
-    print("random conditional toggle %0.2es" % (total / <double>iterations))
-    result['random conditional'] = (total / <double>iterations)
-
-    total = 0.0
-    total2 = 0.0
-    total3 = 0.0
-    for i in range(iterations):
-        positions = np.random.randint(0, n, n)
-        v = np.zeros(n, dtype=BOOL)
-        for j in range(n):
-            v[j] = positions[j] % 2
-        v2 = np.roll(v, 1)
-
-        start = time.time()
-        v3 = np.logical_or(v, v2)
-        total += time.time() - start
-        
-        start2 = time.time()
-        v3 = np.logical_xor(v, v2)
-        total2 += time.time() - start2
-       
-        start3 = time.time() 
-        v3 = np.logical_and(v, v2)
-        total3 += time.time() - start3
-    print("logical or %0.2es" % (total / <double>iterations))
-    print("logical xor %0.2es" % (total2 / <double>iterations))
-    print("logical and %0.2es" % (total3 / <double>iterations))
-    result['or'] = (total / <double>iterations)
-    result['xor'] = (total2 / <double>iterations)
-    result['and'] = (total3 / <double>iterations)
-    return result
-
-cdef dict ghetto_bench_ba(int n, int iterations):
-    cdef int i, j
-    cdef BIT_ARRAY* v
-    cdef BIT_ARRAY* v2 
-    cdef BIT_ARRAY* v3
-    cdef double start, start2, start3
-    cdef double total, total2, total3
-    cdef SIZE_t[:] positions
-    cdef dict result
-    result = {}
-    start = time.time()
-    for i in range(iterations):
-        v = bit_array_create(n)
-        bit_array_free(v)
-    print("allocation %0.2es" % ((time.time() - start) / <double>iterations))
-    result['allocation'] = (time.time() - start) / <double>iterations
-
-    v = bit_array_create(n)
-    start = time.time()
-    for i in range(iterations):
-        for j in range(n):
-            bit_array_set_bit(v, j)
-    print("sequential toggles %0.2es" % ((time.time() - start) / <double>iterations))
-    result['sequential'] = (time.time() - start) / <double>iterations
-
-    total = 0.0
-    for i in range(iterations):
-        positions = np.random.randint(0, n, n)
-        start = time.time()
-        for j in range(n):
-            bit_array_toggle_bit(v, positions[j])
-        total += time.time() - start
-    print("random toggles %0.2es" % (total / <double>iterations))
-    result['random'] = (total / <double>iterations)
-
-    total = 0.0
-    for i in range(iterations):
-        positions = np.random.randint(0, n, n)
-        
-        for j in range(n):
-            if positions[j] % 2:
-                bit_array_set_bit(v, j)
-
-        start = time.time()
-        for j in range(n):
-            if bit_array_get_bit(v, j):
-                bit_array_set_bit(v, j)
-        total += time.time() - start
-    print("random conditional toggle %0.2es" % (total / <double>iterations))
-    result['random conditional'] = (total / <double>iterations)
-
-    total = 0.0
-    total2 = 0.0
-    total3 = 0.0
-    v3 = bit_array_create(n)
-    for i in range(iterations):
-        positions = np.random.randint(0, n, n)
-        for j in range(n):
-            if positions[j] % 2:
-                bit_array_set_bit(v, j)
-        v2 = bit_array_clone(v)
-        bit_array_cycle_right(v2, 1)
-
-        start = time.time()
-        bit_array_or(v3, v, v2)
-        total += time.time() - start
-         
-        start2 = time.time()
-        bit_array_xor(v3, v, v2)
-        total2 += time.time() - start2
-       
-        start3 = time.time() 
-        bit_array_and(v3, v, v2)
-        total3 += time.time() - start3
-    print("logical or %0.2es" % (total / <double>iterations))
-    print("logical xor %0.2es" % (total2 / <double>iterations))
-    print("logical and %0.2es" % (total3 / <double>iterations))
-    result['or'] = (total / <double>iterations)
-    result['xor'] = (total2 / <double>iterations)
-    result['and'] = (total3 / <double>iterations)
-
-    bit_array_free(v)
-    bit_array_free(v2)
-    bit_array_free(v3)
-
-    return result
-
-def bench(int n, int iterations):
-    np_res = ghetto_bench_np(n, iterations)
-    ba_res = ghetto_bench_ba(n, iterations)
-
-    return np_res, ba_res
 
 cdef inline int min(int a, int b) nogil:
     if a > b:
@@ -326,22 +153,6 @@ cdef class mM:
                     
 
 @cython.final
-cdef class BPNode:
-    """A version of a node
-
-    Attributes
-    ----------
-    name : unicode
-        The name of the node
-    length : np.double_t
-        A branch length from this node to a parent
-    """
-    def __cinit__(self, unicode name, DOUBLE_t length):
-        self.name = name
-        self.length = length
-
-
-@cython.final
 cdef class BP:
     """A balanced parentheses succinct data structure tree representation
 
@@ -449,9 +260,6 @@ cdef class BP:
     cpdef inline DOUBLE_t length(self, SIZE_t i):
         return self._lengths[i]
 
-    cpdef inline BPNode get_node(self, SIZE_t i):
-        return BPNode(self._names[i], self._lengths[i])
-
     cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
         """Determine the rank order of the ith bit t
 
@@ -519,34 +327,6 @@ cdef class BP:
         # same as: self.rank(1, i) - self.rank(0, i)
         return self._e_index[i]
     
-    cdef inline SIZE_t fwdsearch_naive(self, SIZE_t i, int d) nogil:
-        """Forward search for excess by depth"""
-        cdef:
-            SIZE_t j, n = self.size
-            SIZE_t b
-
-        b = self._e_index[i] + d
-
-        for j in range(i + 1, n):
-            if self._e_index[j] == b:
-                return j
-
-        return -1  # wasn't stated as needed but appears so given testing
-
-    cdef inline SIZE_t bwdsearch_naive(self, SIZE_t i, int d) nogil:
-        """Backward search for excess by depth"""
-        cdef:
-            SIZE_t j
-            SIZE_t b 
-
-        b = self._e_index[i] + d
-
-        for j in range(i - 1, -1, -1):
-            if self._e_index[j] == b:
-                return j
-
-        return -1
-
     cdef inline SIZE_t close(self, SIZE_t i) nogil:
         """The position of the closing parenthesis that matches B[i]"""
         if not self._b_ptr[i]:
@@ -571,7 +351,7 @@ cdef class BP:
         else:
             return self.bwdsearch(i - 1, -2) + 1
 
-    cpdef SIZE_t rmq(self, SIZE_t i, SIZE_t j):
+    cpdef SIZE_t rmq(self, SIZE_t i, SIZE_t j) nogil:
         """The leftmost minimum excess in i -> j"""
         cdef:
             SIZE_t k, min_k
@@ -586,7 +366,7 @@ cdef class BP:
                 min_v = obs_v
         return min_k
 
-    cpdef SIZE_t rMq(self, SIZE_t i, SIZE_t j):
+    cpdef SIZE_t rMq(self, SIZE_t i, SIZE_t j) nogil:
         """The leftmost maximmum excess in i -> j"""
         cdef:
             SIZE_t k, max_k
@@ -602,7 +382,29 @@ cdef class BP:
 
         return max_k
 
-        # return np.array([self.excess(k) for k in range(i, j + 1)]).argmax() + i
+    def __len__(self):
+        """The number of nodes in the tree"""
+        return self.size / 2
+
+    def __repr__(self):
+        """Returns summary of the tree
+        
+        Returns
+        -------
+        str
+            A summary of this node and all descendants
+        
+        Notes
+        -----
+        This method returns the name of the node and a count of tips and the
+        number of internal nodes in the tree. This docstring and repr was
+        adapted from skbio.TreeNode
+        """
+        cdef total_nodes = len(self)
+        cdef tip_count = self.ntips()
+
+        return "<BP, name: %s, internal node count: %d, tips count: %d>" % \
+                (self.name(0), total_nodes - tip_count, tip_count)
 
     def __reduce__(self):
         return (BP, (self.B, self._lengths, self._names))
@@ -621,9 +423,6 @@ cdef class BP:
 
     cdef BOOL_t isleaf(self, SIZE_t i) nogil:
         """Whether the node is a leaf"""
-        # publication describe this operation as "iff B[i+1] == 0" which is incorrect
-
-        # most likely there is an implicit conversion here
         return self._b_ptr[i] and (not self._b_ptr[i + 1])
 
     cdef SIZE_t fchild(self, SIZE_t i) nogil:
@@ -658,12 +457,12 @@ cdef class BP:
         else:
             return self.lchild(self.open(i))
 
-    def mincount(self, i, j):
+    def mincount(self, SIZE_t i, SIZE_t j):
         """number of occurrences of the minimum in excess(i), excess(i + 1), . . . , excess(j)."""
         excess, counts = np.unique([self.excess(k) for k in range(i, j + 1)], return_counts=True)
         return counts[excess.argmin()]
 
-    def minselect(self, i, j, q):
+    def minselect(self, SIZE_t i, SIZE_t j, SIZE_t q):
         """position of the qth minimum in excess(i), excess(i + 1), . . . , excess(j)."""
         counts = np.array([self.excess(k) for k in range(i, j + 1)])
         index = counts == counts.min()
@@ -720,35 +519,91 @@ cdef class BP:
         else:
             return 0
 
-    def preorder(self, i):
-        """Preorder rank of node i"""
-        # preorder(i) = rank1(i),
+    cpdef SIZE_t preorder(self, SIZE_t i) nogil:
+        """Preorder rank of node i
+        
+        Parameters
+        ----------
+        i : int
+            The node index to assess the preorder order of.
+
+        Returns
+        -------
+        int
+            The nodes order of evaluation in a preorder traversal of the tree.
+        """
         if self._b_ptr[i]:
             return self.rank(1, i)
         else:
             return self.preorder(self.open(i))
 
     cpdef SIZE_t preorderselect(self, SIZE_t k) nogil:
-        """The node with preorder k"""
-        # preorderselect(k) = select1(k),
+        """The index of the node with preorder k
+        
+        Parameters
+        ----------
+        k : int
+            The preorder evaluation order to search for.
+
+        Returns
+        -------
+        int
+            The index position of the node in the tree.
+        """
         return self.select(1, k)
 
-    def postorder(self, i):
-        """Postorder rank of node i"""
-        # postorder(i) = rank0(close(i)),
+    cpdef SIZE_t postorder(self, SIZE_t i) nogil:
+        """Postorder rank of node i
+        
+        Parameters
+        ----------
+        i : int
+            The node index to assess the postorder order of.
+
+        Returns
+        -------
+        int
+            The nodes order of evaluation in a postorder traversal of the tree.
+        """
         if self._b_ptr[i]:
             return self.rank(0, self.close(i))
         else:
             return self.rank(0, i)
 
     cpdef SIZE_t postorderselect(self, SIZE_t k) nogil:
-        """The node with postorder k"""
-        # postorderselect(k) = open(select0(k)),
+        """The index of the node with postorder k
+        
+        Parameters
+        ----------
+        k : int
+            The postorder evaluation order to search for.
+
+        Returns
+        -------
+        int
+            The index position of the node in the tree.
+        """
         return self.open(self.select(0, k))
 
-    def isancestor(self, i, j):
-        """Whether i is an ancestor of j"""
-        # isancestor(i, j) iff i ≤ j < close(i)
+    cpdef BOOL_t isancestor(self, SIZE_t i, SIZE_t j) nogil:
+        """Whether i is an ancestor of j
+
+        Parameters
+        ----------
+        i : int
+            A node index
+        j : int
+            A node index
+
+        Note
+        ----
+        False is returned if i == j. A node cannot be an ancestor of itself.
+
+        Returns
+        -------
+        bool
+            True if i is an ancestor of j, False otherwise.
+        """
         if i == j:
             return False
 
@@ -757,17 +612,40 @@ cdef class BP:
 
         return i <= j < self.close(i)
 
-    def subtree(self, i):
-        """The number of nodes in the subtree of i"""
-        # subtree(i) = (close(i) − i + 1)/2.
+    cpdef SIZE_t subtree(self, SIZE_t i) nogil:
+        """The number of nodes in the subtree of i
+        
+        Parameters
+        ----------
+        i : int
+            The node to evaluate
+
+        Returns
+        -------
+        int
+            The number of nodes in the subtree of i
+        """
         if not self._b_ptr[i]:
             i = self.open(i)
 
         return (self.close(i) - i + 1) / 2
 
-    def levelancestor(self, i, d):
-        """ancestor j of i such that depth(j) = depth(i) − d"""
-        # levelancestor(i, d) = bwdsearch(i, −d−1)+1
+    cpdef SIZE_t levelancestor(self, SIZE_t i, SIZE_t d) nogil:
+        """The ancestor j of i such that depth(j) = depth(i) − d
+        
+        Parameters
+        ----------
+        i : int
+            The node to evaluate
+
+        d : int
+            How many ancestors back to evaluate
+
+        Returns
+        -------
+        int
+            The node index of the ancestor to search for
+        """
         if d <= 0:
             return -1
 
@@ -776,9 +654,18 @@ cdef class BP:
 
         return self.bwdsearch(i, -d - 1) + 1
 
-    def levelnext(self, i):
-        """The next node with the same depth"""
-        # levelnext(i) = fwdsearch(close(i), 1)
+    cpdef SIZE_t levelnext(self, SIZE_t i) nogil:
+        """The next node with the same depth
+        Parameters
+        ----------
+        i : int
+            The node to evaluate
+
+        Returns
+        -------
+        int
+            The node index of the next node or -1 if there isn't one
+        """
         return self.fwdsearch(self.close(i), 1)
 
     def levelprev(self, i):
@@ -798,33 +685,44 @@ cdef class BP:
         #else:
         #    return j #+ 1
 
-    def levelleftmost(self, d):
+    def levelleftmost(self, SIZE_t d):
         #levelleftmost(d) = fwdsearch(0, d),
         pass
 
-    def levelrightmost(self, d):
+    def levelrightmost(self, SIZE_t d):
         #levelrightmost(d) = open(bwdsearch(2n + 1, d)).
         pass
 
-    def degree(self, i):
+    def degree(self, SIZE_t i):
         #degree(i) = mincount(i + 1, close(i) − 1),
         pass
 
-    def child(i, q):
+    def child(self, SIZE_t i, SIZE_t q):
         # child(i, q) = minselect(i+1, close(i)−1, q−1)+1 for q > 1
         # (for q = 1 it is fchild(i)),
         pass
 
-    def childrank(self, i):
+    def childrank(self, SIZE_t i):
         # childrank(i) = mincount(parent(i) + 1, i) + 1
         # unless B[i − 1] = 1
         # (in which case childrank(i) = 1)
         pass
 
-    def lca(self, i, j):
-        # lca(i, j) = parent(rmq(i, j) + 1)
-        # unless isancestor(i, j)
-        # (so lca(i, j) = i) or isancestor(j, i) (so lca(i, j) = j),
+    cpdef SIZE_t lca(self, SIZE_t i, SIZE_t j) nogil:
+        """The lowest common ancestor of i and j
+
+        Parameters
+        ----------
+        i : int
+            A node index to evaluate
+        j : int
+            A node index to evalute
+
+        Returns
+        -------
+        int
+           The index of the lowest common ancestor
+        """
         if self.isancestor(i, j):
             return i
         elif self.isancestor(j, i):
@@ -832,13 +730,38 @@ cdef class BP:
         else:
             return self.parent(self.rmq(i, j) + 1)
 
-    def deepestnode(self, i):
-        # deepestnode(i) = rMq(i, close(i)),
+    cpdef SIZE_t deepestnode(self, SIZE_t i) nogil:
+        """The index of the deepestnode which descends from i
+
+        Parameters
+        ----------
+        i : int
+            The node to evaluate
+
+        Returns
+        -------
+        int
+            The index of the deepest node which descends from i
+        """
         return self.rMq(self.open(i), self.close(i))
 
-    def height(self, i):
-        """the height of i (distance to its deepest node)"""
-        # height(i) = excess(deepestnode(i)) − excess(i).
+    cpdef SIZE_t height(self, SIZE_t i) nogil:
+        """The height of node i with respect to its deepest descendent
+
+        Parameters
+        ----------
+        i : int
+            The node to evaluate
+        
+        Notes
+        -----
+        Height is in terms of number of edges, not in terms of branch length
+        
+        Returns
+        -------
+        int
+            The number of edges between node i and its deepest node
+        """
         return self.excess(self.deepestnode(i)) - self.excess(self.open(i))
 
     cpdef BP shear(self, set tips):
@@ -858,8 +781,6 @@ cdef class BP:
         cdef:
             SIZE_t i, n = len(tips)
             SIZE_t p, t
-            #BOOL_t[:] mask
-            #BOOL_t* mask_ptr
             BIT_ARRAY* mask
             BP new_bp
 
@@ -867,27 +788,16 @@ cdef class BP:
         bit_array_set_bit(mask, self.root())
         bit_array_set_bit(mask, self.close(self.root()))
 
-        #mask = np.zeros(self.B.size, dtype=BOOL)
-        #mask_ptr = &mask[0]
-
-        #mask_ptr[self.root()] = 1
-        #mask_ptr[self.close(self.root())] = 1
-
         for i in range(self.B.size):
             # isleaf is only defined on the open parenthesis
             if self.isleaf(i):
                 if self.name(i) in tips:  # gil is required for set operation
                     with nogil:
-                        #mask_ptr[i] = 1
-                        #mask_ptr[i + 1] = 1 # close
                         bit_array_set_bit(mask, i)
                         bit_array_set_bit(mask, i + 1)
 
                         p = self.parent(i)
-                        #while p != 0 and mask_ptr[p] == 0:
                         while p != 0 and bit_array_get_bit(mask, p) == 0:
-                            #mask_ptr[p] = 1
-                            #mask_ptr[self.close(p)] = 1
                             bit_array_set_bit(mask, p)
                             bit_array_set_bit(mask, self.close(p))
 
@@ -1214,66 +1124,6 @@ cdef class BP:
             
         return result
 
-    cdef DOUBLE_t unweighted_unifrac(self, SIZE_t[:] u, SIZE_t[:] v) nogil:
-        # interesting...
-        cdef BOOL_t[:] u_mask
-        cdef BOOL_t[:] v_mask
-        cdef BOOL_t[:] u_xor_v
-        cdef BOOL_t[:] u_or_v
-        cdef DOUBLE_t unique = 0.0
-        cdef DOUBLE_t total = 0.0
-        # can't use & for some reason, angers the gil with _lengths
-        cdef DOUBLE_t* lengths_ptr = <DOUBLE_t*>self._lengths.data
-        cdef SIZE_t i
-
-        with gil:
-            # or just malloc and free
-            u_mask = np.zeros(self.size, dtype=BOOL)
-            v_mask = np.zeros(self.size, dtype=BOOL)
-
-        u_mask[0] = 1
-        u_mask[self.size - 1] = 1
-
-        v_mask[0] = 1
-        v_mask[self.size - 1] = 1
-        
-        for i in range(self.size):
-            if u[i]:
-                u_mask[i] = 1
-                u_mask[self.close(i)] = 1
-
-                p = self.parent(i)
-                while p != 0 and u_mask[p] == 0:
-                    u_mask[p] = 1
-                    u_mask[self.close(p)] = 1
-
-                    p = self.parent(p)
-            
-            if v[i]:
-                v_mask[i] = 1
-                v_mask[self.close(i)] = 1
-
-                p = self.parent(i)
-                while p != 0 and v_mask[p] == 0:
-                    v_mask[p] = 1
-                    v_mask[self.close(p)] = 1
-
-                    p = self.parent(p)
-
-        for i in range(self.size):
-            if u_mask[i] ^ v_mask[i]:
-                unique += lengths_ptr[i]
-
-            if u_mask[i] | v_mask[i]:
-                total += lengths_ptr[i]
-
-        if total == 0.0:
-            return 0.0
-        else:
-            return unique / total
-###
-###
-#
 # add in .r and .n into rmm calculation
 #   - necessary for mincount/minselect
 ###

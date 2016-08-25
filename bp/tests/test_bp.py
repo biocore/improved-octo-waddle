@@ -311,12 +311,6 @@ class BPTests(TestCase):
 
         npt.assert_equal(obs, exp)
 
-    def test_get_node_unset(self):
-        for i in range(self.BP.B.size):
-            n = self.BP.get_node(i)
-            self.assertEqual(n.name, None)
-            self.assertEqual(n.length, 0.0)
-
     def test_name_unset(self):
         for i in range(self.BP.B.size):
             self.assertEqual(self.BP.name(i), None)
@@ -344,31 +338,6 @@ class BPTests(TestCase):
         self.assertEqual(self.BP.length(1), 1.23)
         self.assertEqual(self.BP.length(5), 0.0)
         self.assertEqual(self.BP.length(7), 5.43)
-
-    def test_get_node_set(self):
-        names = np.full(self.BP.B.size, None, dtype=object)
-        lengths = np.zeros(self.BP.B.size, dtype=np.double)
-
-        names[0] = 'root'
-        names[self.BP.preorderselect(7)] = 'other'
-
-        lengths[1] = 1.23
-        lengths[self.BP.preorderselect(6)] = 5.43
-        lengths[self.BP.preorderselect(7)] = 2.
-
-        self.BP.set_names(names)
-        self.BP.set_lengths(lengths)
-
-        obs_0 = self.BP.get_node(0)
-        obs_13 = self.BP.get_node(13)
-        obs_11 = self.BP.get_node(11)
-        obs_1 = self.BP.get_node(1)
-
-        self.assertEqual(obs_0.name, 'root')
-        self.assertEqual(obs_13.name, 'other')
-        self.assertEqual(obs_13.length, 2.)
-        self.assertEqual(obs_11.length, 5.43)
-        self.assertEqual(obs_1.length, 1.23)
 
 
 if __name__ == '__main__':

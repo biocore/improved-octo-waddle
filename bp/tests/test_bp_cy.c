@@ -848,7 +848,7 @@ typedef npy_float64 __pyx_t_2bp_3_bp_DOUBLE_t;
  * ctypedef np.npy_float64 DOUBLE_t
  * ctypedef np.npy_uint8 BOOL_t             # <<<<<<<<<<<<<<
  * 
- * cdef class mM:
+ * 
  */
 typedef npy_uint8 __pyx_t_2bp_3_bp_BOOL_t;
 /* None.proto */
@@ -876,7 +876,6 @@ typedef npy_uint8 __pyx_t_2bp_3_bp_BOOL_t;
 
 /*--- Type declarations ---*/
 struct __pyx_obj_2bp_3_bp_mM;
-struct __pyx_obj_2bp_3_bp_BPNode;
 struct __pyx_obj_2bp_3_bp_BP;
 struct __pyx_array_obj;
 struct __pyx_MemviewEnum_obj;
@@ -919,8 +918,8 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
-/* "bp/_bp.pxd":11
- * ctypedef np.npy_uint8 BOOL_t
+/* "bp/_bp.pxd":12
+ * 
  * 
  * cdef class mM:             # <<<<<<<<<<<<<<
  *     cdef int b  # block size
@@ -942,21 +941,7 @@ struct __pyx_obj_2bp_3_bp_mM {
 };
 
 
-/* "bp/_bp.pxd":26
- * 
- * @cython.final
- * cdef class BPNode:             # <<<<<<<<<<<<<<
- *     cdef:
- *         public unicode name
- */
-struct __pyx_obj_2bp_3_bp_BPNode {
-  PyObject_HEAD
-  PyObject *name;
-  __pyx_t_2bp_3_bp_DOUBLE_t length;
-};
-
-
-/* "bp/_bp.pxd":32
+/* "bp/_bp.pxd":28
  * 
  * @cython.final
  * cdef class BP:             # <<<<<<<<<<<<<<
@@ -969,6 +954,8 @@ struct __pyx_obj_2bp_3_bp_BP {
   PyArrayObject *B;
   __pyx_t_2bp_3_bp_BOOL_t *_b_ptr;
   __Pyx_memviewslice _e_index;
+  __Pyx_memviewslice _k_index_0;
+  __Pyx_memviewslice _k_index_1;
   PyArrayObject *_names;
   PyArrayObject *_lengths;
   struct __pyx_obj_2bp_3_bp_mM *_rmm;
@@ -1054,8 +1041,8 @@ struct __pyx_memoryviewslice_obj {
 
 
 
-/* "bp/_bp.pxd":11
- * ctypedef np.npy_uint8 BOOL_t
+/* "bp/_bp.pxd":12
+ * 
  * 
  * cdef class mM:             # <<<<<<<<<<<<<<
  *     cdef int b  # block size
@@ -1068,7 +1055,7 @@ struct __pyx_vtabstruct_2bp_3_bp_mM {
 static struct __pyx_vtabstruct_2bp_3_bp_mM *__pyx_vtabptr_2bp_3_bp_mM;
 
 
-/* "bp/_bp.pxd":32
+/* "bp/_bp.pxd":28
  * 
  * @cython.final
  * cdef class BP:             # <<<<<<<<<<<<<<
@@ -1077,29 +1064,17 @@ static struct __pyx_vtabstruct_2bp_3_bp_mM *__pyx_vtabptr_2bp_3_bp_mM;
  */
 
 struct __pyx_vtabstruct_2bp_3_bp_BP {
-  PyObject *(*name)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
-  __pyx_t_2bp_3_bp_DOUBLE_t (*length)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
-  struct __pyx_obj_2bp_3_bp_BPNode *(*get_node)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
   __pyx_t_2bp_3_bp_SIZE_t (*rank)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*select)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*_excess)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*excess)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*fwdsearch)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int);
   __pyx_t_2bp_3_bp_SIZE_t (*bwdsearch)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int);
-  __pyx_t_2bp_3_bp_SIZE_t (*fwdsearch_naive)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int);
-  __pyx_t_2bp_3_bp_SIZE_t (*bwdsearch_naive)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int);
   __pyx_t_2bp_3_bp_SIZE_t (*close)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*open)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_BOOL_t (*isleaf)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*enclose)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
-  __pyx_t_2bp_3_bp_SIZE_t (*rmq)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
-  __pyx_t_2bp_3_bp_SIZE_t (*rMq)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
-  __pyx_t_2bp_3_bp_SIZE_t (*postorderselect)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
-  __pyx_t_2bp_3_bp_SIZE_t (*preorderselect)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
-  struct __pyx_obj_2bp_3_bp_BP *(*shear)(struct __pyx_obj_2bp_3_bp_BP *, PyObject *, int __pyx_skip_dispatch);
-  struct __pyx_obj_2bp_3_bp_BP *(*collapse)(struct __pyx_obj_2bp_3_bp_BP *, int __pyx_skip_dispatch);
   struct __pyx_obj_2bp_3_bp_BP *(*_mask_from_self)(struct __pyx_obj_2bp_3_bp_BP *, struct BIT_ARRAY *, PyArrayObject *);
-  __pyx_t_2bp_3_bp_SIZE_t (*ntips)(struct __pyx_obj_2bp_3_bp_BP *, int __pyx_skip_dispatch);
   __pyx_t_2bp_3_bp_SIZE_t (*nsibling)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*psibling)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
   __pyx_t_2bp_3_bp_SIZE_t (*lchild)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t);
@@ -1109,7 +1084,24 @@ struct __pyx_vtabstruct_2bp_3_bp_BP {
   __pyx_t_2bp_3_bp_SIZE_t (*root)(struct __pyx_obj_2bp_3_bp_BP *);
   int (*scan_block_forward)(struct __pyx_obj_2bp_3_bp_BP *, int, int, int, int);
   int (*scan_block_backward)(struct __pyx_obj_2bp_3_bp_BP *, int, int, int, int);
-  __pyx_t_2bp_3_bp_DOUBLE_t (*unweighted_unifrac)(struct __pyx_obj_2bp_3_bp_BP *, __Pyx_memviewslice, __Pyx_memviewslice);
+  PyObject *(*name)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_DOUBLE_t (*length)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*rmq)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*rMq)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*postorderselect)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*postorder)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*preorderselect)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*preorder)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_BOOL_t (*isancestor)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*levelancestor)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*subtree)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  struct __pyx_obj_2bp_3_bp_BP *(*shear)(struct __pyx_obj_2bp_3_bp_BP *, PyObject *, int __pyx_skip_dispatch);
+  struct __pyx_obj_2bp_3_bp_BP *(*collapse)(struct __pyx_obj_2bp_3_bp_BP *, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*ntips)(struct __pyx_obj_2bp_3_bp_BP *, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*levelnext)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*height)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*deepestnode)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
+  __pyx_t_2bp_3_bp_SIZE_t (*lca)(struct __pyx_obj_2bp_3_bp_BP *, __pyx_t_2bp_3_bp_SIZE_t, __pyx_t_2bp_3_bp_SIZE_t, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_2bp_3_bp_BP *__pyx_vtabptr_2bp_3_bp_BP;
 
@@ -1869,7 +1861,6 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, cha
 
 /* Module declarations from 'bp._bp' */
 static PyTypeObject *__pyx_ptype_2bp_3_bp_mM = 0;
-static PyTypeObject *__pyx_ptype_2bp_3_bp_BPNode = 0;
 static PyTypeObject *__pyx_ptype_2bp_3_bp_BP = 0;
 
 /* Module declarations from 'bp.tests.test_bp_cy' */
@@ -27041,11 +27032,10 @@ PyMODINIT_FUNC PyInit_test_bp_cy(void)
   __pyx_ptype_5numpy_broadcast = __Pyx_ImportType("numpy", "broadcast", sizeof(PyArrayMultiIterObject), 0); if (unlikely(!__pyx_ptype_5numpy_broadcast)) __PYX_ERR(1, 172, __pyx_L1_error)
   __pyx_ptype_5numpy_ndarray = __Pyx_ImportType("numpy", "ndarray", sizeof(PyArrayObject), 0); if (unlikely(!__pyx_ptype_5numpy_ndarray)) __PYX_ERR(1, 181, __pyx_L1_error)
   __pyx_ptype_5numpy_ufunc = __Pyx_ImportType("numpy", "ufunc", sizeof(PyUFuncObject), 0); if (unlikely(!__pyx_ptype_5numpy_ufunc)) __PYX_ERR(1, 861, __pyx_L1_error)
-  __pyx_ptype_2bp_3_bp_mM = __Pyx_ImportType("bp._bp", "mM", sizeof(struct __pyx_obj_2bp_3_bp_mM), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_mM)) __PYX_ERR(4, 11, __pyx_L1_error)
-  __pyx_vtabptr_2bp_3_bp_mM = (struct __pyx_vtabstruct_2bp_3_bp_mM*)__Pyx_GetVtable(__pyx_ptype_2bp_3_bp_mM->tp_dict); if (unlikely(!__pyx_vtabptr_2bp_3_bp_mM)) __PYX_ERR(4, 11, __pyx_L1_error)
-  __pyx_ptype_2bp_3_bp_BPNode = __Pyx_ImportType("bp._bp", "BPNode", sizeof(struct __pyx_obj_2bp_3_bp_BPNode), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_BPNode)) __PYX_ERR(4, 26, __pyx_L1_error)
-  __pyx_ptype_2bp_3_bp_BP = __Pyx_ImportType("bp._bp", "BP", sizeof(struct __pyx_obj_2bp_3_bp_BP), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_BP)) __PYX_ERR(4, 32, __pyx_L1_error)
-  __pyx_vtabptr_2bp_3_bp_BP = (struct __pyx_vtabstruct_2bp_3_bp_BP*)__Pyx_GetVtable(__pyx_ptype_2bp_3_bp_BP->tp_dict); if (unlikely(!__pyx_vtabptr_2bp_3_bp_BP)) __PYX_ERR(4, 32, __pyx_L1_error)
+  __pyx_ptype_2bp_3_bp_mM = __Pyx_ImportType("bp._bp", "mM", sizeof(struct __pyx_obj_2bp_3_bp_mM), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_mM)) __PYX_ERR(4, 12, __pyx_L1_error)
+  __pyx_vtabptr_2bp_3_bp_mM = (struct __pyx_vtabstruct_2bp_3_bp_mM*)__Pyx_GetVtable(__pyx_ptype_2bp_3_bp_mM->tp_dict); if (unlikely(!__pyx_vtabptr_2bp_3_bp_mM)) __PYX_ERR(4, 12, __pyx_L1_error)
+  __pyx_ptype_2bp_3_bp_BP = __Pyx_ImportType("bp._bp", "BP", sizeof(struct __pyx_obj_2bp_3_bp_BP), 1); if (unlikely(!__pyx_ptype_2bp_3_bp_BP)) __PYX_ERR(4, 28, __pyx_L1_error)
+  __pyx_vtabptr_2bp_3_bp_BP = (struct __pyx_vtabstruct_2bp_3_bp_BP*)__Pyx_GetVtable(__pyx_ptype_2bp_3_bp_BP->tp_dict); if (unlikely(!__pyx_vtabptr_2bp_3_bp_BP)) __PYX_ERR(4, 28, __pyx_L1_error)
   /*--- Variable import code ---*/
   /*--- Function import code ---*/
   /*--- Execution code ---*/
