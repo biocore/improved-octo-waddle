@@ -8,7 +8,7 @@
 import os
 from setuptools import setup
 from setuptools.extension import Extension
-from setuptools.command.install import install
+from setuptools.command.build_py import build_py
 
 import numpy as np
 
@@ -67,10 +67,10 @@ if USE_CYTHON:
 import subprocess
 bitarr = os.path.join(os.path.abspath(__file__).rsplit('/', 1)[0], 'BitArray')
 
-class BitArrayInstall(install):
+class BitArrayInstall(build_py):
     def run(self):
-        install.run(self)
         subprocess.run(['make', '-C', bitarr, 'libbitarr.a'])
+        install.run(self)
 
 
 setup(name='bp',
