@@ -8,6 +8,7 @@
 import os
 from setuptools import setup
 from setuptools.extension import Extension
+from setuptools.command.install import install
 
 import numpy as np
 
@@ -55,15 +56,22 @@ extensions.extend([Extension("bp._ba",
                              libraries=['bitarr'])])
 
 
-import subprocess
-subprocess.run(['cd', os.path.abspath(__file__), ';', 'make', 'libbitarr.a'],
-               shell=True)
 
 
 
 if USE_CYTHON:
     from Cython.Build import cythonize
     extensions = cythonize(extensions)
+
+
+import subprocess
+bitarr = os.path.join(os.path.abspath(__file__).rsplit('/', 1)[0], 'BitArray')
+
+class BitArrayInstall(install):
+    def run(self):
+        install.run(self)
+        subprocess.run(['make', '-C', bitarr, 'libbitarr.a'])
+
 
 setup(name='bp',
       version=0.1,
@@ -82,4 +90,5 @@ setup(name='bp',
           'nose >= 1.3.7',
           'cython >= 0.24.1',
           'scikit-bio >= 0.5.0, < 0.6.0'],
-      long_description=long_description)
+      long_description=long_description,
+      cmdclass={'install': BitArrayInstall})
