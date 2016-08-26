@@ -56,7 +56,8 @@ extensions.extend([Extension("bp._ba",
 
 
 import subprocess
-subprocess.run(['cd', os.path.abspath(__file__), 'make', 'libbitarr.a'])
+subprocess.run(['cd', os.path.abspath(__file__), ';', 'make', 'libbitarr.a'],
+               shell=True)
 
 
 
