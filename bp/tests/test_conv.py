@@ -5,8 +5,8 @@ import skbio
 import numpy.testing as npt
 import numpy as np
 
-from bp import to_skbio_treenode, from_skbio_treenode, parse_newick, to_skbio_treearray
-
+from bp import (to_skbio_treenode, from_skbio_treenode, parse_newick,
+                to_skbio_treearray)
 
 
 class ConversionTests(TestCase):
@@ -38,11 +38,14 @@ class ConversionTests(TestCase):
     def test_to_array(self):
         t = parse_newick('(((a:1,b:2,c:3)x:4,(d:5)y:6)z:7,(e:8,f:9)z:10);')
 
-        exp_child_index = np.array([[4, 0, 2], [5, 3, 3], [8, 4, 5], [9, 6, 7], [10, 8, 9]], dtype=np.uint32)
-        exp_length = np.array([1, 2, 3, 5, 4, 6, 8, 9, 7, 10, 0.0], dtype=np.double)
-        exp_id_index = {0: True, 1: True, 2: True, 3: True, 4: False, 5: False, 6: True, 7: True, 8: False, 9: False,
-                        10: False}
-        exp_name = np.array(['a', 'b', 'c', 'd', 'x', 'y', 'e', 'f', 'z', 'z', None])
+        exp_child_index = np.array([[4, 0, 2], [5, 3, 3], [8, 4, 5], [9, 6, 7],
+                                    [10, 8, 9]], dtype=np.uint32)
+        exp_length = np.array([1, 2, 3, 5, 4, 6, 8, 9, 7, 10, 0.0],
+                              dtype=np.double)
+        exp_id_index = {0: True, 1: True, 2: True, 3: True, 4: False, 5: False,
+                        6: True, 7: True, 8: False, 9: False, 10: False}
+        exp_name = np.array(['a', 'b', 'c', 'd', 'x', 'y', 'e', 'f', 'z', 'z',
+                            None])
         obs = to_skbio_treearray(t)
 
         obs_child_index = obs['child_index']
@@ -57,6 +60,7 @@ class ConversionTests(TestCase):
 
         for k in obs_id_index:
             self.assertEqual(obs_id_index[k].is_tip(), exp_id_index[k])
+
 
 if __name__ == '__main__':
     main()
