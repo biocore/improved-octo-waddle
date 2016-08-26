@@ -59,6 +59,9 @@ if USE_CYTHON:
     from Cython.Build import cythonize
     extensions = cythonize(extensions)
 
+import subprocess
+subprocess.run('make libbitarr.a')
+
 setup(name='bp',
       version=0.1,
       description='Balanced parentheses',
