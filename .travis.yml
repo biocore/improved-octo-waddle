@@ -15,6 +15,7 @@ before_install:
 install:
   - conda create --yes -n env_name python=$PYTHON_VERSION --file ci/conda_requirements.txt
   - source activate env_name
+  - pip install . --no-deps
 script:
   - flake8 bp
   - make test
