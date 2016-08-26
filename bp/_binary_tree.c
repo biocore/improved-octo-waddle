@@ -1209,9 +1209,6 @@ static struct __pyx_vtabstruct__memoryviewslice *__pyx_vtabptr__memoryviewslice;
 #define __Pyx_CLEAR(r)    do { PyObject* tmp = ((PyObject*)(r)); r = NULL; __Pyx_DECREF(tmp);} while(0)
 #define __Pyx_XCLEAR(r)   do { if((r) != NULL) {PyObject* tmp = ((PyObject*)(r)); r = NULL; __Pyx_DECREF(tmp);}} while(0)
 
-/* None.proto */
-static CYTHON_INLINE long __Pyx_div_long(long, long);
-
 /* PyObjectGetAttrStr.proto */
 #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_GetAttrStr(PyObject* obj, PyObject* attr_name) {
@@ -1297,6 +1294,9 @@ static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void);
 
 /* ExtTypeTest.proto */
 static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type);
+
+/* None.proto */
+static CYTHON_INLINE long __Pyx_div_long(long, long);
 
 /* RaiseArgTupleInvalid.proto */
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
@@ -1510,45 +1510,6 @@ static void __pyx_insert_code_object(int code_line, PyCodeObject* code_object);
 static void __Pyx_AddTraceback(const char *funcname, int c_line,
                                int py_line, const char *filename);
 
-#if PY_MAJOR_VERSION < 3
-    static int __Pyx_GetBuffer(PyObject *obj, Py_buffer *view, int flags);
-    static void __Pyx_ReleaseBuffer(Py_buffer *view);
-#else
-    #define __Pyx_GetBuffer PyObject_GetBuffer
-    #define __Pyx_ReleaseBuffer PyBuffer_Release
-#endif
-
-
-/* BufferStructDeclare.proto */
-typedef struct {
-  Py_ssize_t shape, strides, suboffsets;
-} __Pyx_Buf_DimInfo;
-typedef struct {
-  size_t refcount;
-  Py_buffer pybuffer;
-} __Pyx_Buffer;
-typedef struct {
-  __Pyx_Buffer *rcbuffer;
-  char *data;
-  __Pyx_Buf_DimInfo diminfo[8];
-} __Pyx_LocalBuf_ND;
-
-/* None.proto */
-static Py_ssize_t __Pyx_zeros[] = {0, 0, 0, 0, 0, 0, 0, 0};
-static Py_ssize_t __Pyx_minusones[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-
-/* MemviewSliceIsContig.proto */
-static int __pyx_memviewslice_is_contig(const __Pyx_memviewslice mvs,
-                                        char order, int ndim);
-
-/* OverlappingSlices.proto */
-static int __pyx_slices_overlap(__Pyx_memviewslice *slice1,
-                                __Pyx_memviewslice *slice2,
-                                int ndim, size_t itemsize);
-
-/* Capsule.proto */
-static CYTHON_INLINE PyObject *__pyx_capsule_create(void *p, const char *sig);
-
 /* None.proto */
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -1658,6 +1619,48 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_enum__NPY_TYPES(enum NPY_TYPES value);
 
+#if PY_MAJOR_VERSION < 3
+    static int __Pyx_GetBuffer(PyObject *obj, Py_buffer *view, int flags);
+    static void __Pyx_ReleaseBuffer(Py_buffer *view);
+#else
+    #define __Pyx_GetBuffer PyObject_GetBuffer
+    #define __Pyx_ReleaseBuffer PyBuffer_Release
+#endif
+
+
+/* BufferStructDeclare.proto */
+typedef struct {
+  Py_ssize_t shape, strides, suboffsets;
+} __Pyx_Buf_DimInfo;
+typedef struct {
+  size_t refcount;
+  Py_buffer pybuffer;
+} __Pyx_Buffer;
+typedef struct {
+  __Pyx_Buffer *rcbuffer;
+  char *data;
+  __Pyx_Buf_DimInfo diminfo[8];
+} __Pyx_LocalBuf_ND;
+
+/* None.proto */
+static Py_ssize_t __Pyx_zeros[] = {0, 0, 0, 0, 0, 0, 0, 0};
+static Py_ssize_t __Pyx_minusones[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+
+/* MemviewSliceIsContig.proto */
+static int __pyx_memviewslice_is_contig(const __Pyx_memviewslice mvs,
+                                        char order, int ndim);
+
+/* OverlappingSlices.proto */
+static int __pyx_slices_overlap(__Pyx_memviewslice *slice1,
+                                __Pyx_memviewslice *slice2,
+                                int ndim, size_t itemsize);
+
+/* Capsule.proto */
+static CYTHON_INLINE PyObject *__pyx_capsule_create(void *p, const char *sig);
+
+/* CIntFromPy.proto */
+static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
+
 /* MemviewSliceCopyTemplate.proto */
 static __Pyx_memviewslice
 __pyx_memoryview_copy_new_contig(const __Pyx_memviewslice *from_mvs,
@@ -1699,9 +1702,6 @@ static CYTHON_INLINE int __pyx_sub_acquisition_count_locked(
 #define __PYX_XDEC_MEMVIEW(slice, have_gil) __Pyx_XDEC_MEMVIEW(slice, have_gil, __LINE__)
 static CYTHON_INLINE void __Pyx_INC_MEMVIEW(__Pyx_memviewslice *, int, int);
 static CYTHON_INLINE void __Pyx_XDEC_MEMVIEW(__Pyx_memviewslice *, int, int);
-
-/* CIntFromPy.proto */
-static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
 
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
@@ -3320,689 +3320,6 @@ static PyObject *__pyx_pf_2bp_12_binary_tree_test_binary_tree(CYTHON_UNUSED PyOb
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":16
- * # done following benching
- * 
- * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Is v the root"""
- *     return v == 0
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-
-  /* "bp/_binary_tree.pxd":18
- * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:
- *     """Is v the root"""
- *     return v == 0             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = (__pyx_v_v == 0);
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":16
- * # done following benching
- * 
- * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Is v the root"""
- *     return v == 0
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":21
- * 
- * 
- * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Is v a left child of some node"""
- *     return 0 if bt_is_root(v) else v % 2
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_left_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-  long __pyx_t_1;
-
-  /* "bp/_binary_tree.pxd":23
- * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:
- *     """Is v a left child of some node"""
- *     return 0 if bt_is_root(v) else v % 2             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  if ((__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0)) {
-    __pyx_t_1 = 0;
-  } else {
-    __pyx_t_1 = (__pyx_v_v % 2);
-  }
-  __pyx_r = __pyx_t_1;
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":21
- * 
- * 
- * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Is v a left child of some node"""
- *     return 0 if bt_is_root(v) else v % 2
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":26
- * 
- * 
- * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Is v a right child of some node"""
- *     return 0 if bt_is_root(v) else 1 - (v % 2)
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_right_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-  long __pyx_t_1;
-
-  /* "bp/_binary_tree.pxd":28
- * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:
- *     """Is v a right child of some node"""
- *     return 0 if bt_is_root(v) else 1 - (v % 2)             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  if ((__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0)) {
-    __pyx_t_1 = 0;
-  } else {
-    __pyx_t_1 = (1 - (__pyx_v_v % 2));
-  }
-  __pyx_r = __pyx_t_1;
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":26
- * 
- * 
- * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Is v a right child of some node"""
- *     return 0 if bt_is_root(v) else 1 - (v % 2)
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":31
- * 
- * 
- * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the parent of v"""
- *     return 0 if bt_is_root(v) else (v - 1) // 2
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_parent(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-  long __pyx_t_1;
-
-  /* "bp/_binary_tree.pxd":33
- * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:
- *     """Get the index of the parent of v"""
- *     return 0 if bt_is_root(v) else (v - 1) // 2             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  if ((__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0)) {
-    __pyx_t_1 = 0;
-  } else {
-    __pyx_t_1 = __Pyx_div_long((__pyx_v_v - 1), 2);
-  }
-  __pyx_r = __pyx_t_1;
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":31
- * 
- * 
- * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the parent of v"""
- *     return 0 if bt_is_root(v) else (v - 1) // 2
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":36
- * 
- * 
- * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the left child of v"""
- *     return 2 * v + 1
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-
-  /* "bp/_binary_tree.pxd":38
- * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:
- *     """Get the index of the left child of v"""
- *     return 2 * v + 1             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = ((2 * __pyx_v_v) + 1);
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":36
- * 
- * 
- * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the left child of v"""
- *     return 2 * v + 1
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":41
- * 
- * 
- * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the right child of v"""
- *     return 2 * v + 2
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-
-  /* "bp/_binary_tree.pxd":43
- * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:
- *     """Get the index of the right child of v"""
- *     return 2 * v + 2             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = ((2 * __pyx_v_v) + 2);
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":41
- * 
- * 
- * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the right child of v"""
- *     return 2 * v + 2
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":46
- * 
- * 
- * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the left sibling of v"""
- *     return v - 1
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_sibling(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-
-  /* "bp/_binary_tree.pxd":48
- * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:
- *     """Get the index of the left sibling of v"""
- *     return v - 1             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = (__pyx_v_v - 1);
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":46
- * 
- * 
- * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the left sibling of v"""
- *     return v - 1
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":51
- * 
- * 
- * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the right sibling of v"""
- *     return v + 1
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right_sibling(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-
-  /* "bp/_binary_tree.pxd":53
- * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:
- *     """Get the index of the right sibling of v"""
- *     return v + 1             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = (__pyx_v_v + 1);
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":51
- * 
- * 
- * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index of the right sibling of v"""
- *     return v + 1
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":56
- * 
- * 
- * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
- *     """Determine if v is a leaf"""
- *     return <SIZE_t>(v >= pow(2, height) - 1)
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_leaf(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-
-  /* "bp/_binary_tree.pxd":58
- * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:
- *     """Determine if v is a leaf"""
- *     return <SIZE_t>(v >= pow(2, height) - 1)             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = ((__pyx_t_2bp_3_bp_SIZE_t)(__pyx_v_v >= (pow(2.0, __pyx_v_height) - 1.0)));
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":56
- * 
- * 
- * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
- *     """Determine if v is a leaf"""
- *     return <SIZE_t>(v >= pow(2, height) - 1)
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":61
- * 
- * 
- * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index from the left of a node at a given height"""
- *     return <SIZE_t>pow(2, height) - 1 + pos
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_node_from_left(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_pos, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-
-  /* "bp/_binary_tree.pxd":63
- * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:
- *     """Get the index from the left of a node at a given height"""
- *     return <SIZE_t>pow(2, height) - 1 + pos             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = ((((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, __pyx_v_height)) - 1) + __pyx_v_pos);
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":61
- * 
- * 
- * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
- *     """Get the index from the left of a node at a given height"""
- *     return <SIZE_t>pow(2, height) - 1 + pos
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":66
- * 
- * 
- * cdef inline SIZE_t bt_offset_from_left(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the position from left of a node at its level
- * 
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_offset_from_left(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  double __pyx_v_leftmost_check;
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-  int __pyx_t_1;
-
-  /* "bp/_binary_tree.pxd":73
- *     cdef double leftmost_check
- * 
- *     if bt_is_root(v):             # <<<<<<<<<<<<<<
- *         return 0
- * 
- */
-  __pyx_t_1 = (__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0);
-  if (__pyx_t_1) {
-
-    /* "bp/_binary_tree.pxd":74
- * 
- *     if bt_is_root(v):
- *         return 0             # <<<<<<<<<<<<<<
- * 
- *     leftmost_check = log2(v + 1)
- */
-    __pyx_r = 0;
-    goto __pyx_L0;
-
-    /* "bp/_binary_tree.pxd":73
- *     cdef double leftmost_check
- * 
- *     if bt_is_root(v):             # <<<<<<<<<<<<<<
- *         return 0
- * 
- */
-  }
-
-  /* "bp/_binary_tree.pxd":76
- *         return 0
- * 
- *     leftmost_check = log2(v + 1)             # <<<<<<<<<<<<<<
- *     if leftmost_check == floor(leftmost_check):
- *         return 0
- */
-  __pyx_v_leftmost_check = log2((__pyx_v_v + 1));
-
-  /* "bp/_binary_tree.pxd":77
- * 
- *     leftmost_check = log2(v + 1)
- *     if leftmost_check == floor(leftmost_check):             # <<<<<<<<<<<<<<
- *         return 0
- * 
- */
-  __pyx_t_1 = ((__pyx_v_leftmost_check == floor(__pyx_v_leftmost_check)) != 0);
-  if (__pyx_t_1) {
-
-    /* "bp/_binary_tree.pxd":78
- *     leftmost_check = log2(v + 1)
- *     if leftmost_check == floor(leftmost_check):
- *         return 0             # <<<<<<<<<<<<<<
- * 
- *     return v - <SIZE_t>pow(2, floor(log2(v))) + 1
- */
-    __pyx_r = 0;
-    goto __pyx_L0;
-
-    /* "bp/_binary_tree.pxd":77
- * 
- *     leftmost_check = log2(v + 1)
- *     if leftmost_check == floor(leftmost_check):             # <<<<<<<<<<<<<<
- *         return 0
- * 
- */
-  }
-
-  /* "bp/_binary_tree.pxd":80
- *         return 0
- * 
- *     return v - <SIZE_t>pow(2, floor(log2(v))) + 1             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = ((__pyx_v_v - ((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, floor(log2(__pyx_v_v))))) + 1);
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":66
- * 
- * 
- * cdef inline SIZE_t bt_offset_from_left(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the position from left of a node at its level
- * 
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":83
- * 
- * 
- * cdef inline SIZE_t bt_offset_from_right(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the position from right of a node at its level"""
- *     cdef SIZE_t lvl = <SIZE_t>floor(log2(v + 1))
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_offset_from_right(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_lvl;
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_n_nodes_at_lvl;
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-
-  /* "bp/_binary_tree.pxd":85
- * cdef inline SIZE_t bt_offset_from_right(SIZE_t v) nogil:
- *     """Get the position from right of a node at its level"""
- *     cdef SIZE_t lvl = <SIZE_t>floor(log2(v + 1))             # <<<<<<<<<<<<<<
- *     cdef SIZE_t n_nodes_at_lvl = <SIZE_t>pow(2, lvl)
- * 
- */
-  __pyx_v_lvl = ((__pyx_t_2bp_3_bp_SIZE_t)floor(log2((__pyx_v_v + 1))));
-
-  /* "bp/_binary_tree.pxd":86
- *     """Get the position from right of a node at its level"""
- *     cdef SIZE_t lvl = <SIZE_t>floor(log2(v + 1))
- *     cdef SIZE_t n_nodes_at_lvl = <SIZE_t>pow(2, lvl)             # <<<<<<<<<<<<<<
- * 
- *     return n_nodes_at_lvl - bt_offset_from_left(v) - 1
- */
-  __pyx_v_n_nodes_at_lvl = ((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, __pyx_v_lvl));
-
-  /* "bp/_binary_tree.pxd":88
- *     cdef SIZE_t n_nodes_at_lvl = <SIZE_t>pow(2, lvl)
- * 
- *     return n_nodes_at_lvl - bt_offset_from_left(v) - 1             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = ((__pyx_v_n_nodes_at_lvl - __pyx_f_2bp_12_binary_tree_bt_offset_from_left(__pyx_v_v)) - 1);
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":83
- * 
- * 
- * cdef inline SIZE_t bt_offset_from_right(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
- *     """Get the position from right of a node at its level"""
- *     cdef SIZE_t lvl = <SIZE_t>floor(log2(v + 1))
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":91
- * 
- * 
- * cdef inline SIZE_t bt_left_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
- *     """Determine the index of a nodes left most leaf"""
- *     cdef SIZE_t left_tip = <SIZE_t>pow(2, height) - 1
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_leaf(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_left_tip;
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_block_size;
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-  int __pyx_t_1;
-
-  /* "bp/_binary_tree.pxd":93
- * cdef inline SIZE_t bt_left_leaf(SIZE_t v, SIZE_t height) nogil:
- *     """Determine the index of a nodes left most leaf"""
- *     cdef SIZE_t left_tip = <SIZE_t>pow(2, height) - 1             # <<<<<<<<<<<<<<
- *     cdef SIZE_t block_size
- * 
- */
-  __pyx_v_left_tip = (((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, __pyx_v_height)) - 1);
-
-  /* "bp/_binary_tree.pxd":96
- *     cdef SIZE_t block_size
- * 
- *     if bt_is_root(v):             # <<<<<<<<<<<<<<
- *         return left_tip
- * 
- */
-  __pyx_t_1 = (__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0);
-  if (__pyx_t_1) {
-
-    /* "bp/_binary_tree.pxd":97
- * 
- *     if bt_is_root(v):
- *         return left_tip             # <<<<<<<<<<<<<<
- * 
- *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))
- */
-    __pyx_r = __pyx_v_left_tip;
-    goto __pyx_L0;
-
-    /* "bp/_binary_tree.pxd":96
- *     cdef SIZE_t block_size
- * 
- *     if bt_is_root(v):             # <<<<<<<<<<<<<<
- *         return left_tip
- * 
- */
-  }
-
-  /* "bp/_binary_tree.pxd":99
- *         return left_tip
- * 
- *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))             # <<<<<<<<<<<<<<
- * 
- *     return left_tip + (block_size * bt_offset_from_left(v))
- */
-  __pyx_v_block_size = ((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, (__pyx_v_height - floor(log2((__pyx_v_v + 1))))));
-
-  /* "bp/_binary_tree.pxd":101
- *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))
- * 
- *     return left_tip + (block_size * bt_offset_from_left(v))             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = (__pyx_v_left_tip + (__pyx_v_block_size * __pyx_f_2bp_12_binary_tree_bt_offset_from_left(__pyx_v_v)));
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":91
- * 
- * 
- * cdef inline SIZE_t bt_left_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
- *     """Determine the index of a nodes left most leaf"""
- *     cdef SIZE_t left_tip = <SIZE_t>pow(2, height) - 1
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "bp/_binary_tree.pxd":104
- * 
- * 
- * cdef inline SIZE_t bt_right_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
- *     """Determine the index of a nodes right most leaf"""
- *     cdef SIZE_t right_tip = <SIZE_t>pow(2, height + 1) - 2
- */
-
-static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right_leaf(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_right_tip;
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_block_size;
-  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
-  int __pyx_t_1;
-
-  /* "bp/_binary_tree.pxd":106
- * cdef inline SIZE_t bt_right_leaf(SIZE_t v, SIZE_t height) nogil:
- *     """Determine the index of a nodes right most leaf"""
- *     cdef SIZE_t right_tip = <SIZE_t>pow(2, height + 1) - 2             # <<<<<<<<<<<<<<
- *     cdef SIZE_t block_size
- * 
- */
-  __pyx_v_right_tip = (((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, (__pyx_v_height + 1))) - 2);
-
-  /* "bp/_binary_tree.pxd":109
- *     cdef SIZE_t block_size
- * 
- *     if bt_is_root(v):             # <<<<<<<<<<<<<<
- *         return right_tip
- * 
- */
-  __pyx_t_1 = (__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0);
-  if (__pyx_t_1) {
-
-    /* "bp/_binary_tree.pxd":110
- * 
- *     if bt_is_root(v):
- *         return right_tip             # <<<<<<<<<<<<<<
- * 
- *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))
- */
-    __pyx_r = __pyx_v_right_tip;
-    goto __pyx_L0;
-
-    /* "bp/_binary_tree.pxd":109
- *     cdef SIZE_t block_size
- * 
- *     if bt_is_root(v):             # <<<<<<<<<<<<<<
- *         return right_tip
- * 
- */
-  }
-
-  /* "bp/_binary_tree.pxd":112
- *         return right_tip
- * 
- *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))             # <<<<<<<<<<<<<<
- * 
- *     return right_tip - (block_size * bt_offset_from_right(v))
- */
-  __pyx_v_block_size = ((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, (__pyx_v_height - floor(log2((__pyx_v_v + 1))))));
-
-  /* "bp/_binary_tree.pxd":114
- *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))
- * 
- *     return right_tip - (block_size * bt_offset_from_right(v))             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = (__pyx_v_right_tip - (__pyx_v_block_size * __pyx_f_2bp_12_binary_tree_bt_offset_from_right(__pyx_v_v)));
-  goto __pyx_L0;
-
-  /* "bp/_binary_tree.pxd":104
- * 
- * 
- * cdef inline SIZE_t bt_right_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
- *     """Determine the index of a nodes right most leaf"""
- *     cdef SIZE_t right_tip = <SIZE_t>pow(2, height + 1) - 2
- */
-
-  /* function exit code */
-  __pyx_L0:;
   return __pyx_r;
 }
 
@@ -6125,6 +5442,689 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":16
+ * # done following benching
+ * 
+ * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Is v the root"""
+ *     return v == 0
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+
+  /* "bp/_binary_tree.pxd":18
+ * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:
+ *     """Is v the root"""
+ *     return v == 0             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = (__pyx_v_v == 0);
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":16
+ * # done following benching
+ * 
+ * cdef inline SIZE_t bt_is_root(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Is v the root"""
+ *     return v == 0
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":21
+ * 
+ * 
+ * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Is v a left child of some node"""
+ *     return 0 if bt_is_root(v) else v % 2
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_left_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+  long __pyx_t_1;
+
+  /* "bp/_binary_tree.pxd":23
+ * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:
+ *     """Is v a left child of some node"""
+ *     return 0 if bt_is_root(v) else v % 2             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  if ((__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0)) {
+    __pyx_t_1 = 0;
+  } else {
+    __pyx_t_1 = (__pyx_v_v % 2);
+  }
+  __pyx_r = __pyx_t_1;
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":21
+ * 
+ * 
+ * cdef inline SIZE_t bt_is_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Is v a left child of some node"""
+ *     return 0 if bt_is_root(v) else v % 2
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":26
+ * 
+ * 
+ * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Is v a right child of some node"""
+ *     return 0 if bt_is_root(v) else 1 - (v % 2)
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_right_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+  long __pyx_t_1;
+
+  /* "bp/_binary_tree.pxd":28
+ * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:
+ *     """Is v a right child of some node"""
+ *     return 0 if bt_is_root(v) else 1 - (v % 2)             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  if ((__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0)) {
+    __pyx_t_1 = 0;
+  } else {
+    __pyx_t_1 = (1 - (__pyx_v_v % 2));
+  }
+  __pyx_r = __pyx_t_1;
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":26
+ * 
+ * 
+ * cdef inline SIZE_t bt_is_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Is v a right child of some node"""
+ *     return 0 if bt_is_root(v) else 1 - (v % 2)
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":31
+ * 
+ * 
+ * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the parent of v"""
+ *     return 0 if bt_is_root(v) else (v - 1) // 2
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_parent(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+  long __pyx_t_1;
+
+  /* "bp/_binary_tree.pxd":33
+ * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:
+ *     """Get the index of the parent of v"""
+ *     return 0 if bt_is_root(v) else (v - 1) // 2             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  if ((__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0)) {
+    __pyx_t_1 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_div_long((__pyx_v_v - 1), 2);
+  }
+  __pyx_r = __pyx_t_1;
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":31
+ * 
+ * 
+ * cdef inline SIZE_t bt_parent(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the parent of v"""
+ *     return 0 if bt_is_root(v) else (v - 1) // 2
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":36
+ * 
+ * 
+ * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the left child of v"""
+ *     return 2 * v + 1
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+
+  /* "bp/_binary_tree.pxd":38
+ * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:
+ *     """Get the index of the left child of v"""
+ *     return 2 * v + 1             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = ((2 * __pyx_v_v) + 1);
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":36
+ * 
+ * 
+ * cdef inline SIZE_t bt_left_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the left child of v"""
+ *     return 2 * v + 1
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":41
+ * 
+ * 
+ * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the right child of v"""
+ *     return 2 * v + 2
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right_child(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+
+  /* "bp/_binary_tree.pxd":43
+ * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:
+ *     """Get the index of the right child of v"""
+ *     return 2 * v + 2             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = ((2 * __pyx_v_v) + 2);
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":41
+ * 
+ * 
+ * cdef inline SIZE_t bt_right_child(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the right child of v"""
+ *     return 2 * v + 2
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":46
+ * 
+ * 
+ * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the left sibling of v"""
+ *     return v - 1
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_sibling(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+
+  /* "bp/_binary_tree.pxd":48
+ * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:
+ *     """Get the index of the left sibling of v"""
+ *     return v - 1             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = (__pyx_v_v - 1);
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":46
+ * 
+ * 
+ * cdef inline SIZE_t bt_left_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the left sibling of v"""
+ *     return v - 1
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":51
+ * 
+ * 
+ * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the right sibling of v"""
+ *     return v + 1
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right_sibling(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+
+  /* "bp/_binary_tree.pxd":53
+ * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:
+ *     """Get the index of the right sibling of v"""
+ *     return v + 1             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = (__pyx_v_v + 1);
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":51
+ * 
+ * 
+ * cdef inline SIZE_t bt_right_sibling(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index of the right sibling of v"""
+ *     return v + 1
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":56
+ * 
+ * 
+ * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
+ *     """Determine if v is a leaf"""
+ *     return <SIZE_t>(v >= pow(2, height) - 1)
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_is_leaf(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+
+  /* "bp/_binary_tree.pxd":58
+ * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:
+ *     """Determine if v is a leaf"""
+ *     return <SIZE_t>(v >= pow(2, height) - 1)             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = ((__pyx_t_2bp_3_bp_SIZE_t)(__pyx_v_v >= (pow(2.0, __pyx_v_height) - 1.0)));
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":56
+ * 
+ * 
+ * cdef inline SIZE_t bt_is_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
+ *     """Determine if v is a leaf"""
+ *     return <SIZE_t>(v >= pow(2, height) - 1)
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":61
+ * 
+ * 
+ * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index from the left of a node at a given height"""
+ *     return <SIZE_t>pow(2, height) - 1 + pos
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_node_from_left(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_pos, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+
+  /* "bp/_binary_tree.pxd":63
+ * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:
+ *     """Get the index from the left of a node at a given height"""
+ *     return <SIZE_t>pow(2, height) - 1 + pos             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = ((((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, __pyx_v_height)) - 1) + __pyx_v_pos);
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":61
+ * 
+ * 
+ * cdef inline SIZE_t bt_node_from_left(SIZE_t pos, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the index from the left of a node at a given height"""
+ *     return <SIZE_t>pow(2, height) - 1 + pos
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":66
+ * 
+ * 
+ * cdef inline SIZE_t bt_offset_from_left(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the position from left of a node at its level
+ * 
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_offset_from_left(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  double __pyx_v_leftmost_check;
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+  int __pyx_t_1;
+
+  /* "bp/_binary_tree.pxd":73
+ *     cdef double leftmost_check
+ * 
+ *     if bt_is_root(v):             # <<<<<<<<<<<<<<
+ *         return 0
+ * 
+ */
+  __pyx_t_1 = (__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0);
+  if (__pyx_t_1) {
+
+    /* "bp/_binary_tree.pxd":74
+ * 
+ *     if bt_is_root(v):
+ *         return 0             # <<<<<<<<<<<<<<
+ * 
+ *     leftmost_check = log2(v + 1)
+ */
+    __pyx_r = 0;
+    goto __pyx_L0;
+
+    /* "bp/_binary_tree.pxd":73
+ *     cdef double leftmost_check
+ * 
+ *     if bt_is_root(v):             # <<<<<<<<<<<<<<
+ *         return 0
+ * 
+ */
+  }
+
+  /* "bp/_binary_tree.pxd":76
+ *         return 0
+ * 
+ *     leftmost_check = log2(v + 1)             # <<<<<<<<<<<<<<
+ *     if leftmost_check == floor(leftmost_check):
+ *         return 0
+ */
+  __pyx_v_leftmost_check = log2((__pyx_v_v + 1));
+
+  /* "bp/_binary_tree.pxd":77
+ * 
+ *     leftmost_check = log2(v + 1)
+ *     if leftmost_check == floor(leftmost_check):             # <<<<<<<<<<<<<<
+ *         return 0
+ * 
+ */
+  __pyx_t_1 = ((__pyx_v_leftmost_check == floor(__pyx_v_leftmost_check)) != 0);
+  if (__pyx_t_1) {
+
+    /* "bp/_binary_tree.pxd":78
+ *     leftmost_check = log2(v + 1)
+ *     if leftmost_check == floor(leftmost_check):
+ *         return 0             # <<<<<<<<<<<<<<
+ * 
+ *     return v - <SIZE_t>pow(2, floor(log2(v))) + 1
+ */
+    __pyx_r = 0;
+    goto __pyx_L0;
+
+    /* "bp/_binary_tree.pxd":77
+ * 
+ *     leftmost_check = log2(v + 1)
+ *     if leftmost_check == floor(leftmost_check):             # <<<<<<<<<<<<<<
+ *         return 0
+ * 
+ */
+  }
+
+  /* "bp/_binary_tree.pxd":80
+ *         return 0
+ * 
+ *     return v - <SIZE_t>pow(2, floor(log2(v))) + 1             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = ((__pyx_v_v - ((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, floor(log2(__pyx_v_v))))) + 1);
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":66
+ * 
+ * 
+ * cdef inline SIZE_t bt_offset_from_left(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the position from left of a node at its level
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":83
+ * 
+ * 
+ * cdef inline SIZE_t bt_offset_from_right(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the position from right of a node at its level"""
+ *     cdef SIZE_t lvl = <SIZE_t>floor(log2(v + 1))
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_offset_from_right(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_lvl;
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_n_nodes_at_lvl;
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+
+  /* "bp/_binary_tree.pxd":85
+ * cdef inline SIZE_t bt_offset_from_right(SIZE_t v) nogil:
+ *     """Get the position from right of a node at its level"""
+ *     cdef SIZE_t lvl = <SIZE_t>floor(log2(v + 1))             # <<<<<<<<<<<<<<
+ *     cdef SIZE_t n_nodes_at_lvl = <SIZE_t>pow(2, lvl)
+ * 
+ */
+  __pyx_v_lvl = ((__pyx_t_2bp_3_bp_SIZE_t)floor(log2((__pyx_v_v + 1))));
+
+  /* "bp/_binary_tree.pxd":86
+ *     """Get the position from right of a node at its level"""
+ *     cdef SIZE_t lvl = <SIZE_t>floor(log2(v + 1))
+ *     cdef SIZE_t n_nodes_at_lvl = <SIZE_t>pow(2, lvl)             # <<<<<<<<<<<<<<
+ * 
+ *     return n_nodes_at_lvl - bt_offset_from_left(v) - 1
+ */
+  __pyx_v_n_nodes_at_lvl = ((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, __pyx_v_lvl));
+
+  /* "bp/_binary_tree.pxd":88
+ *     cdef SIZE_t n_nodes_at_lvl = <SIZE_t>pow(2, lvl)
+ * 
+ *     return n_nodes_at_lvl - bt_offset_from_left(v) - 1             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = ((__pyx_v_n_nodes_at_lvl - __pyx_f_2bp_12_binary_tree_bt_offset_from_left(__pyx_v_v)) - 1);
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":83
+ * 
+ * 
+ * cdef inline SIZE_t bt_offset_from_right(SIZE_t v) nogil:             # <<<<<<<<<<<<<<
+ *     """Get the position from right of a node at its level"""
+ *     cdef SIZE_t lvl = <SIZE_t>floor(log2(v + 1))
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":91
+ * 
+ * 
+ * cdef inline SIZE_t bt_left_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
+ *     """Determine the index of a nodes left most leaf"""
+ *     cdef SIZE_t left_tip = <SIZE_t>pow(2, height) - 1
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_left_leaf(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_left_tip;
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_block_size;
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+  int __pyx_t_1;
+
+  /* "bp/_binary_tree.pxd":93
+ * cdef inline SIZE_t bt_left_leaf(SIZE_t v, SIZE_t height) nogil:
+ *     """Determine the index of a nodes left most leaf"""
+ *     cdef SIZE_t left_tip = <SIZE_t>pow(2, height) - 1             # <<<<<<<<<<<<<<
+ *     cdef SIZE_t block_size
+ * 
+ */
+  __pyx_v_left_tip = (((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, __pyx_v_height)) - 1);
+
+  /* "bp/_binary_tree.pxd":96
+ *     cdef SIZE_t block_size
+ * 
+ *     if bt_is_root(v):             # <<<<<<<<<<<<<<
+ *         return left_tip
+ * 
+ */
+  __pyx_t_1 = (__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0);
+  if (__pyx_t_1) {
+
+    /* "bp/_binary_tree.pxd":97
+ * 
+ *     if bt_is_root(v):
+ *         return left_tip             # <<<<<<<<<<<<<<
+ * 
+ *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))
+ */
+    __pyx_r = __pyx_v_left_tip;
+    goto __pyx_L0;
+
+    /* "bp/_binary_tree.pxd":96
+ *     cdef SIZE_t block_size
+ * 
+ *     if bt_is_root(v):             # <<<<<<<<<<<<<<
+ *         return left_tip
+ * 
+ */
+  }
+
+  /* "bp/_binary_tree.pxd":99
+ *         return left_tip
+ * 
+ *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))             # <<<<<<<<<<<<<<
+ * 
+ *     return left_tip + (block_size * bt_offset_from_left(v))
+ */
+  __pyx_v_block_size = ((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, (__pyx_v_height - floor(log2((__pyx_v_v + 1))))));
+
+  /* "bp/_binary_tree.pxd":101
+ *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))
+ * 
+ *     return left_tip + (block_size * bt_offset_from_left(v))             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = (__pyx_v_left_tip + (__pyx_v_block_size * __pyx_f_2bp_12_binary_tree_bt_offset_from_left(__pyx_v_v)));
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":91
+ * 
+ * 
+ * cdef inline SIZE_t bt_left_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
+ *     """Determine the index of a nodes left most leaf"""
+ *     cdef SIZE_t left_tip = <SIZE_t>pow(2, height) - 1
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "bp/_binary_tree.pxd":104
+ * 
+ * 
+ * cdef inline SIZE_t bt_right_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
+ *     """Determine the index of a nodes right most leaf"""
+ *     cdef SIZE_t right_tip = <SIZE_t>pow(2, height + 1) - 2
+ */
+
+static CYTHON_INLINE __pyx_t_2bp_3_bp_SIZE_t __pyx_f_2bp_12_binary_tree_bt_right_leaf(__pyx_t_2bp_3_bp_SIZE_t __pyx_v_v, __pyx_t_2bp_3_bp_SIZE_t __pyx_v_height) {
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_right_tip;
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_v_block_size;
+  __pyx_t_2bp_3_bp_SIZE_t __pyx_r;
+  int __pyx_t_1;
+
+  /* "bp/_binary_tree.pxd":106
+ * cdef inline SIZE_t bt_right_leaf(SIZE_t v, SIZE_t height) nogil:
+ *     """Determine the index of a nodes right most leaf"""
+ *     cdef SIZE_t right_tip = <SIZE_t>pow(2, height + 1) - 2             # <<<<<<<<<<<<<<
+ *     cdef SIZE_t block_size
+ * 
+ */
+  __pyx_v_right_tip = (((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, (__pyx_v_height + 1))) - 2);
+
+  /* "bp/_binary_tree.pxd":109
+ *     cdef SIZE_t block_size
+ * 
+ *     if bt_is_root(v):             # <<<<<<<<<<<<<<
+ *         return right_tip
+ * 
+ */
+  __pyx_t_1 = (__pyx_f_2bp_12_binary_tree_bt_is_root(__pyx_v_v) != 0);
+  if (__pyx_t_1) {
+
+    /* "bp/_binary_tree.pxd":110
+ * 
+ *     if bt_is_root(v):
+ *         return right_tip             # <<<<<<<<<<<<<<
+ * 
+ *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))
+ */
+    __pyx_r = __pyx_v_right_tip;
+    goto __pyx_L0;
+
+    /* "bp/_binary_tree.pxd":109
+ *     cdef SIZE_t block_size
+ * 
+ *     if bt_is_root(v):             # <<<<<<<<<<<<<<
+ *         return right_tip
+ * 
+ */
+  }
+
+  /* "bp/_binary_tree.pxd":112
+ *         return right_tip
+ * 
+ *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))             # <<<<<<<<<<<<<<
+ * 
+ *     return right_tip - (block_size * bt_offset_from_right(v))
+ */
+  __pyx_v_block_size = ((__pyx_t_2bp_3_bp_SIZE_t)pow(2.0, (__pyx_v_height - floor(log2((__pyx_v_v + 1))))));
+
+  /* "bp/_binary_tree.pxd":114
+ *     block_size = <SIZE_t>pow(2, height - floor(log2(v + 1)))
+ * 
+ *     return right_tip - (block_size * bt_offset_from_right(v))             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = (__pyx_v_right_tip - (__pyx_v_block_size * __pyx_f_2bp_12_binary_tree_bt_offset_from_right(__pyx_v_v)));
+  goto __pyx_L0;
+
+  /* "bp/_binary_tree.pxd":104
+ * 
+ * 
+ * cdef inline SIZE_t bt_right_leaf(SIZE_t v, SIZE_t height) nogil:             # <<<<<<<<<<<<<<
+ *     """Determine the index of a nodes right most leaf"""
+ *     cdef SIZE_t right_tip = <SIZE_t>pow(2, height + 1) - 2
+ */
+
+  /* function exit code */
+  __pyx_L0:;
   return __pyx_r;
 }
 
@@ -19112,14 +19112,6 @@ end:
 }
 #endif
 
-/* None */
-static CYTHON_INLINE long __Pyx_div_long(long a, long b) {
-    long q = a / b;
-    long r = a - q*b;
-    q -= ((r != 0) & ((r ^ b) < 0));
-    return q;
-}
-
 /* GetBuiltinName */
 static PyObject *__Pyx_GetBuiltinName(PyObject *name) {
     PyObject* result = __Pyx_PyObject_GetAttrStr(__pyx_b, name);
@@ -19370,6 +19362,14 @@ bad:
     PyErr_Format(PyExc_TypeError, "Cannot convert %.200s to %.200s",
                  Py_TYPE(obj)->tp_name, type->tp_name);
     return 0;
+}
+
+/* None */
+  static CYTHON_INLINE long __Pyx_div_long(long a, long b) {
+    long q = a / b;
+    long r = a - q*b;
+    q -= ((r != 0) & ((r ^ b) < 0));
+    return q;
 }
 
 /* RaiseArgTupleInvalid */
@@ -20391,101 +20391,6 @@ bad:
     Py_XDECREF(py_frame);
 }
 
-#if PY_MAJOR_VERSION < 3
-static int __Pyx_GetBuffer(PyObject *obj, Py_buffer *view, int flags) {
-    if (PyObject_CheckBuffer(obj)) return PyObject_GetBuffer(obj, view, flags);
-        if (PyObject_TypeCheck(obj, __pyx_ptype_5numpy_ndarray)) return __pyx_pw_5numpy_7ndarray_1__getbuffer__(obj, view, flags);
-        if (PyObject_TypeCheck(obj, __pyx_array_type)) return __pyx_array_getbuffer(obj, view, flags);
-        if (PyObject_TypeCheck(obj, __pyx_memoryview_type)) return __pyx_memoryview_getbuffer(obj, view, flags);
-    PyErr_Format(PyExc_TypeError, "'%.200s' does not have the buffer interface", Py_TYPE(obj)->tp_name);
-    return -1;
-}
-static void __Pyx_ReleaseBuffer(Py_buffer *view) {
-    PyObject *obj = view->obj;
-    if (!obj) return;
-    if (PyObject_CheckBuffer(obj)) {
-        PyBuffer_Release(view);
-        return;
-    }
-        if (PyObject_TypeCheck(obj, __pyx_ptype_5numpy_ndarray)) { __pyx_pw_5numpy_7ndarray_3__releasebuffer__(obj, view); return; }
-    Py_DECREF(obj);
-    view->obj = NULL;
-}
-#endif
-
-
-      /* MemviewSliceIsContig */
-      static int
-__pyx_memviewslice_is_contig(const __Pyx_memviewslice mvs,
-                             char order, int ndim)
-{
-    int i, index, step, start;
-    Py_ssize_t itemsize = mvs.memview->view.itemsize;
-    if (order == 'F') {
-        step = 1;
-        start = 0;
-    } else {
-        step = -1;
-        start = ndim - 1;
-    }
-    for (i = 0; i < ndim; i++) {
-        index = start + step * i;
-        if (mvs.suboffsets[index] >= 0 || mvs.strides[index] != itemsize)
-            return 0;
-        itemsize *= mvs.shape[index];
-    }
-    return 1;
-}
-
-/* OverlappingSlices */
-      static void
-__pyx_get_array_memory_extents(__Pyx_memviewslice *slice,
-                               void **out_start, void **out_end,
-                               int ndim, size_t itemsize)
-{
-    char *start, *end;
-    int i;
-    start = end = slice->data;
-    for (i = 0; i < ndim; i++) {
-        Py_ssize_t stride = slice->strides[i];
-        Py_ssize_t extent = slice->shape[i];
-        if (extent == 0) {
-            *out_start = *out_end = start;
-            return;
-        } else {
-            if (stride > 0)
-                end += stride * (extent - 1);
-            else
-                start += stride * (extent - 1);
-        }
-    }
-    *out_start = start;
-    *out_end = end + itemsize;
-}
-static int
-__pyx_slices_overlap(__Pyx_memviewslice *slice1,
-                     __Pyx_memviewslice *slice2,
-                     int ndim, size_t itemsize)
-{
-    void *start1, *end1, *start2, *end2;
-    __pyx_get_array_memory_extents(slice1, &start1, &end1, ndim, itemsize);
-    __pyx_get_array_memory_extents(slice2, &start2, &end2, ndim, itemsize);
-    return (start1 < end2) && (start2 < end1);
-}
-
-/* Capsule */
-      static CYTHON_INLINE PyObject *
-__pyx_capsule_create(void *p, CYTHON_UNUSED const char *sig)
-{
-    PyObject *cobj;
-#if PY_VERSION_HEX >= 0x02070000
-    cobj = PyCapsule_New(p, sig, NULL);
-#else
-    cobj = PyCObject_FromVoidPtr(p, NULL);
-#endif
-    return cobj;
-}
-
 /* None */
       #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -20804,6 +20709,286 @@ __pyx_capsule_create(void *p, CYTHON_UNUSED const char *sig)
         return _PyLong_FromByteArray(bytes, sizeof(enum NPY_TYPES),
                                      little, !is_unsigned);
     }
+}
+
+#if PY_MAJOR_VERSION < 3
+static int __Pyx_GetBuffer(PyObject *obj, Py_buffer *view, int flags) {
+    if (PyObject_CheckBuffer(obj)) return PyObject_GetBuffer(obj, view, flags);
+        if (PyObject_TypeCheck(obj, __pyx_ptype_5numpy_ndarray)) return __pyx_pw_5numpy_7ndarray_1__getbuffer__(obj, view, flags);
+        if (PyObject_TypeCheck(obj, __pyx_array_type)) return __pyx_array_getbuffer(obj, view, flags);
+        if (PyObject_TypeCheck(obj, __pyx_memoryview_type)) return __pyx_memoryview_getbuffer(obj, view, flags);
+    PyErr_Format(PyExc_TypeError, "'%.200s' does not have the buffer interface", Py_TYPE(obj)->tp_name);
+    return -1;
+}
+static void __Pyx_ReleaseBuffer(Py_buffer *view) {
+    PyObject *obj = view->obj;
+    if (!obj) return;
+    if (PyObject_CheckBuffer(obj)) {
+        PyBuffer_Release(view);
+        return;
+    }
+        if (PyObject_TypeCheck(obj, __pyx_ptype_5numpy_ndarray)) { __pyx_pw_5numpy_7ndarray_3__releasebuffer__(obj, view); return; }
+    Py_DECREF(obj);
+    view->obj = NULL;
+}
+#endif
+
+
+      /* MemviewSliceIsContig */
+      static int
+__pyx_memviewslice_is_contig(const __Pyx_memviewslice mvs,
+                             char order, int ndim)
+{
+    int i, index, step, start;
+    Py_ssize_t itemsize = mvs.memview->view.itemsize;
+    if (order == 'F') {
+        step = 1;
+        start = 0;
+    } else {
+        step = -1;
+        start = ndim - 1;
+    }
+    for (i = 0; i < ndim; i++) {
+        index = start + step * i;
+        if (mvs.suboffsets[index] >= 0 || mvs.strides[index] != itemsize)
+            return 0;
+        itemsize *= mvs.shape[index];
+    }
+    return 1;
+}
+
+/* OverlappingSlices */
+      static void
+__pyx_get_array_memory_extents(__Pyx_memviewslice *slice,
+                               void **out_start, void **out_end,
+                               int ndim, size_t itemsize)
+{
+    char *start, *end;
+    int i;
+    start = end = slice->data;
+    for (i = 0; i < ndim; i++) {
+        Py_ssize_t stride = slice->strides[i];
+        Py_ssize_t extent = slice->shape[i];
+        if (extent == 0) {
+            *out_start = *out_end = start;
+            return;
+        } else {
+            if (stride > 0)
+                end += stride * (extent - 1);
+            else
+                start += stride * (extent - 1);
+        }
+    }
+    *out_start = start;
+    *out_end = end + itemsize;
+}
+static int
+__pyx_slices_overlap(__Pyx_memviewslice *slice1,
+                     __Pyx_memviewslice *slice2,
+                     int ndim, size_t itemsize)
+{
+    void *start1, *end1, *start2, *end2;
+    __pyx_get_array_memory_extents(slice1, &start1, &end1, ndim, itemsize);
+    __pyx_get_array_memory_extents(slice2, &start2, &end2, ndim, itemsize);
+    return (start1 < end2) && (start2 < end1);
+}
+
+/* Capsule */
+      static CYTHON_INLINE PyObject *
+__pyx_capsule_create(void *p, CYTHON_UNUSED const char *sig)
+{
+    PyObject *cobj;
+#if PY_VERSION_HEX >= 0x02070000
+    cobj = PyCapsule_New(p, sig, NULL);
+#else
+    cobj = PyCObject_FromVoidPtr(p, NULL);
+#endif
+    return cobj;
+}
+
+/* CIntFromPy */
+      static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *x) {
+    const int neg_one = (int) -1, const_zero = (int) 0;
+    const int is_unsigned = neg_one > const_zero;
+#if PY_MAJOR_VERSION < 3
+    if (likely(PyInt_Check(x))) {
+        if (sizeof(int) < sizeof(long)) {
+            __PYX_VERIFY_RETURN_INT(int, long, PyInt_AS_LONG(x))
+        } else {
+            long val = PyInt_AS_LONG(x);
+            if (is_unsigned && unlikely(val < 0)) {
+                goto raise_neg_overflow;
+            }
+            return (int) val;
+        }
+    } else
+#endif
+    if (likely(PyLong_Check(x))) {
+        if (is_unsigned) {
+#if CYTHON_USE_PYLONG_INTERNALS
+            const digit* digits = ((PyLongObject*)x)->ob_digit;
+            switch (Py_SIZE(x)) {
+                case  0: return (int) 0;
+                case  1: __PYX_VERIFY_RETURN_INT(int, digit, digits[0])
+                case 2:
+                    if (8 * sizeof(int) > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) >= 2 * PyLong_SHIFT) {
+                            return (int) (((((int)digits[1]) << PyLong_SHIFT) | (int)digits[0]));
+                        }
+                    }
+                    break;
+                case 3:
+                    if (8 * sizeof(int) > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) >= 3 * PyLong_SHIFT) {
+                            return (int) (((((((int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0]));
+                        }
+                    }
+                    break;
+                case 4:
+                    if (8 * sizeof(int) > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) >= 4 * PyLong_SHIFT) {
+                            return (int) (((((((((int)digits[3]) << PyLong_SHIFT) | (int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0]));
+                        }
+                    }
+                    break;
+            }
+#endif
+#if CYTHON_COMPILING_IN_CPYTHON
+            if (unlikely(Py_SIZE(x) < 0)) {
+                goto raise_neg_overflow;
+            }
+#else
+            {
+                int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
+                if (unlikely(result < 0))
+                    return (int) -1;
+                if (unlikely(result == 1))
+                    goto raise_neg_overflow;
+            }
+#endif
+            if (sizeof(int) <= sizeof(unsigned long)) {
+                __PYX_VERIFY_RETURN_INT_EXC(int, unsigned long, PyLong_AsUnsignedLong(x))
+            } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
+                __PYX_VERIFY_RETURN_INT_EXC(int, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
+            }
+        } else {
+#if CYTHON_USE_PYLONG_INTERNALS
+            const digit* digits = ((PyLongObject*)x)->ob_digit;
+            switch (Py_SIZE(x)) {
+                case  0: return (int) 0;
+                case -1: __PYX_VERIFY_RETURN_INT(int, sdigit, (sdigit) (-(sdigit)digits[0]))
+                case  1: __PYX_VERIFY_RETURN_INT(int,  digit, +digits[0])
+                case -2:
+                    if (8 * sizeof(int) - 1 > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) - 1 > 2 * PyLong_SHIFT) {
+                            return (int) (((int)-1)*(((((int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
+                        }
+                    }
+                    break;
+                case 2:
+                    if (8 * sizeof(int) > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) - 1 > 2 * PyLong_SHIFT) {
+                            return (int) ((((((int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
+                        }
+                    }
+                    break;
+                case -3:
+                    if (8 * sizeof(int) - 1 > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) - 1 > 3 * PyLong_SHIFT) {
+                            return (int) (((int)-1)*(((((((int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
+                        }
+                    }
+                    break;
+                case 3:
+                    if (8 * sizeof(int) > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) - 1 > 3 * PyLong_SHIFT) {
+                            return (int) ((((((((int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
+                        }
+                    }
+                    break;
+                case -4:
+                    if (8 * sizeof(int) - 1 > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) - 1 > 4 * PyLong_SHIFT) {
+                            return (int) (((int)-1)*(((((((((int)digits[3]) << PyLong_SHIFT) | (int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
+                        }
+                    }
+                    break;
+                case 4:
+                    if (8 * sizeof(int) > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(int) - 1 > 4 * PyLong_SHIFT) {
+                            return (int) ((((((((((int)digits[3]) << PyLong_SHIFT) | (int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
+                        }
+                    }
+                    break;
+            }
+#endif
+            if (sizeof(int) <= sizeof(long)) {
+                __PYX_VERIFY_RETURN_INT_EXC(int, long, PyLong_AsLong(x))
+            } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
+                __PYX_VERIFY_RETURN_INT_EXC(int, PY_LONG_LONG, PyLong_AsLongLong(x))
+            }
+        }
+        {
+#if CYTHON_COMPILING_IN_PYPY && !defined(_PyLong_AsByteArray)
+            PyErr_SetString(PyExc_RuntimeError,
+                            "_PyLong_AsByteArray() not available in PyPy, cannot convert large numbers");
+#else
+            int val;
+            PyObject *v = __Pyx_PyNumber_IntOrLong(x);
+ #if PY_MAJOR_VERSION < 3
+            if (likely(v) && !PyLong_Check(v)) {
+                PyObject *tmp = v;
+                v = PyNumber_Long(tmp);
+                Py_DECREF(tmp);
+            }
+ #endif
+            if (likely(v)) {
+                int one = 1; int is_little = (int)*(unsigned char *)&one;
+                unsigned char *bytes = (unsigned char *)&val;
+                int ret = _PyLong_AsByteArray((PyLongObject *)v,
+                                              bytes, sizeof(val),
+                                              is_little, !is_unsigned);
+                Py_DECREF(v);
+                if (likely(!ret))
+                    return val;
+            }
+#endif
+            return (int) -1;
+        }
+    } else {
+        int val;
+        PyObject *tmp = __Pyx_PyNumber_IntOrLong(x);
+        if (!tmp) return (int) -1;
+        val = __Pyx_PyInt_As_int(tmp);
+        Py_DECREF(tmp);
+        return val;
+    }
+raise_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "value too large to convert to int");
+    return (int) -1;
+raise_neg_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "can't convert negative value to int");
+    return (int) -1;
 }
 
 /* MemviewSliceCopyTemplate */
@@ -21556,191 +21741,6 @@ static CYTHON_INLINE void __Pyx_XDEC_MEMVIEW(__Pyx_memviewslice *memslice,
     } else {
         memslice->memview = NULL;
     }
-}
-
-/* CIntFromPy */
-        static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *x) {
-    const int neg_one = (int) -1, const_zero = (int) 0;
-    const int is_unsigned = neg_one > const_zero;
-#if PY_MAJOR_VERSION < 3
-    if (likely(PyInt_Check(x))) {
-        if (sizeof(int) < sizeof(long)) {
-            __PYX_VERIFY_RETURN_INT(int, long, PyInt_AS_LONG(x))
-        } else {
-            long val = PyInt_AS_LONG(x);
-            if (is_unsigned && unlikely(val < 0)) {
-                goto raise_neg_overflow;
-            }
-            return (int) val;
-        }
-    } else
-#endif
-    if (likely(PyLong_Check(x))) {
-        if (is_unsigned) {
-#if CYTHON_USE_PYLONG_INTERNALS
-            const digit* digits = ((PyLongObject*)x)->ob_digit;
-            switch (Py_SIZE(x)) {
-                case  0: return (int) 0;
-                case  1: __PYX_VERIFY_RETURN_INT(int, digit, digits[0])
-                case 2:
-                    if (8 * sizeof(int) > 1 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) >= 2 * PyLong_SHIFT) {
-                            return (int) (((((int)digits[1]) << PyLong_SHIFT) | (int)digits[0]));
-                        }
-                    }
-                    break;
-                case 3:
-                    if (8 * sizeof(int) > 2 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) >= 3 * PyLong_SHIFT) {
-                            return (int) (((((((int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0]));
-                        }
-                    }
-                    break;
-                case 4:
-                    if (8 * sizeof(int) > 3 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) >= 4 * PyLong_SHIFT) {
-                            return (int) (((((((((int)digits[3]) << PyLong_SHIFT) | (int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0]));
-                        }
-                    }
-                    break;
-            }
-#endif
-#if CYTHON_COMPILING_IN_CPYTHON
-            if (unlikely(Py_SIZE(x) < 0)) {
-                goto raise_neg_overflow;
-            }
-#else
-            {
-                int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
-                if (unlikely(result < 0))
-                    return (int) -1;
-                if (unlikely(result == 1))
-                    goto raise_neg_overflow;
-            }
-#endif
-            if (sizeof(int) <= sizeof(unsigned long)) {
-                __PYX_VERIFY_RETURN_INT_EXC(int, unsigned long, PyLong_AsUnsignedLong(x))
-            } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
-                __PYX_VERIFY_RETURN_INT_EXC(int, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
-            }
-        } else {
-#if CYTHON_USE_PYLONG_INTERNALS
-            const digit* digits = ((PyLongObject*)x)->ob_digit;
-            switch (Py_SIZE(x)) {
-                case  0: return (int) 0;
-                case -1: __PYX_VERIFY_RETURN_INT(int, sdigit, (sdigit) (-(sdigit)digits[0]))
-                case  1: __PYX_VERIFY_RETURN_INT(int,  digit, +digits[0])
-                case -2:
-                    if (8 * sizeof(int) - 1 > 1 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) - 1 > 2 * PyLong_SHIFT) {
-                            return (int) (((int)-1)*(((((int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
-                        }
-                    }
-                    break;
-                case 2:
-                    if (8 * sizeof(int) > 1 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) - 1 > 2 * PyLong_SHIFT) {
-                            return (int) ((((((int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
-                        }
-                    }
-                    break;
-                case -3:
-                    if (8 * sizeof(int) - 1 > 2 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) - 1 > 3 * PyLong_SHIFT) {
-                            return (int) (((int)-1)*(((((((int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
-                        }
-                    }
-                    break;
-                case 3:
-                    if (8 * sizeof(int) > 2 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) - 1 > 3 * PyLong_SHIFT) {
-                            return (int) ((((((((int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
-                        }
-                    }
-                    break;
-                case -4:
-                    if (8 * sizeof(int) - 1 > 3 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) - 1 > 4 * PyLong_SHIFT) {
-                            return (int) (((int)-1)*(((((((((int)digits[3]) << PyLong_SHIFT) | (int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
-                        }
-                    }
-                    break;
-                case 4:
-                    if (8 * sizeof(int) > 3 * PyLong_SHIFT) {
-                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
-                            __PYX_VERIFY_RETURN_INT(int, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if (8 * sizeof(int) - 1 > 4 * PyLong_SHIFT) {
-                            return (int) ((((((((((int)digits[3]) << PyLong_SHIFT) | (int)digits[2]) << PyLong_SHIFT) | (int)digits[1]) << PyLong_SHIFT) | (int)digits[0])));
-                        }
-                    }
-                    break;
-            }
-#endif
-            if (sizeof(int) <= sizeof(long)) {
-                __PYX_VERIFY_RETURN_INT_EXC(int, long, PyLong_AsLong(x))
-            } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
-                __PYX_VERIFY_RETURN_INT_EXC(int, PY_LONG_LONG, PyLong_AsLongLong(x))
-            }
-        }
-        {
-#if CYTHON_COMPILING_IN_PYPY && !defined(_PyLong_AsByteArray)
-            PyErr_SetString(PyExc_RuntimeError,
-                            "_PyLong_AsByteArray() not available in PyPy, cannot convert large numbers");
-#else
-            int val;
-            PyObject *v = __Pyx_PyNumber_IntOrLong(x);
- #if PY_MAJOR_VERSION < 3
-            if (likely(v) && !PyLong_Check(v)) {
-                PyObject *tmp = v;
-                v = PyNumber_Long(tmp);
-                Py_DECREF(tmp);
-            }
- #endif
-            if (likely(v)) {
-                int one = 1; int is_little = (int)*(unsigned char *)&one;
-                unsigned char *bytes = (unsigned char *)&val;
-                int ret = _PyLong_AsByteArray((PyLongObject *)v,
-                                              bytes, sizeof(val),
-                                              is_little, !is_unsigned);
-                Py_DECREF(v);
-                if (likely(!ret))
-                    return val;
-            }
-#endif
-            return (int) -1;
-        }
-    } else {
-        int val;
-        PyObject *tmp = __Pyx_PyNumber_IntOrLong(x);
-        if (!tmp) return (int) -1;
-        val = __Pyx_PyInt_As_int(tmp);
-        Py_DECREF(tmp);
-        return val;
-    }
-raise_overflow:
-    PyErr_SetString(PyExc_OverflowError,
-        "value too large to convert to int");
-    return (int) -1;
-raise_neg_overflow:
-    PyErr_SetString(PyExc_OverflowError,
-        "can't convert negative value to int");
-    return (int) -1;
 }
 
 /* CIntToPy */

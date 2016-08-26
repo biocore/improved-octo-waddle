@@ -6,6 +6,9 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+# line length is useful here, so disabling check
+# flake8: noqa: E501
+
 from unittest import TestCase, main
 
 import numpy as np
@@ -81,12 +84,6 @@ class BPTests(TestCase):
         for i in range(len(self.fig1_B)):
             for j in range(i+1, len(self.fig1_B)):
                 self.assertEqual(self.BP.rMq(i, j), exp[i][j - i])
-
-    def test_depth(self):
-        pass # depth(i) == excess(i)
-
-    def test_parent(self):
-        pass # parent(i) == enclose(i)
 
     def test_mincount(self):
         #       (  (  (  )  (  )  (  (  )  )   )   (   )   (   (   (   )   (   )   )   )   )
@@ -199,36 +196,6 @@ class BPTests(TestCase):
 
         for i, e in enumerate(exp):
             self.assertEqual(self.BP.levelnext(i), e)
-
-    def test_levelprev(self):
-        #levelprev(i) = open(bwdsearch(i, 0)+1)
-        #exp = [-1, -1, -1, -1, 2, 2, 4, -1, -1, 4, -1, 1, 1, 11, 6, 7, 7, 15, 15, 6, 1, -1]
-        self.fail("levelprev is not acting as expected, and is getting prior nodes at different levels. "
-                  "I think its definition is incorrect.")
-        self._testinator(exp, self.BP.levelprev, verbose=True)
-
-    def test_levelleftmost(self):
-        #levelleftmost(d) = fwdsearch(0, d),
-        pass
-
-    def test_levelrightmost(self):
-        #levelrightmost(d) = open(bwdsearch(2n + 1, d)).
-        pass
-
-    def test_degree(self):
-        #degree(i) = mincount(i + 1, close(i) − 1),
-        pass
-
-    def test_child(i):
-        # child(i, q) = minselect(i+1, close(i)−1, q−1)+1 for q > 1
-        # (for q = 1 it is fchild(i)),
-        pass
-
-    def test_childrank(self):
-        # childrank(i) = mincount(parent(i) + 1, i) + 1
-        # unless B[i − 1] = 1
-        # (in which case childrank(i) = 1)
-        pass
 
     def test_lca(self):
         # lca(i, j) = parent(rmq(i, j) + 1)

@@ -419,7 +419,12 @@ cdef class BP:
 
     cdef SIZE_t parent(self, SIZE_t i) nogil:
         """The parent of node i"""
-        return self.enclose(i)
+        # TODO: only make operations like this defined on the open parentheses.
+        # this monkeying with checking open/close sucks.
+        if i == self.root() or i == (self.size - 1):
+            return -1
+        else:
+            return self.enclose(i)
 
     cdef BOOL_t isleaf(self, SIZE_t i) nogil:
         """Whether the node is a leaf"""
@@ -667,46 +672,6 @@ cdef class BP:
             The node index of the next node or -1 if there isn't one
         """
         return self.fwdsearch(self.close(i), 1)
-
-    def levelprev(self, i):
-        """The previous node with the same depth"""
-        #levelprev(i) = open(bwdsearch(i, 0)+1)
-        j = self.open(self.bwdsearch(self.open(i), 0))# + 1
-        print(i, self.excess(i), self.excess(j), self.depth(i), self.depth(j))
-        #print(i, self.bwdsearch(i, 0), self.open(self.bwdsearch(i, 0)))
-        #return self.bwdsearch(self.open(i), 0)
-        return j #self.bwdsearch(i - 1)
-        #if not self.B[i]:
-        #    i = self.open(i)
-
-        #j = self.open(self.bwdsearch(i, 0))
-        #if j < 0:
-        #    return j
-        #else:
-        #    return j #+ 1
-
-    def levelleftmost(self, SIZE_t d):
-        #levelleftmost(d) = fwdsearch(0, d),
-        pass
-
-    def levelrightmost(self, SIZE_t d):
-        #levelrightmost(d) = open(bwdsearch(2n + 1, d)).
-        pass
-
-    def degree(self, SIZE_t i):
-        #degree(i) = mincount(i + 1, close(i) − 1),
-        pass
-
-    def child(self, SIZE_t i, SIZE_t q):
-        # child(i, q) = minselect(i+1, close(i)−1, q−1)+1 for q > 1
-        # (for q = 1 it is fchild(i)),
-        pass
-
-    def childrank(self, SIZE_t i):
-        # childrank(i) = mincount(parent(i) + 1, i) + 1
-        # unless B[i − 1] = 1
-        # (in which case childrank(i) = 1)
-        pass
 
     cpdef SIZE_t lca(self, SIZE_t i, SIZE_t j) nogil:
         """The lowest common ancestor of i and j

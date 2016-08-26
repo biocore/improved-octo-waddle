@@ -57,7 +57,11 @@ cdef class BP:
     cdef SIZE_t root(self) nogil
     cdef int scan_block_forward(self, int i, int k, int b, int d) nogil
     cdef int scan_block_backward(self, int i, int k, int b, int d) nogil
-    
+   
+    # TODO: evalute down the road what methods should be cdef. There is a 
+    # performance cost for cpdef, so for high use functions, it may make sense
+    # to punt down to cdef.
+    # http://notes-on-cython.readthedocs.io/en/latest/fibo_speed.html
     cpdef inline unicode name(self, SIZE_t i)
     cpdef inline DOUBLE_t length(self, SIZE_t i)
     cpdef SIZE_t rmq(self, SIZE_t i, SIZE_t j) nogil

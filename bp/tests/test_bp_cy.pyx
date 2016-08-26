@@ -6,8 +6,11 @@ from bp._bp cimport BP, mM
 
 fig1_B = np.array([1, 1, 1, 0, 1, 0, 1, 1 ,0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0,
                    0, 0, 0], dtype=np.uint8)
+
+
 def get_test_obj():
     return BP(fig1_B)
+
 
 def test_rank():
     cdef BP obj = get_test_obj()
@@ -16,6 +19,7 @@ def test_rank():
     for exp, t in zip((counts_1, counts_0), (1, 0)):
         for idx, e in enumerate(exp):
             npt.assert_equal(obj.rank(t, idx), e)
+
 
 def test_select():
     cdef BP obj = get_test_obj()
@@ -26,19 +30,12 @@ def test_select():
         for k in range(1, len(exp)):
             npt.assert_equal(obj.select(t, k), exp[k])
 
-#def test_select_rmm():
-#    cdef BP obj = get_test_obj()
-#    pos_1 = np.unique(fig1_B.cumsum(), return_index=True)[1] #- 1
-#    pos_0 = np.unique((1 - fig1_B).cumsum(), return_index=True)[1]
-#
-#    for exp, t in zip((pos_1, pos_0), (1, 0)):
-#        for k in range(1, len(exp)):
-#            npt.assert_equal(obj.select_rmm(t, k), exp[k])
 
 def test_rank_property():
     cdef BP obj = get_test_obj()
     for i in range(len(fig1_B)):
         npt.assert_equal(obj.rank(1, i) + obj.rank(0, i), i+1)
+
 
 def test_rank_select_property():
     cdef BP obj = get_test_obj()
@@ -49,6 +46,7 @@ def test_rank_select_property():
             # needed +t on expectation, unclear at this time why.
             npt.assert_equal(obj.rank(t, obj.select(t, k)), k + t)
 
+
 def test_excess():
     cdef BP obj = get_test_obj()
     # from fig 2
@@ -56,12 +54,22 @@ def test_excess():
     for idx, e in enumerate(exp):
         npt.assert_equal(obj.excess(idx), e)
 
+
+def test_depth():
+    cdef BP obj = get_test_obj()
+    # from fig 2
+    exp = [1, 2, 3, 2, 3, 2, 3, 4, 3, 2, 1, 2, 1, 2, 3, 4, 3, 4, 3, 2, 1, 0]
+    for idx, e in enumerate(exp):
+        npt.assert_equal(obj.depth(idx), e)
+
+
 def test_close():
     cdef BP obj = get_test_obj()
     exp = [21, 10, 3, 5, 9, 8, 12, 20, 19, 16, 18]
     for i, e in zip(np.argwhere(fig1_B == 1).squeeze(), exp):
         npt.assert_equal(obj.close(i), e)
         npt.assert_equal(obj.excess(obj.close(i)), obj.excess(i) - 1)
+
 
 def test_open():
     cdef BP obj = get_test_obj()
@@ -71,6 +79,7 @@ def test_open():
         npt.assert_equal(obj.excess(obj.open(i)) - 1,
                          obj.excess(i))
 
+
 def test_enclose():
     cdef BP obj = get_test_obj()
     # i > 0 and i < (len(B) - 1)
@@ -78,23 +87,35 @@ def test_enclose():
     for i, e in zip(range(1, len(fig1_B) - 1), exp):
         npt.assert_equal(obj.enclose(i), e)
 
+
+def test_parent():
+    cdef BP obj = get_test_obj()
+    exp = [-1, 0, 1, 1, 1, 1, 1, 6, 6, 1, 0, 0, 0, 0, 13, 14, 14, 14, 14, 13, 
+           0, -1]
+    for i, e in zip(range(len(fig1_B)), exp):
+        npt.assert_equal(obj.parent(i), e)
+
+
 def test_root():
     cdef BP obj = get_test_obj()
     npt.assert_equal(obj.root(), 0)
 
+
 def test_isleaf():
     cdef BP obj = get_test_obj()
-    ### should isleaf be True when queried with the closing parenthesis of a leaf?
 
     exp = [0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0]
     for i, e in enumerate(exp):
         npt.assert_equal(obj.isleaf(i), e)
 
+
 def test_fchild():
     cdef BP obj = get_test_obj()
-    exp = [1, 2, 0, 0, 0, 0, 7, 0, 0, 7, 2, 0, 0, 14, 15, 0, 0, 0, 0, 15, 14, 1]
+    exp = [1, 2, 0, 0, 0, 0, 7, 0, 0, 7, 2, 0, 0, 14, 15, 0, 0, 0, 0, 15, 14, 
+           1]
     for i, e in enumerate(exp):
         npt.assert_equal(obj.fchild(i), e)
+
 
 def test_lchild():
     cdef BP obj = get_test_obj()
@@ -123,17 +144,22 @@ def test_lchild():
     for i, e in enumerate(exp):
         npt.assert_equal(obj.lchild(i), e)
 
+
 def test_nsibling():
     cdef BP obj = get_test_obj()
-    exp = [0, 11, 4, 4, 6, 6, 0, 0, 0, 0, 11, 13, 13, 0, 0, 17, 17, 0, 0, 0, 0, 0]
+    exp = [0, 11, 4, 4, 6, 6, 0, 0, 0, 0, 11, 13, 13, 0, 0, 17, 17, 0, 0, 0, 0,
+           0]
     for i, e in enumerate(exp):
         npt.assert_equal(obj.nsibling(i), e)
 
+
 def test_psibling():
     cdef BP obj = get_test_obj()
-    exp = [0, 0, 0, 0, 2, 2, 4, 0, 0, 4, 0, 1, 1, 11, 0, 0, 0, 15, 15, 0, 11, 0]
+    exp = [0, 0, 0, 0, 2, 2, 4, 0, 0, 4, 0, 1, 1, 11, 0, 0, 0, 15, 15, 0, 11, 
+           0]
     for i, e in enumerate(exp):
         npt.assert_equal(obj.psibling(i), e)
+
 
 def test_fwdsearch():
     cdef BP obj = get_test_obj()
@@ -144,6 +170,7 @@ def test_fwdsearch():
     for (i, d), e in exp.items():
         npt.assert_equal(obj.fwdsearch(i, d), e)
 
+
 def test_bwdsearch():
     cdef BP obj = get_test_obj()
     exp = {(3, 0): 1,  # open of parent
@@ -152,6 +179,7 @@ def test_bwdsearch():
 
     for (i, d), e in exp.items():
         npt.assert_equal(obj.bwdsearch(i, d), e)
+
 
 def test_fwdsearch_more():
     cdef BP bp
@@ -307,9 +335,9 @@ def test_rmm():
     bp = parse_newick('((a,b,(c)),d,((e,f)));')
     exp = np.array([[0, 1, 0, 1, 1, 0, 0, 1, 2, 1, 1, 2, 0],  # m
                     [4, 4, 4, 4, 4, 4, 0, 3, 4, 3, 4, 4, 1],  # M
-                   #[0, 4, -4, 4, 0, -4, 0, 2, 2, -2, 2, -2, -2]], dtype=np.intp).T # partial excess
                     [0, 0, 10, 0, 6, 10, 0, 0, 3, 6, 7, 10, 11], # r
-                    [11, 6, 11, 2, 6, 11, 0, 1, 2, 5, 6, 9, 11]], dtype=np.intp).T # k0
+                    [11, 6, 11, 2, 6, 11, 0, 1, 2, 5, 6, 9, 11]],  # k0
+                   dtype=np.intp).T 
     obs = mM(bp.B, bp.B.size)
 
     assert exp.shape[0] == obs.mM.shape[0]
@@ -317,6 +345,4 @@ def test_rmm():
     
     for i in range(exp.shape[0]):
         for j in range(exp.shape[1]):
-            #if j == 3:
-            #    print(i, j, obs.mM[i, j], exp[i, j])
             assert obs.mM[i, j] == exp[i, j]    

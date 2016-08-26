@@ -1,3 +1,5 @@
 nose
 numpy
-pep8
+flake8
+cython
+scikit-bio
