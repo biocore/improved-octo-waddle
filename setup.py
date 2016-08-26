@@ -75,7 +75,7 @@ setup(name='bp',
       url='https://github.com/wasade/improved-octo-waddle',
       packages=['bp'],
       ext_modules=extensions,
-      include_dirs=[np.get_include()],
+      include_dirs=[np.get_include(), 'BitArray/'],
       setup_requires=['numpy >= 1.9.2'],
       install_requires=[
           'numpy >= 1.9.2',
