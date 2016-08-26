@@ -75,5 +75,5 @@ setup(name='bp',
           'numpy >= 1.9.2',
           'nose >= 1.3.7',
           'cython >= 0.24.1',
-          'scikit-bio >= 0.5.0 < 0.6.0'],
+          'scikit-bio >= 0.5.0, < 0.6.0'],
       long_description=long_description)
