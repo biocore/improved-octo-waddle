@@ -8,7 +8,7 @@
 import os
 from setuptools import setup
 from setuptools.extension import Extension
-from setuptools.command.install import install
+from setuptools.command.build_py import build_py
 
 import numpy as np
 
@@ -67,14 +67,14 @@ if USE_CYTHON:
 import subprocess
 bitarr = os.path.join(os.path.abspath(__file__).rsplit('/', 1)[0], 'BitArray')
 
-class BitArrayInstall(install):
+class BitArrayInstall(build_py):
     def run(self):
         subprocess.run(['make', '-C', bitarr, 'libbitarr.a'])
-        install.run(self)
+        build_py.run(self)
 
 
-setup(name='bp',
-      version=0.1,
+setup(name='iow',
+      version="0.1.1",
       description='Balanced parentheses',
       author='Daniel McDonald',
       author_email='mcdonadt@colorado.edu',
@@ -91,4 +91,4 @@ setup(name='bp',
           'cython >= 0.24.1',
           'scikit-bio >= 0.5.0, < 0.6.0'],
       long_description=long_description,
-      cmdclass={'install': BitArrayInstall})
+      cmdclass={'build_py': BitArrayInstall})
