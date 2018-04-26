@@ -27,9 +27,10 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
         split_idx = token.rfind(':')
         name = token[:split_idx]
         length = np.double(token[split_idx + 1:])
-        name = name.replace("'", "").replace('"', "")
+        name = name.strip("'")
     else:
         name = token.replace("'", "").replace('"', "")
+        pass
 
     names[ptr] = name
     lengths[ptr] = length
@@ -43,9 +44,6 @@ cpdef parse_newick(unicode data):
         unicode token, last_token
         np.ndarray[object, ndim=1] names
         np.ndarray[np.double_t, ndim=1] lengths
-
-    ##### probably can cache tip indices
-    ##### probably can cache parent indices
 
     datalen = len(data)
     topology = _newick_to_bp(data)
@@ -127,41 +125,47 @@ cdef object _newick_to_bp(unicode data):
     topology = np.empty(len(data), dtype=np.uint8)
     topology_ptr = 0
     last_c = u'x'
+    in_quote = False
 
     for i in range(len(data)):
         c = data[i]
-        if c == u'(':
-            # opening of a node
-            topology[topology_ptr] = 1
-            topology_ptr += 1
-            last_c = c
-            potential_single_descendant = True
-        elif c == u')':
-            # closing of a node
-            if potential_single_descendant or last_c == u',':
-                # we have a single descendant or a last child (i.e., ",)")
-                topology[topology_ptr] = 1
-                topology[topology_ptr + 1] = 0
-                topology[topology_ptr + 2] = 0
-                topology_ptr += 3
-                potential_single_descendant = False
-            else:
-                # it is possible to still have a single descendant in the case
-                # of a multiple single descendant: (...()...)
-                topology[topology_ptr] = 0
-                topology_ptr += 1
-            last_c = c
-        elif c == u',':
-            if last_c != u')':
-                # we have a new tip
-                topology[topology_ptr] = 1
-                topology[topology_ptr + 1] = 0
-                topology_ptr += 2
-            potential_single_descendant = False
-            last_c = c
+        if c == u"'":
+            in_quote = not in_quote
         else:
-            # ignore non-structure
-            pass
+            if in_quote:
+                continue
+            elif c == u'(':
+                # opening of a node
+                topology[topology_ptr] = 1
+                topology_ptr += 1
+                last_c = c
+                potential_single_descendant = True
+            elif c == u')':
+                # closing of a node
+                if potential_single_descendant or last_c == u',':
+                    # we have a single descendant or a last child (i.e., ",)")
+                    topology[topology_ptr] = 1
+                    topology[topology_ptr + 1] = 0
+                    topology[topology_ptr + 2] = 0
+                    topology_ptr += 3
+                    potential_single_descendant = False
+                else:
+                    # it is possible to still have a single descendant in the case
+                    # of a multiple single descendant: (...()...)
+                    topology[topology_ptr] = 0
+                    topology_ptr += 1
+                last_c = c
+            elif c == u',':
+                if last_c != u')':
+                    # we have a new tip
+                    topology[topology_ptr] = 1
+                    topology[topology_ptr + 1] = 0
+                    topology_ptr += 2
+                potential_single_descendant = False
+                last_c = c
+            else:
+                # ignore non-structure
+                pass
 
     return BP(topology[:topology_ptr])
 

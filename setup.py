@@ -27,7 +27,6 @@ classifiers = [s.strip() for s in classes.split('\n') if s]
 long_description = """An implementation of a balanced tree as described by
 Cordova and Navarro"""
 
-from Cython.Compiler.Options import directive_defaults
 
 USE_CYTHON = os.environ.get('USE_CYTHON', True)
 ext = '.pyx' if USE_CYTHON else '.c'
