@@ -45,16 +45,16 @@ cdef class BP:
     cdef SIZE_t bwdsearch(self, SIZE_t i, int d) nogil
     cdef inline SIZE_t close(self, SIZE_t i) nogil
     cdef inline SIZE_t open(self, SIZE_t i) nogil
-    cdef inline BOOL_t isleaf(self, SIZE_t i) nogil
+    cpdef inline BOOL_t isleaf(self, SIZE_t i) nogil
     cdef inline SIZE_t enclose(self, SIZE_t i) nogil
     cdef BP _mask_from_self(self, BIT_ARRAY* mask, np.ndarray[DOUBLE_t, ndim=1] lengths)
-    cdef SIZE_t nsibling(self, SIZE_t i) nogil
-    cdef SIZE_t psibling(self, SIZE_t i) nogil
-    cdef SIZE_t lchild(self, SIZE_t i) nogil
-    cdef SIZE_t fchild(self, SIZE_t i) nogil
-    cdef SIZE_t parent(self, SIZE_t i) nogil
-    cdef SIZE_t depth(self, SIZE_t i) nogil
-    cdef SIZE_t root(self) nogil
+    cpdef SIZE_t nsibling(self, SIZE_t i) nogil
+    cpdef SIZE_t psibling(self, SIZE_t i) nogil
+    cpdef SIZE_t lchild(self, SIZE_t i) nogil
+    cpdef SIZE_t fchild(self, SIZE_t i) nogil
+    cpdef SIZE_t parent(self, SIZE_t i) nogil
+    cpdef SIZE_t depth(self, SIZE_t i) nogil
+    cpdef SIZE_t root(self) nogil
     cdef int scan_block_forward(self, int i, int k, int b, int d) nogil
     cdef int scan_block_backward(self, int i, int k, int b, int d) nogil
    

@@ -409,15 +409,15 @@ cdef class BP:
     def __reduce__(self):
         return (BP, (self.B, self._lengths, self._names))
 
-    cdef SIZE_t depth(self, SIZE_t i) nogil:
+    cpdef SIZE_t depth(self, SIZE_t i) nogil:
         """The depth of node i"""
         return self._e_index[i]
 
-    cdef SIZE_t root(self) nogil:
+    cpdef SIZE_t root(self) nogil:
         """The root of the tree"""
         return 0
 
-    cdef SIZE_t parent(self, SIZE_t i) nogil:
+    cpdef SIZE_t parent(self, SIZE_t i) nogil:
         """The parent of node i"""
         # TODO: only make operations like this defined on the open parentheses.
         # this monkeying with checking open/close sucks.
@@ -426,11 +426,11 @@ cdef class BP:
         else:
             return self.enclose(i)
 
-    cdef BOOL_t isleaf(self, SIZE_t i) nogil:
+    cpdef BOOL_t isleaf(self, SIZE_t i) nogil:
         """Whether the node is a leaf"""
         return self._b_ptr[i] and (not self._b_ptr[i + 1])
 
-    cdef SIZE_t fchild(self, SIZE_t i) nogil:
+    cpdef SIZE_t fchild(self, SIZE_t i) nogil:
         """The first child of i (i.e., the left child)
 
         fchild(i) = i + 1 (if i is not a leaf)
@@ -446,7 +446,7 @@ cdef class BP:
         else:
             return self.fchild(self.open(i))
 
-    cdef SIZE_t lchild(self, SIZE_t i) nogil:
+    cpdef SIZE_t lchild(self, SIZE_t i) nogil:
         """The last child of i (i.e., the right child)
 
         lchild(i) = open(close(i) − 1) (if i is not a leaf)
@@ -477,7 +477,7 @@ cdef class BP:
         else:
             return i + index.nonzero()[0][q - 1]
 
-    cdef SIZE_t nsibling(self, SIZE_t i) nogil:
+    cpdef SIZE_t nsibling(self, SIZE_t i) nogil:
         """The next sibling of i (i.e., the sibling to the right)
 
         nsibling(i) = close(i) + 1 (if the result j holds B[j] = 0 then i has no next sibling)
@@ -499,7 +499,7 @@ cdef class BP:
         else:
             return 0
 
-    cdef SIZE_t psibling(self, SIZE_t i) nogil:
+    cpdef SIZE_t psibling(self, SIZE_t i) nogil:
         """The previous sibling of i (i.e., the sibling to the left)
 
         psibling(i) = open(i − 1) (if B[i − 1] = 1 then i has no previous sibling)
