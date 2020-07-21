@@ -73,7 +73,7 @@ class BitArrayInstall(build_py):
 
 
 setup(name='iow',
-      version="0.1.1",
+      version="0.1.2",
       description='Balanced parentheses',
       author='Daniel McDonald',
       author_email='mcdonadt@colorado.edu',
