@@ -36,6 +36,52 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
     lengths[ptr] = length
 
 
+def write_newick(BP tree, object output):
+    cdef:
+        list name_stack
+        list length_stack
+        list open_paren_stack
+        object name
+        np.npy_float64 length
+        Py_ssize_t idx
+        np.npy_uint8 v
+        Py_ssize_t root_close
+
+    length_stack = []
+    name_stack = []
+    open_paren_stack = []
+    root_close = tree.close(0)
+
+    for idx, v in enumerate(tree.B):
+        if v:
+            if not tree.isleaf(idx):
+                output.write('(')
+            name_stack.append(tree.name(idx))
+            length_stack.append(tree.length(idx))
+            open_paren_stack.append(idx)
+        else:
+            name = name_stack.pop()
+            length = length_stack.pop()
+
+            if name is not None:
+                # if we have magical characters, make sure we quote
+                if set(name) & {';', ',', '(', ')'}:
+                    output.write("'%s'" % name)
+                else:
+                    output.write(name)
+
+            if length > 0:
+                output.write(':%f' % length)
+                
+            if tree.nsibling(open_paren_stack.pop()) == 0:
+                if idx != root_close:
+                    output.write(')')
+            else:
+                output.write(',')
+
+    output.write(';')
+
+
 cpdef parse_newick(unicode data):
     cdef:
         np.uint32_t ptr, open_ptr
