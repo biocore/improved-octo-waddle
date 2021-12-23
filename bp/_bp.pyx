@@ -327,7 +327,7 @@ cdef class BP:
         # same as: self.rank(1, i) - self.rank(0, i)
         return self._e_index[i]
     
-    cdef inline SIZE_t close(self, SIZE_t i) nogil:
+    cpdef inline SIZE_t close(self, SIZE_t i) nogil:
         """The position of the closing parenthesis that matches B[i]"""
         if not self._b_ptr[i]:
             # identity: the close of a closed parenthesis is itself

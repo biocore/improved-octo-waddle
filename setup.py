@@ -18,6 +18,7 @@ classes = """
     Topic :: Scientific/Engineering
     Programming Language :: Python
     Programming Language :: Python :: 3.5
+    Programming Language :: Python :: 3.6
     Operating System :: Unix
     Operating System :: POSIX
     Operating System :: MacOS :: MacOS X
@@ -73,7 +74,7 @@ class BitArrayInstall(build_py):
 
 
 setup(name='iow',
-      version="0.1.2",
+      version="0.1.3",
       description='Balanced parentheses',
       author='Daniel McDonald',
       author_email='mcdonadt@colorado.edu',

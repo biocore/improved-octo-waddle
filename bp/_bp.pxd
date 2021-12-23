@@ -43,7 +43,7 @@ cdef class BP:
     cdef SIZE_t excess(self, SIZE_t i) nogil
     cdef SIZE_t fwdsearch(self, SIZE_t i, int d) nogil
     cdef SIZE_t bwdsearch(self, SIZE_t i, int d) nogil
-    cdef inline SIZE_t close(self, SIZE_t i) nogil
+    cpdef inline SIZE_t close(self, SIZE_t i) nogil
     cdef inline SIZE_t open(self, SIZE_t i) nogil
     cpdef inline BOOL_t isleaf(self, SIZE_t i) nogil
     cdef inline SIZE_t enclose(self, SIZE_t i) nogil

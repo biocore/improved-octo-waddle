@@ -197,6 +197,11 @@ class BPTests(TestCase):
         for i, e in enumerate(exp):
             self.assertEqual(self.BP.levelnext(i), e)
 
+    def test_close(self):
+        exp = [21, 10, 3, 5, 9, 8, 12, 20, 19, 16, 18]
+        for i, e in zip(np.argwhere(self.BP.B == 1).squeeze(), exp):
+            npt.assert_equal(self.BP.close(i), e)
+
     def test_lca(self):
         # lca(i, j) = parent(rmq(i, j) + 1)
         # unless isancestor(i, j)
