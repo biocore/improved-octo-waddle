@@ -10,6 +10,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
@@ -26,8 +28,6 @@ jobs:
         echo "********"
         ls -lrt /home/runner/work/improved-octo-waddle/improved-octo-waddle/bp/BitArray
         echo "********"
-        git submodule init
-        git submodule update
         pip install -e .
     - name: Lint with flake8
       run: |
