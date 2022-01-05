@@ -31,7 +31,7 @@ Cordova and Navarro"""
 
 
 curdir = os.path.abspath(__file__).rsplit('/', 1)[0]
-bitarr = os.path.join(curdir, 'BitArray')
+bitarr = os.path.join(curdir, 'bp/BitArray')
 
 
 class BitArrayInstall(build_py):
@@ -55,15 +55,15 @@ extensions = [Extension("bp._bp",
                         ["bp/_binary_tree" + ext], ),
               Extension("bp.tests.test_bp_cy",
                         ["bp/tests/test_bp_cy" + ext],
-                        include_dirs=['BitArray/'],
-                        library_dirs=['BitArray/'],
+                        include_dirs=['bp/BitArray/'],
+                        library_dirs=['bp/BitArray/'],
                         libraries=['bitarr']),
               ]
 
 extensions.extend([Extension("bp._ba",
                             ["bp/_ba" + ext],
-                            include_dirs=['BitArray/'],
-                             library_dirs=['BitArray/'],
+                            include_dirs=['bp/BitArray/'],
+                             library_dirs=['bp/BitArray/'],
                              libraries=['bitarr'])])
 
 
