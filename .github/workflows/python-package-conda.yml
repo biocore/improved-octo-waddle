@@ -23,12 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         conda install cython scikit-bio numpy
-        echo "*********"
-        ls -lrt
-        echo "********"
-        ls -lrt /home/runner/work/improved-octo-waddle/improved-octo-waddle/bp/BitArray
-        echo "********"
-        pip install -vvv -e .
+        pip install -e .
     - name: Lint with flake8
       run: |
         conda install flake8
