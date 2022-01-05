@@ -65,7 +65,8 @@ if USE_CYTHON:
 
 
 import subprocess
-bitarr = os.path.join(os.path.abspath(__file__).rsplit('/', 1)[0], 'BitArray')
+curdir = os.path.abspath(__file__).rsplit('/', 1)[0]
+bitarr = os.path.join(curdir, 'BitArray')
 
 class BitArrayInstall(build_py):
     def run(self):
@@ -83,9 +84,7 @@ setup(name='iow',
       url='https://github.com/wasade/improved-octo-waddle',
       packages=['bp'],
       ext_modules=extensions,
-      include_dirs=[np.get_include(), 'BitArray/'],
-      package_data={
-          '': ['BitArray/*']},
+      include_dirs=[np.get_include(), bitarr],
       setup_requires=['numpy >= 1.9.2'],
       install_requires=[
           'numpy >= 1.9.2',

@@ -21,6 +21,9 @@ jobs:
     - name: Install dependencies
       run: |
         conda install cython scikit-bio numpy
+        echo "*********"
+        ls -lrt
+        echo "********"
         pip install -e .
     - name: Lint with flake8
       run: |
