@@ -87,6 +87,7 @@ setup(name='iow',
       ext_modules=extensions,
       include_dirs=[np.get_include(), bitarr],
       setup_requires=['numpy >= 1.9.2'],
+      pacakge_data={'bp': ['BitArray/*', ]},
       install_requires=[
           'numpy >= 1.9.2',
           'nose >= 1.3.7',
