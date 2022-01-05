@@ -9,6 +9,10 @@ import os
 from setuptools import setup
 from setuptools.extension import Extension
 from setuptools.command.build_py import build_py
+from setuptools.command.install import install
+from setuptools.command.develop import develop
+from setuptools.command.egg_info import egg_info
+
 import subprocess
 
 import numpy as np
@@ -34,10 +38,33 @@ curdir = os.path.abspath(__file__).rsplit('/', 1)[0]
 bitarr = os.path.join(curdir, 'bp/BitArray')
 
 
-class BitArrayInstall(build_py):
-    def run(self):
+class common:
+    def build_bitarray(self):
         subprocess.run(['make', '-C', bitarr, 'libbitarr.a'])
+
+
+class BitArrayBuild(build_py, common):
+    def run(self):
+        self.build_bitarray()
         build_py.run(self)
+
+
+class BitArrayInstall(install, common):
+    def run(self):
+        self.build_bitarray()
+        install.run(self)
+
+
+class BitArrayDevelop(develop, common):
+    def run(self):
+        self.build_bitarray()
+        develop.run(self)
+
+
+class BitArrayEggInfo(egg_info, common):
+    def run(self):
+        self.build_bitarray()
+        egg_info.run(self)
 
 
 USE_CYTHON = os.environ.get('USE_CYTHON', True)
@@ -94,4 +121,8 @@ setup(name='iow',
           'cython >= 0.24.1',
           'scikit-bio >= 0.5.0, < 0.6.0'],
       long_description=long_description,
-      cmdclass={'build_py': BitArrayInstall})
+      cmdclass={'build_py': BitArrayBuild,
+                'install': BitArrayInstall,
+                'develop': BitArrayDevelop,
+                'egg_info': BitArrayEggInfo
+                })
