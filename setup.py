@@ -9,6 +9,7 @@ import os
 from setuptools import setup
 from setuptools.extension import Extension
 from setuptools.command.build_py import build_py
+import subprocess
 
 import numpy as np
 
@@ -29,12 +30,22 @@ long_description = """An implementation of a balanced tree as described by
 Cordova and Navarro"""
 
 
+curdir = os.path.abspath(__file__).rsplit('/', 1)[0]
+bitarr = os.path.join(curdir, 'BitArray')
+
+
+class BitArrayInstall(build_py):
+    def run(self):
+        subprocess.run(['make', '-C', bitarr, 'libbitarr.a'])
+        build_py.run(self)
+
+
 USE_CYTHON = os.environ.get('USE_CYTHON', True)
 ext = '.pyx' if USE_CYTHON else '.c'
 extensions = [Extension("bp._bp",
                         ["bp/_bp" + ext],
-                        include_dirs=['BitArray/'],
-                        library_dirs=['BitArray/'],
+                        include_dirs=[bitarr],
+                        library_dirs=[bitarr],
                         libraries=['bitarr']),
               Extension("bp._io",
                         ["bp/_io" + ext], ),
@@ -62,16 +73,6 @@ extensions.extend([Extension("bp._ba",
 if USE_CYTHON:
     from Cython.Build import cythonize
     extensions = cythonize(extensions)
-
-
-import subprocess
-curdir = os.path.abspath(__file__).rsplit('/', 1)[0]
-bitarr = os.path.join(curdir, 'BitArray')
-
-class BitArrayInstall(build_py):
-    def run(self):
-        subprocess.run(['make', '-C', bitarr, 'libbitarr.a'])
-        build_py.run(self)
 
 
 setup(name='iow',
