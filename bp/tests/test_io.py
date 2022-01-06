@@ -7,6 +7,28 @@ import numpy.testing as npt
 
 
 class NewickTests(TestCase):
+    def test_parse_newick_simple_edge_numbers(self):
+        # from https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031009
+        # but without edge labels
+        # 0 1 2 3 4 5 6 7 8 9
+        # 1 1 1 0 1 0 0 1 0 0
+        in_ = '((A:.01{0}, B:.01{1})D:.01{3}, C:.01{4}) {5};'
+        exp_sk = '((A:.01, B:.01)D:.01, C:.01);'
+        exp = skbio.TreeNode.read([exp_sk])  # skbio doesn't know about edge numbers
+        obs = parse_newick(in_)
+        obs_sk = to_skbio_treenode(obs)
+        self.assertEqual(obs_sk.compare_subsets(exp), 0.0)
+        self.assertEqual(obs.edge(2), 0)
+        self.assertEqual(obs.edge(4), 1)
+        self.assertEqual(obs.edge(1), 3)
+        self.assertEqual(obs.edge(7), 4)
+        self.assertEqual(obs.edge(0), 5)
+        self.assertEqual(obs.edge_from_number(0), 2)
+        self.assertEqual(obs.edge_from_number(1), 4)
+        self.assertEqual(obs.edge_from_number(3), 1)
+        self.assertEqual(obs.edge_from_number(4), 7)
+        self.assertEqual(obs.edge_from_number(5), 0)
+
     def test_parse_newick_nested_quotes(self):
         # bug: quotes are removed
         in_ = '((foo"bar":1,baz:2)x:3)r;'
