@@ -9,6 +9,11 @@ import os
 from setuptools import setup
 from setuptools.extension import Extension
 from setuptools.command.build_py import build_py
+from setuptools.command.install import install
+from setuptools.command.develop import develop
+from setuptools.command.egg_info import egg_info
+
+import subprocess
 
 import numpy as np
 
@@ -29,12 +34,45 @@ long_description = """An implementation of a balanced tree as described by
 Cordova and Navarro"""
 
 
+curdir = os.path.abspath(__file__).rsplit('/', 1)[0]
+bitarr = os.path.join(curdir, 'bp/BitArray')
+
+
+class common:
+    def build_bitarray(self):
+        subprocess.run(['make', '-C', bitarr, 'libbitarr.a'])
+
+
+class BitArrayBuild(build_py, common):
+    def run(self):
+        self.build_bitarray()
+        build_py.run(self)
+
+
+class BitArrayInstall(install, common):
+    def run(self):
+        self.build_bitarray()
+        install.run(self)
+
+
+class BitArrayDevelop(develop, common):
+    def run(self):
+        self.build_bitarray()
+        develop.run(self)
+
+
+class BitArrayEggInfo(egg_info, common):
+    def run(self):
+        self.build_bitarray()
+        egg_info.run(self)
+
+
 USE_CYTHON = os.environ.get('USE_CYTHON', True)
 ext = '.pyx' if USE_CYTHON else '.c'
 extensions = [Extension("bp._bp",
                         ["bp/_bp" + ext],
-                        include_dirs=['BitArray/'],
-                        library_dirs=['BitArray/'],
+                        include_dirs=[bitarr],
+                        library_dirs=[bitarr],
                         libraries=['bitarr']),
               Extension("bp._io",
                         ["bp/_io" + ext], ),
@@ -44,15 +82,15 @@ extensions = [Extension("bp._bp",
                         ["bp/_binary_tree" + ext], ),
               Extension("bp.tests.test_bp_cy",
                         ["bp/tests/test_bp_cy" + ext],
-                        include_dirs=['BitArray/'],
-                        library_dirs=['BitArray/'],
+                        include_dirs=['bp/BitArray/'],
+                        library_dirs=['bp/BitArray/'],
                         libraries=['bitarr']),
               ]
 
 extensions.extend([Extension("bp._ba",
                             ["bp/_ba" + ext],
-                            include_dirs=['BitArray/'],
-                             library_dirs=['BitArray/'],
+                            include_dirs=['bp/BitArray/'],
+                             library_dirs=['bp/BitArray/'],
                              libraries=['bitarr'])])
 
 
@@ -62,15 +100,6 @@ extensions.extend([Extension("bp._ba",
 if USE_CYTHON:
     from Cython.Build import cythonize
     extensions = cythonize(extensions)
-
-
-import subprocess
-bitarr = os.path.join(os.path.abspath(__file__).rsplit('/', 1)[0], 'BitArray')
-
-class BitArrayInstall(build_py):
-    def run(self):
-        subprocess.run(['make', '-C', bitarr, 'libbitarr.a'])
-        build_py.run(self)
 
 
 setup(name='iow',
@@ -83,12 +112,17 @@ setup(name='iow',
       url='https://github.com/wasade/improved-octo-waddle',
       packages=['bp'],
       ext_modules=extensions,
-      include_dirs=[np.get_include(), 'BitArray/'],
+      include_dirs=[np.get_include(), bitarr],
       setup_requires=['numpy >= 1.9.2'],
+      package_data={'bp': ['BitArray/*', ]},
       install_requires=[
           'numpy >= 1.9.2',
           'nose >= 1.3.7',
           'cython >= 0.24.1',
           'scikit-bio >= 0.5.0, < 0.6.0'],
       long_description=long_description,
-      cmdclass={'build_py': BitArrayInstall})
+      cmdclass={'build_py': BitArrayBuild,
+                'install': BitArrayInstall,
+                'develop': BitArrayDevelop,
+                'egg_info': BitArrayEggInfo
+                })

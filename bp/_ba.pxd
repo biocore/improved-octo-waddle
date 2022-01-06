@@ -1,7 +1,7 @@
 cdef extern from "<inttypes.h>":
     ctypedef unsigned int uint64_t
 
-cdef extern from "../BitArray/bit_array.h":
+cdef extern from "bit_array.h":
     struct BIT_ARRAY:
         pass
     ctypedef uint64_t bit_index_t
