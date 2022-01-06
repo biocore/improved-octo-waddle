@@ -17,6 +17,9 @@ class ConversionTests(TestCase):
         self.sktn = skbio.TreeNode.read(StringIO(self.tstr))
         print("SETUP", flush=True)
 
+    def test_noop(self):
+        pass
+
     #def test_to_skbio_treenode(self):
     #    print("tst", flush=True)
     #    obs = to_skbio_treenode(self.bp)
@@ -30,16 +33,16 @@ class ConversionTests(TestCase):
     #    self.assertEqual(obs.ascii_art(), self.sktn.ascii_art())
     #    print("tst", flush=True)
 
-    def test_from_skbio_treenode(self):
-        print("fst", flush=True)
-        obs_bp = from_skbio_treenode(self.sktn)
-        exp_bp = self.bp
+ #   def test_from_skbio_treenode(self):
+ #       print("fst", flush=True)
+ #       obs_bp = from_skbio_treenode(self.sktn)
+ #       exp_bp = self.bp
 
-        npt.assert_equal(obs_bp.B, exp_bp.B)
-        for i in range(len(self.bp.B)):
-            self.assertEqual(exp_bp.name(i), obs_bp.name(i))
-            self.assertEqual(exp_bp.length(i), obs_bp.length(i))
-        print("fst", flush=True)
+ #       npt.assert_equal(obs_bp.B, exp_bp.B)
+ #       for i in range(len(self.bp.B)):
+ #           self.assertEqual(exp_bp.name(i), obs_bp.name(i))
+ #           self.assertEqual(exp_bp.length(i), obs_bp.length(i))
+ #       print("fst", flush=True)
 
     #def test_to_array(self):
     #    print("ta", flush=True)
