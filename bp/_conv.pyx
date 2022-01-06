@@ -27,6 +27,7 @@ def to_skbio_treenode(BP bp):
         node_idx = bp.preorderselect(i)
         nodes[i].name = bp.name(node_idx)
         nodes[i].length = bp.length(node_idx)
+        nodes[i].edge_num = bp.edge(node_idx)
 
         if node_idx != bp.root():
             # preorder starts at 1 annoyingly
