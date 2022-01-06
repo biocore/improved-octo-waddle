@@ -17,8 +17,8 @@ class ConversionTests(TestCase):
         self.sktn = skbio.TreeNode.read(StringIO(self.tstr))
         print("SETUP", flush=True)
 
-    def test_noop(self):
-        pass
+    def test_blah(self):
+        to_skbio_treenode(self.bp)
 
     #def test_to_skbio_treenode(self):
     #    print("tst", flush=True)
