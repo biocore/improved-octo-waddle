@@ -198,6 +198,7 @@ cdef class BP:
         cdef np.ndarray[object, ndim=1] _names
         cdef np.ndarray[DOUBLE_t, ndim=1] _lengths
         cdef np.ndarray[INT32_t, ndim=1] _edges
+        cdef np.ndarray[SIZE_t, ndim=1] _edge_lookup
 
         # the tree is only valid if it is balanaced
         assert B.sum() == (float(B.size) / 2)
@@ -218,9 +219,10 @@ cdef class BP:
             self._lengths = np.zeros(self.B.size, dtype=DOUBLE)
 
         if edges is not None:
-            self._edges = edges
+            self._set_edges(edges)
         else:
             self._edges = np.full(self.B.size, -1, dtype=INT32)
+            self._edge_lookup = None
 
         # construct a rank index. These operations are performed frequently,
         # and easy to cache at a relatively minor memory expense
@@ -262,6 +264,29 @@ cdef class BP:
 
     def set_lengths(self, np.ndarray[DOUBLE_t, ndim=1] lengths):
         self._lengths = lengths
+   
+    cdef void _set_edges(self, np.ndarray[INT32_t, ndim=1] edges):
+        cdef:
+            int i, n
+            INT32_t edge
+            np.ndarray[SIZE_t, ndim=1] _edge_lookup
+            np.ndarray[BOOL_t, ndim=1] b
+
+        b = self.B
+        n = b.size
+       
+        # Py_ssize_t is signed...
+        _edge_lookup = np.full(n, -1, dtype=SIZE)
+        for i in range(n):
+            if b[i] == 1:
+                edge = edges[i]
+                _edge_lookup[edge] = i
+        
+        self._edge_lookup = _edge_lookup
+        self._edges = edges
+
+    def set_edges(self, np.ndarray[INT32_t, ndim=1] edges):
+        self._set_edges(edges)
 
     cpdef inline unicode name(self, SIZE_t i):
         return self._names[i]
@@ -273,7 +298,7 @@ cdef class BP:
         return self._edges[i]
 
     cpdef SIZE_t edge_from_number(self, INT32_t n):
-        return -1
+        return self._edge_lookup[n]
 
     cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
         """Determine the rank order of the ith bit t

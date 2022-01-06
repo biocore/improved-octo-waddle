@@ -30,7 +30,7 @@ cdef inline np.int32_t number_from_edge(unicode token):
     if split_idx == -1:
         return -1
     else:
-        return np.int32(token[split_idx:-1])
+        return np.int32(token[split_idx + 1:-1])
 
 
 cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
@@ -52,16 +52,18 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
         token_parsed = token[1:]
         length = length_from_edge(token_parsed)
         edge = number_from_edge(token_parsed)
-    elif ':' in token:
+    elif u':' in token:
         split_idx = token.rfind(':')
         name = token[:split_idx]
         token_parsed = token[split_idx + 1:]
         length = length_from_edge(token_parsed)
         edge = number_from_edge(token_parsed)
-        name = name.strip("'")
+        name = name.strip("'").strip()
+    elif u'{' in token:
+        # strip as " {123}" is valid?
+        edge = np.int32(token.strip()[1:-1])
     else:
-        name = token.replace("'", "").replace('"', "")
-        pass
+        name = token.replace("'", "").replace('"', "").strip()
 
     names[ptr] = name
     lengths[ptr] = length

@@ -14,11 +14,12 @@ class NewickTests(TestCase):
         # 0 1 2 3 4 5 6 7 8 9
         # 1 1 1 0 1 0 0 1 0 0
         in_ = '((A:.01{0}, B:.01{1})D:.01{3}, C:.01{4}) {5};'
-        exp_sk = '((A:.01, B:.01)D:.01, C:.01);'
-        exp = skbio.TreeNode.read([exp_sk])  # skbio doesn't know about edge numbers
+        exp_sk = '((A:.01, B:.01)D:.01, C:.01);'  # skbio doesn't know about edge numbers
         obs = parse_newick(in_)
         obs_sk = to_skbio_treenode(obs)
-        self._compare_newick(obs_sk, exp)
+        exp_sk = skbio.TreeNode.read([exp_sk])
+        self.assertEqual(obs_sk.compare_rfd(exp_sk), 0)
+
         self.assertEqual(obs.edge(2), 0)
         self.assertEqual(obs.edge(4), 1)
         self.assertEqual(obs.edge(1), 3)

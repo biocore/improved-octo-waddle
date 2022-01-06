@@ -36,6 +36,7 @@ cdef class BP:
         np.ndarray _names
         np.ndarray _lengths
         np.ndarray _edges
+        np.ndarray _edge_lookup
         mM _rmm
         SIZE_t size
 
@@ -59,7 +60,8 @@ cdef class BP:
     cpdef SIZE_t root(self) nogil
     cdef int scan_block_forward(self, int i, int k, int b, int d) nogil
     cdef int scan_block_backward(self, int i, int k, int b, int d) nogil
-   
+    cdef void _set_edges(self, np.ndarray[INT32_t, ndim=1] edges)
+
     # TODO: evalute down the road what methods should be cdef. There is a 
     # performance cost for cpdef, so for high use functions, it may make sense
     # to punt down to cdef.
