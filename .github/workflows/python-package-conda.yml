@@ -36,5 +36,5 @@ jobs:
         conda install pytest
         #pytest
         python bp/tests/test_conv.py
-        python bp/tests/test_io.py
-        python bp/tests/test_bp.py
+        #python bp/tests/test_io.py
+        #python bp/tests/test_bp.py
