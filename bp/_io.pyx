@@ -28,7 +28,7 @@ cdef inline np.int32_t number_from_edge(unicode token):
     # 0.12345{0123} -> 0123
     split_idx = token.find('{')
     if split_idx == -1:
-        return -1
+        return 0
     else:
         return np.int32(token[split_idx + 1:-1])
 
