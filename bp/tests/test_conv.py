@@ -17,21 +17,21 @@ class ConversionTests(TestCase):
         self.sktn = skbio.TreeNode.read(StringIO(self.tstr))
         print("SETUP", flush=True)
 
-    def test_blah(self):
-        to_skbio_treenode(self.bp)
+    #def test_blah(self):
+    #    to_skbio_treenode(self.bp)
 
-    #def test_to_skbio_treenode(self):
-    #    print("tst", flush=True)
-    #    obs = to_skbio_treenode(self.bp)
-    #    for o, e in zip(obs.traverse(), self.sktn.traverse()):
-    #        if e.length is None:
-    #            self.assertEqual(o.length, None if e.is_root() else 0.0)
-    #        else:
-    #            self.assertEqual(o.length, e.length)
-    #        self.assertEqual(o.name, e.name)
+    def test_to_skbio_treenode(self):
+        print("tst", flush=True)
+        obs = to_skbio_treenode(self.bp)
+        for o, e in zip(obs.traverse(), self.sktn.traverse()):
+            if e.length is None:
+                self.assertEqual(o.length, None if e.is_root() else 0.0)
+            else:
+                self.assertEqual(o.length, e.length)
+            self.assertEqual(o.name, e.name)
 
-    #    self.assertEqual(obs.ascii_art(), self.sktn.ascii_art())
-    #    print("tst", flush=True)
+        self.assertEqual(obs.ascii_art(), self.sktn.ascii_art())
+        print("tst", flush=True)
 
  #   def test_from_skbio_treenode(self):
  #       print("fst", flush=True)
