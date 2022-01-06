@@ -11,11 +11,14 @@ from bp import (to_skbio_treenode, from_skbio_treenode, parse_newick,
 
 class ConversionTests(TestCase):
     def setUp(self):
+        print("SETUP", flush=True)
         self.tstr = "(((a:1,b:2.5)c:6,d:8,(e),(f,g,(h:1,i:2)j:1)k:1.2)l,m:2)r;"
         self.bp = parse_newick(self.tstr)
         self.sktn = skbio.TreeNode.read(StringIO(self.tstr))
+        print("SETUP", flush=True)
 
     def test_to_skbio_treenode(self):
+        print("tst", flush=True)
         obs = to_skbio_treenode(self.bp)
         for o, e in zip(obs.traverse(), self.sktn.traverse()):
             if e.length is None:
@@ -25,8 +28,10 @@ class ConversionTests(TestCase):
             self.assertEqual(o.name, e.name)
 
         self.assertEqual(obs.ascii_art(), self.sktn.ascii_art())
+        print("tst", flush=True)
 
     def test_from_skbio_treenode(self):
+        print("fst", flush=True)
         obs_bp = from_skbio_treenode(self.sktn)
         exp_bp = self.bp
 
@@ -34,8 +39,10 @@ class ConversionTests(TestCase):
         for i in range(len(self.bp.B)):
             self.assertEqual(exp_bp.name(i), obs_bp.name(i))
             self.assertEqual(exp_bp.length(i), obs_bp.length(i))
+        print("fst", flush=True)
 
     def test_to_array(self):
+        print("ta", flush=True)
         t = parse_newick('(((a:1,b:2,c:3)x:4,(d:5)y:6)z:7,(e:8,f:9)z:10);')
 
         exp_child_index = np.array([[4, 0, 2], [5, 3, 3], [8, 4, 5], [9, 6, 7],
@@ -60,7 +67,7 @@ class ConversionTests(TestCase):
 
         for k in obs_id_index:
             self.assertEqual(obs_id_index[k].is_tip(), exp_id_index[k])
-
+        print("ta", flush=True)
 
 if __name__ == '__main__':
     main()
