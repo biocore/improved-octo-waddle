@@ -48,6 +48,10 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
     length = 0.0
     edge = -1
 
+    # NOTE: there is likely some fat to trim in this method. we do a lot
+    # of work per token, we could probably do that work smarter. as is,
+    # the changes to support edge numbers increase parsing ~20%, which
+    # is annoying but probably not a critical
     if token[0] == u':':
         token_parsed = token[1:]
         length = length_from_edge(token_parsed)
