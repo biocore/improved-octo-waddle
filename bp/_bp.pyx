@@ -25,9 +25,11 @@ np.import_array()
 cdef extern from "limits.h":
     int INT_MAX
 
+
 DOUBLE = np.float64
 SIZE = np.intp
 BOOL = np.uint8
+INT32 = np.int32
 
 
 cdef inline int min(int a, int b) nogil:
@@ -184,7 +186,8 @@ cdef class BP:
 
     def __cinit__(self, np.ndarray[BOOL_t, ndim=1] B, 
                   np.ndarray[DOUBLE_t, ndim=1] lengths=None,
-                  np.ndarray[object, ndim=1] names=None):
+                  np.ndarray[object, ndim=1] names=None,
+                  np.ndarray[INT32_t, ndim=1] edges=None):
         cdef SIZE_t i
         cdef SIZE_t size
         cdef SIZE_t[:] _e_index
@@ -194,6 +197,7 @@ cdef class BP:
         cdef SIZE_t[:] _r_index_1
         cdef np.ndarray[object, ndim=1] _names
         cdef np.ndarray[DOUBLE_t, ndim=1] _lengths
+        cdef np.ndarray[INT32_t, ndim=1] _edges
 
         # the tree is only valid if it is balanaced
         assert B.sum() == (float(B.size) / 2)
@@ -212,6 +216,11 @@ cdef class BP:
             self._lengths = lengths
         else:
             self._lengths = np.zeros(self.B.size, dtype=DOUBLE)
+
+        if edges is not None:
+            self._edges = edges
+        else:
+            self._edges = np.full(self.B.size, -1, dtype=INT32)
 
         # construct a rank index. These operations are performed frequently,
         # and easy to cache at a relatively minor memory expense
@@ -259,6 +268,12 @@ cdef class BP:
 
     cpdef inline DOUBLE_t length(self, SIZE_t i):
         return self._lengths[i]
+
+    cpdef inline INT32_t edge(self, SIZE_t i):
+        return self._edges[i]
+
+    cpdef SIZE_t edge_from_number(self, INT32_t n):
+        return -1
 
     cdef inline SIZE_t rank(self, SIZE_t t, SIZE_t i) nogil:
         """Determine the rank order of the ith bit t

@@ -5,6 +5,7 @@ from bp._ba cimport BIT_ARRAY
 
 ctypedef np.npy_intp SIZE_t
 ctypedef np.npy_uint32 UINT32_t
+ctypedef np.npy_int32 INT32_t
 ctypedef np.npy_float64 DOUBLE_t
 ctypedef np.npy_uint8 BOOL_t
 
@@ -34,6 +35,7 @@ cdef class BP:
         SIZE_t[:] _k_index_1
         np.ndarray _names
         np.ndarray _lengths
+        np.ndarray _edges
         mM _rmm
         SIZE_t size
 
@@ -64,6 +66,8 @@ cdef class BP:
     # http://notes-on-cython.readthedocs.io/en/latest/fibo_speed.html
     cpdef inline unicode name(self, SIZE_t i)
     cpdef inline DOUBLE_t length(self, SIZE_t i)
+    cpdef inline INT32_t edge(self, SIZE_t i)
+    cpdef SIZE_t edge_from_number(self, INT32_t n)
     cpdef SIZE_t rmq(self, SIZE_t i, SIZE_t j) nogil
     cpdef SIZE_t rMq(self, SIZE_t i, SIZE_t j) nogil
     cpdef SIZE_t postorderselect(self, SIZE_t k) nogil
