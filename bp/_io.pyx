@@ -1,5 +1,5 @@
 # encoding: utf-8
-# cython: profile=False, boundscheck=True, wraparound=False
+# cython: profile=False, boundscheck=False, wraparound=False
 
 from ._bp cimport BP
 import time
@@ -46,7 +46,7 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
 
     name = None
     length = 0.0
-    edge = -1
+    edge = 0
 
     # NOTE: there is likely some fat to trim in this method. we do a lot
     # of work per token, we could probably do that work smarter. as is,
@@ -135,7 +135,7 @@ cpdef parse_newick(unicode data):
 
     names = np.full(len(topology.B), None, dtype=object)
     lengths = np.zeros(len(topology.B), dtype=np.double)
-    edges = np.full(len(topology.B), -1, dtype=np.int32) 
+    edges = np.full(len(topology.B), 0, dtype=np.int32) 
 
     ptr = 0
     token_ptr = _ctoken(data, datalen, 0)

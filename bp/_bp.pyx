@@ -221,7 +221,7 @@ cdef class BP:
         if edges is not None:
             self._set_edges(edges)
         else:
-            self._edges = np.full(self.B.size, -1, dtype=INT32)
+            self._edges = np.full(self.B.size, 0, dtype=INT32)
             self._edge_lookup = None
 
         # construct a rank index. These operations are performed frequently,
@@ -276,7 +276,7 @@ cdef class BP:
         n = b.size
        
         # Py_ssize_t is signed...
-        _edge_lookup = np.full(n, -1, dtype=SIZE)
+        _edge_lookup = np.full(n, 0, dtype=SIZE)
         for i in range(n):
             if b[i] == 1:
                 edge = edges[i]
