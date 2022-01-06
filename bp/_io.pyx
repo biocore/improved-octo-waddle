@@ -1,5 +1,5 @@
 # encoding: utf-8
-# cython: profile=False, boundscheck=False, wraparound=False
+# cython: profile=False, boundscheck=True, wraparound=False
 
 from ._bp cimport BP
 import time
