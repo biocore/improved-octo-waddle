@@ -4,6 +4,8 @@
 from ._bp cimport BP
 import time
 import numpy as np
+import pandas as pd
+import json
 cimport numpy as np
 cimport cython
 np.import_array()
@@ -24,13 +26,15 @@ cdef inline np.double_t length_from_edge(unicode token):
 cdef inline np.int32_t number_from_edge(unicode token):
     cdef:
         Py_ssize_t split_idx
+        Py_ssize_t end
 
     # 0.12345{0123} -> 0123
     split_idx = token.find('{')
     if split_idx == -1:
         return 0
     else:
-        return np.int32(token[split_idx + 1:-1])
+        end = len(token)
+        return np.int32(token[split_idx + 1:end - 1])
 
 
 cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
@@ -41,7 +45,7 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
     cdef:
         np.double_t length
         np.int32_t edge
-        Py_ssize_t split_idx, i
+        Py_ssize_t split_idx, i, end
         unicode name, token_parsed
 
     name = None
@@ -65,7 +69,9 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
         name = name.strip("'").strip()
     elif u'{' in token:
         # strip as " {123}" is valid?
-        edge = np.int32(token.strip()[1:-1])
+        token = token.strip()
+        end = len(token)
+        edge = np.int32(token.strip()[1:end - 1])
     else:
         name = token.replace("'", "").replace('"', "").strip()
 
@@ -311,3 +317,23 @@ cdef inline Py_ssize_t _ctoken(unicode data, Py_ssize_t datalen, Py_ssize_t star
                 return idx
     
     return idx + 1
+
+
+def parse_jplace(object data):
+    """Takes a jplace string, returns a DataFrame of placements and the tree"""
+    as_json = json.loads(data)
+
+    fields = ['fragment'] + as_json['fields']
+
+    placements = []
+    for placement in as_json['placements']:
+        fragments = placement['n']
+        for p in placement['p']:
+            for frag in fragments:
+                placements.append([frag] + p)
+
+    tree = parse_newick(as_json['tree'])
+
+    return pd.DataFrame(placements, columns=fields), tree
+
+
