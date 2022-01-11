@@ -9,31 +9,69 @@ cimport cython
 np.import_array()
 
 
+cdef inline np.double_t length_from_edge(unicode token):
+    cdef:
+        Py_ssize_t split_idx
+
+    # 0.12345{0123} -> 0.12345
+    split_idx = token.find('{')
+    if split_idx == -1:
+        return np.double(token)
+    else:
+        return np.double(token[:split_idx])
+
+
+cdef inline np.int32_t number_from_edge(unicode token):
+    cdef:
+        Py_ssize_t split_idx
+
+    # 0.12345{0123} -> 0123
+    split_idx = token.find('{')
+    if split_idx == -1:
+        return 0
+    else:
+        return np.int32(token[split_idx + 1:-1])
+
+
 cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
                              np.ndarray[object, ndim=1] names, 
-                             np.ndarray[np.double_t, ndim=1] lengths):
+                             np.ndarray[np.double_t, ndim=1] lengths,
+                             np.ndarray[np.int32_t, ndim=1] edges):
     """Inplace update of names and lengths given token details"""
     cdef:
         np.double_t length
+        np.int32_t edge
         Py_ssize_t split_idx, i
-        unicode name
+        unicode name, token_parsed
 
     name = None
     length = 0.0
+    edge = 0
 
+    # NOTE: there is likely some fat to trim in this method. we do a lot
+    # of work per token, we could probably do that work smarter. as is,
+    # the changes to support edge numbers increase parsing ~20%, which
+    # is annoying but probably not a critical
     if token[0] == u':':
-        length = np.double(token[1:])
-    elif ':' in token:
+        token_parsed = token[1:]
+        length = length_from_edge(token_parsed)
+        edge = number_from_edge(token_parsed)
+    elif u':' in token:
         split_idx = token.rfind(':')
         name = token[:split_idx]
-        length = np.double(token[split_idx + 1:])
-        name = name.strip("'")
+        token_parsed = token[split_idx + 1:]
+        length = length_from_edge(token_parsed)
+        edge = number_from_edge(token_parsed)
+        name = name.strip("'").strip()
+    elif u'{' in token:
+        # strip as " {123}" is valid?
+        edge = np.int32(token.strip()[1:-1])
     else:
-        name = token.replace("'", "").replace('"', "")
-        pass
+        name = token.replace("'", "").replace('"', "").strip()
 
     names[ptr] = name
     lengths[ptr] = length
+    edges[ptr] = edge
 
 
 def write_newick(BP tree, object output):
@@ -90,12 +128,14 @@ cpdef parse_newick(unicode data):
         unicode token, last_token
         np.ndarray[object, ndim=1] names
         np.ndarray[np.double_t, ndim=1] lengths
+        np.ndarray[np.int32_t, ndim=1] edges
 
     datalen = len(data)
     topology = _newick_to_bp(data)
 
     names = np.full(len(topology.B), None, dtype=object)
     lengths = np.zeros(len(topology.B), dtype=np.double)
+    edges = np.full(len(topology.B), 0, dtype=np.int32) 
 
     ptr = 0
     token_ptr = _ctoken(data, datalen, 0)
@@ -120,7 +160,7 @@ cpdef parse_newick(unicode data):
             lag = 0
 
             open_ptr = topology.open(ptr)
-            _set_node_metadata(open_ptr, token, names, lengths)
+            _set_node_metadata(open_ptr, token, names, lengths, edges)
 
             if topology.isleaf(ptr):
                 ptr += 2
@@ -134,6 +174,8 @@ cpdef parse_newick(unicode data):
 
     topology.set_names(names)
     topology.set_lengths(lengths)
+    topology.set_edges(edges)
+
     return topology
 
 

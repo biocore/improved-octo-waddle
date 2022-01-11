@@ -15,6 +15,20 @@ class ConversionTests(TestCase):
         self.bp = parse_newick(self.tstr)
         self.sktn = skbio.TreeNode.read(StringIO(self.tstr))
 
+    def test_to_skbio_treenode_with_edge_numbers(self):
+        # from https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031009
+        # but without edge labels
+        # 0 1 2 3 4 5 6 7 8 9
+        # 1 1 1 0 1 0 0 1 0 0
+        in_ = '((A:.01{0}, B:.01{1})D:.01{3}, C:.01{4}) {5};'
+        obs = parse_newick(in_)
+        obs_sk = to_skbio_treenode(obs)
+        self.assertEqual(obs_sk.find('A').edge_num, 0)
+        self.assertEqual(obs_sk.find('B').edge_num, 1)
+        self.assertEqual(obs_sk.find('D').edge_num, 3)
+        self.assertEqual(obs_sk.find('C').edge_num, 4)
+        self.assertEqual(obs_sk.edge_num, 5)
+
     def test_to_skbio_treenode(self):
         obs = to_skbio_treenode(self.bp)
         for o, e in zip(obs.traverse(), self.sktn.traverse()):

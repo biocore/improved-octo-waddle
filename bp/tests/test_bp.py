@@ -15,6 +15,12 @@ import numpy as np
 import numpy.testing as npt
 
 from bp import BP, parse_newick
+import bp.tests.test_bp_cy as tbc
+
+
+for name in dir(tbc):
+    if name.startswith('test_'):
+        getattr(tbc, name)()
 
 
 class BPTests(TestCase):
