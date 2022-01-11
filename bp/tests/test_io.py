@@ -1,12 +1,33 @@
 from unittest import TestCase, main
-from bp import parse_newick, to_skbio_treenode
+from bp import parse_newick, to_skbio_treenode, write_newick
 
 import skbio
+import io
 import numpy as np
 import numpy.testing as npt
 
 
 class NewickTests(TestCase):
+    def _compare_newick(self, obs, exp):
+        a = skbio.TreeNode.read([obs])
+        b = skbio.TreeNode.read([exp])
+        self.assertEqual(a.compare_rfd(b), 0)
+        npt.assert_equal(a.tip_tip_distances().data,
+                         b.tip_tip_distances().data)
+
+    def test_write_newick_cases(self):
+        tests = ['((foo"bar":1,baz:2)x:3)r;',
+                 "(((a:1,b:2.5)c:6,d:8,(e),(f,g,(h:1,i:2)j:1)k:1.2)l,m:2)r;",
+                 "(((a)b)c,((d)e)f)r;",
+                 "((a,(b,c):5)'d','e; foo':10,((f))g)r;"]
+
+        for test in tests:
+            buf = io.StringIO()
+            obs = write_newick(parse_newick(test), buf)
+            buf.seek(0)
+            obs = buf.read()
+            self._compare_newick(obs, test)
+
     def test_parse_newick_nested_quotes(self):
         # bug: quotes are removed
         in_ = '((foo"bar":1,baz:2)x:3)r;'
@@ -19,8 +40,6 @@ class NewickTests(TestCase):
         in_ = "(('foo,bar':1,baz:2)x:3)r;"
         exp = skbio.TreeNode.read([in_])
         obs = to_skbio_treenode(parse_newick(in_))
-        print(obs.ascii_art())
-        print(exp.ascii_art())
         self.assertEqual(obs.compare_subsets(exp), 0.0)
 
     def test_parse_newick_with_parens(self):
