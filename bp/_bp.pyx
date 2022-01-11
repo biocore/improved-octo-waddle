@@ -275,7 +275,6 @@ cdef class BP:
         b = self.B
         n = b.size
        
-        # Py_ssize_t is signed...
         _edge_lookup = np.full(n, 0, dtype=SIZE)
         for i in range(n):
             if b[i] == 1:
