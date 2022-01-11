@@ -321,18 +321,39 @@ cdef inline Py_ssize_t _ctoken(unicode data, Py_ssize_t datalen, Py_ssize_t star
 
 def parse_jplace(object data):
     """Takes a jplace string, returns a DataFrame of placements and the tree"""
-    as_json = json.loads(data)
+    cdef:
+        dict as_json
+        list fields, placements, fragments, p, placement_data, 
+        list placement_inner_data, pquery, entry
+        unicode frag, newick
+        Py_ssize_t placement_idx, placement_inner_idx, fragment_idx, 
+        Py_ssize_t n_fragments
+        BP tree
 
-    fields = ['fragment'] + as_json['fields']
+    as_json = json.loads(data)
+    newick = as_json['tree']
+    placement_data = as_json['placements']
+
+    fields = as_json['fields']
+    fields = ['fragment', ] + fields
 
     placements = []
-    for placement in as_json['placements']:
+    for placement_idx in range(len(placement_data)):
+        placement = placement_data[placement_idx]
+        
+        placement_inner_data = placement['p']
         fragments = placement['n']
-        for p in placement['p']:
-            for frag in fragments:
-                placements.append([frag] + p)
+        n_fragments = len(fragments)
 
-    tree = parse_newick(as_json['tree'])
+        for placement_inner_idx in range(len(placement_inner_data)):
+            pquery = placement_inner_data[placement_inner_idx]
+
+            for fragment_idx in range(n_fragments):
+                frag = fragments[fragment_idx]
+                entry = [frag, ] + pquery
+                placements.append(entry)
+
+    tree = parse_newick(newick)
 
     return pd.DataFrame(placements, columns=fields), tree
 
