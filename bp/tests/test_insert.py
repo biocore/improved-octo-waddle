@@ -1,15 +1,16 @@
 import unittest
 import pkg_resources
 from bp import parse_jplace, insert_fully_resolved
+import skbio
 
 
 class InsertTests(unittest.TestCase):
     package = 'bp.tests'
     def setUp(self):
         self.jplacedata_multiple = \
-            open('jplace_data/300/placement_mul.jplace').read()
+            open(self.get_data_path('300/placement_mul.jplace')).read()
         self.final_multiple_fully_resolved = \
-            skbio.TreeNode.read('jplace_data/300/placement.full_resolve.newick')
+            skbio.TreeNode.read(self.get_data_path('300/placement.full_resolve.newick'))
 
     def get_data_path(self, filename):
         # adapted from qiime2.plugin.testing.TestPluginBase
