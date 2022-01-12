@@ -86,26 +86,30 @@ def insert_fully_resolved(object placements, BP bptree):
     for edge, edge_grp in placements.groupby('edge_num'):
         existing_node = node_lookup[edge]
         current_parent = existing_node.parent
+        
+        # break the edge
+        current_parent.remove(existing_node)
+        existing_node.parent = None
+        existing_length = existing_node.length
 
         for _, fragment in edge_grp.iterrows():
             distal_length = fragment['distal_length']
             fragment_node = fragment['node']
             fragment_parent = fragment['parent']
 
-            # break the edge
-            current_parent.remove(existing_node)
-            existing_node.parent = None
-
             # update branch lengths
-            fragment_parent.length = existing_node.length - distal_length
-            existing_node.length = distal_length
+            fragment_parent.length = existing_length - distal_length
+            existing_length = distal_length
 
             # attach the nodes
             fragment_parent.append(fragment_node)
-            fragment_parent.append(existing_node)
             current_parent.append(fragment_parent)
 
             # update
             current_parent = fragment_parent
+        
+        existing_node.length = existing_length
+        current_parent.append(existing_node)
+        existing_node.length = distal_length
 
     return sktree
