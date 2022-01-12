@@ -2,10 +2,11 @@ import unittest
 import pkg_resources
 from bp import parse_jplace
 from bp.GPL import insert_multifurcating
+import skbio
 
 
 class InsertTests(unittest.TestCase):
-    package = 'bp.GPL.tests'
+    package = 'bp.tests'
 
     def setUp(self):
         self.jplacedata_multiple = \
@@ -16,7 +17,7 @@ class InsertTests(unittest.TestCase):
     def get_data_path(self, filename):
         # adapted from qiime2.plugin.testing.TestPluginBase
         return pkg_resources.resource_filename(self.package,
-                                               '../tests/data/%s' % filename)
+                                               '/data/%s' % filename)
 
     def test_insert_multifurcating(self):
         exp = self.final_multiple_multifurcating
