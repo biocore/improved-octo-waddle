@@ -124,5 +124,4 @@ def insert_multifurcating(object placements, BP bptree):
             new_parent.length = existing_node.length - min_distal
             existing_node.length = min_distal
 
-
     return sktree
