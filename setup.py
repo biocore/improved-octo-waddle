@@ -130,4 +130,8 @@ setup(name='iow',
                 'install': BitArrayInstall,
                 'develop': BitArrayDevelop,
                 'egg_info': BitArrayEggInfo
-                })
+                },
+      entry_points='''
+          [console_scripts]
+          bp=bp._cli:cli
+      ''')
