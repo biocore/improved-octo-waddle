@@ -35,6 +35,7 @@ def insert_multifurcating(object placements, BP bptree):
     skbio.TreeNode
         A tree with the fragments placed
     """
+    # TODO: profile, type and re-profile
     placements, sktree, node_lookup = \
         _insert_setup(placements, bptree, 'multifurcating')
 
