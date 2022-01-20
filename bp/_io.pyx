@@ -326,7 +326,19 @@ cdef inline Py_ssize_t _ctoken(unicode data, Py_ssize_t datalen, Py_ssize_t star
 
 
 def parse_jplace(object data):
-    """Takes a jplace string, returns a DataFrame of placements and the tree"""
+    """Takes a jplace string, returns a DataFrame of placements and the tree
+
+    Implementation specific caveats:
+
+    1) we do not support multiplicities. placements are required to have an "n"
+        entry, and we ignore "nm"
+    2) Matsen et al (https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031009) 
+        define [] for denoting edge labels and {} for denoting edge numbers. We
+        currently support either [] OR {}, we do not support edges with both.
+        In addition, we REQUIRE the edge labels if specified to be integer.
+
+    If either of these caveats are problems, then we need to modify the code.
+    """
     cdef:
         dict as_json
         list fields, placements, fragments, p, placement_data, 
