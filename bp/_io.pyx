@@ -16,7 +16,10 @@ cdef inline np.double_t length_from_edge(unicode token):
         Py_ssize_t split_idx
 
     # 0.12345{0123} -> 0.12345
-    split_idx = token.find('{')
+    # OR 0.12345[0123] -> 0.12345
+    split_idx_curly = token.find('{')
+    split_idx_square = token.find('[')
+    split_idx = max(split_idx_curly, split_idx_square)
     if split_idx == -1:
         return np.double(token)
     else:
@@ -29,7 +32,10 @@ cdef inline np.int32_t number_from_edge(unicode token):
         Py_ssize_t end
 
     # 0.12345{0123} -> 0123
-    split_idx = token.find('{')
+    # OR 0.12345[0123] -> 0.12345
+    split_idx_curly = token.find('{')
+    split_idx_square = token.find('[')
+    split_idx = max(split_idx_curly, split_idx_square)
     if split_idx == -1:
         return 0
     else:
@@ -67,7 +73,7 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
         length = length_from_edge(token_parsed)
         edge = number_from_edge(token_parsed)
         name = name.strip("'").strip()
-    elif u'{' in token:
+    elif u'{' in token or u'[' in token:
         # strip as " {123}" is valid?
         token = token.strip()
         end = len(token)
@@ -342,6 +348,10 @@ def parse_jplace(object data):
         placement = placement_data[placement_idx]
         
         placement_inner_data = placement['p']
+
+        if 'n' not in placement:
+            raise KeyError("jplace parsing limited to entries with 'n' keys")
+
         fragments = placement['n']
         n_fragments = len(fragments)
 

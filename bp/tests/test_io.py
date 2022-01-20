@@ -171,6 +171,20 @@ class JPlaceParseTests(TestCase):
         return pkg_resources.resource_filename(self.package,
                                                'data/%s' % filename)
 
+    def test_place_jplace_square_braces(self):
+        self.jplacedata = json.loads(self.jplacedata)
+        treestr = self.jplacedata['tree']
+        treestr = re.sub(r"{(\d+)}", r"[\1]", treestr)
+        self.jplacedata['tree'] = treestr
+        self.jplacedata = json.dumps(self.jplacedata)
+
+        exp_tree = self.tree
+        obs_df, obs_tree = parse_jplace(self.jplacedata)
+        obs_tree = to_skbio_treenode(obs_tree)
+        self.assertEqual(obs_tree.compare_rfd(exp_tree), 0)
+        for n in obs_tree.traverse(include_self=False):
+            self.assertTrue(n.edge_num >= 0)
+
     def test_parse_jplace_simple(self):
         columns = ['fragment', 'edge_num', 'likelihood', 'like_weight_ratio',
                    'distal_length', 'pendant_length']
