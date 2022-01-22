@@ -12,8 +12,20 @@ problem of requiring numpy and cython for setup.py to execute. The package is
 named iow in pypi as "bp" was taken at time of registration.
 
 ```
+$ conda create --name bp python=3.8
+$ conda activate bp
 $ conda install numpy cython
 $ pip install iow
+```
+
+Developer notes
+---------------
+
+If pulling the source, please note that we use a submodule and Github does not
+by default bring it down. After a clone, please run:
+
+```
+$ git submodule update --init --recursive
 ```
 
 Fragment insertion
@@ -38,3 +50,5 @@ Options:
 
   --help                          Show this message and exit.
 ```
+
+Note that the multifurcating support relies on GPL code derived from the Genesis project. That code and LICENSE can be found under `bp/GPL`.
