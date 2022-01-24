@@ -80,6 +80,10 @@ extensions = [Extension("bp._bp",
                         ["bp/_conv" + ext], ),
               Extension("bp._binary_tree",
                         ["bp/_binary_tree" + ext], ),
+              Extension("bp._insert",
+                        ["bp/_insert" + ext], ),
+              Extension("bp.GPL._insert",
+                        ["bp/GPL/_insert" + ext], ),
               Extension("bp.tests.test_bp_cy",
                         ["bp/tests/test_bp_cy" + ext],
                         include_dirs=['bp/BitArray/'],
@@ -119,10 +123,16 @@ setup(name='iow',
           'numpy >= 1.9.2',
           'nose >= 1.3.7',
           'cython >= 0.24.1',
+          'pandas',
+          'click',
           'scikit-bio >= 0.5.0, < 0.6.0'],
       long_description=long_description,
       cmdclass={'build_py': BitArrayBuild,
                 'install': BitArrayInstall,
                 'develop': BitArrayDevelop,
                 'egg_info': BitArrayEggInfo
-                })
+                },
+      entry_points='''
+          [console_scripts]
+          bp=bp._cli:cli
+      ''')
