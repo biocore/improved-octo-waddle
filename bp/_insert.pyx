@@ -46,6 +46,21 @@ def _insert_setup(placements, bptree, insert_type):
     for node in sktree.traverse(include_self=True):
         node.invalidate_caches = noop
 
+    # we are only setup to handle a single placement per fragment, so pull 
+    # deduplicated following guidance from Prof. Siavash Mirarab. We sort so
+    # "better" has a smaller index value
+    # fragment -> group the rows by the fragment, fragment order doesn't matter
+    # like_weight_ratio -> our first selection criteria, higher is better
+    # pendant_length -> our second selection criteria, lower is better
+    placements = placements.sort_values(['fragment', 'like_weight_ratio', 
+                                         'pendant_length'],
+                                        ascending=[True, False, True])
+
+    # take the first non-duplicated row per fragment. because of the sort, this
+    # is assured to be the highest weight ratio, and the smallest pendant 
+    # length. Ties are handled arbitrarily. 
+    placements = placements[~placements['fragment'].duplicated()]
+
     if insert_type == 'multifurcating':
         placements = placements.sort_values(['edge_num', 'pendant_length'])
     elif insert_type == 'fully_resolved':
@@ -53,6 +68,7 @@ def _insert_setup(placements, bptree, insert_type):
                                             ascending=[True, False])
     else:
         raise ValueError()
+
 
     placements['node'] = placements.apply(_preallocate_fragment, axis=1)
 

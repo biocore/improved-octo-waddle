@@ -376,7 +376,4 @@ def parse_jplace(object data):
                 placements.append(entry)
 
     tree = parse_newick(newick)
-
     return pd.DataFrame(placements, columns=fields), tree
-
-
