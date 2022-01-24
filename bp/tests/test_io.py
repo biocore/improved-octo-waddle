@@ -244,13 +244,9 @@ class JPlaceParseTests(TestCase):
                                        0.00550337922097477])
                 keep.append(placement)
             elif placement['n'][0] == '55':
-                print(placement['p'])
-                print("***")
                 placement['p'].append([138, 0.09563944060686769, 10,
                                        0.014593217782258146,
                                        0.04537214236560885])
-                print(placement['p'])
-                print("***")
                 keep.append(placement)
         data['placements'] = keep
         data = json.dumps(data)
@@ -259,6 +255,7 @@ class JPlaceParseTests(TestCase):
         obs_tree = to_skbio_treenode(obs_tree)
         pdt.assert_frame_equal(obs_df, exp_df)
         self.assertEqual(obs_tree.compare_rfd(exp_tree), 0)
+
 
 if __name__ == '__main__':
     main()
