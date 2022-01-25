@@ -115,7 +115,7 @@ def write_newick(BP tree, object output):
 
             if name is not None:
                 # if we have magical characters, make sure we quote
-                if set(name) & {';', ',', '(', ')', ':'}:
+                if set(name) & {';', ',', '(', ')', ':', '_'}:
                     output.write("'%s'" % name)
                 else:
                     output.write(name)
