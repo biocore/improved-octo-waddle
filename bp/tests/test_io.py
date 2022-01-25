@@ -55,6 +55,13 @@ class NewickTests(TestCase):
             obs = buf.read()
             self._compare_newick(obs, test)
 
+    def test_write_newick_underscore_bug(self):
+        test = "(((a)b)'c_foo',((d)e)f)r;"
+        buf = io.StringIO()
+        obs = write_newick(parse_newick(test), buf)
+        buf.seek(0)
+        self.assertEqual(buf.read(), test)
+
     def test_parse_newick_nested_quotes(self):
         # bug: quotes are removed
         in_ = '((foo"bar":1,baz:2)x:3)r;'
