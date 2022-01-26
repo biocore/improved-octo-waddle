@@ -5,6 +5,11 @@ cimport numpy as np
 from ._bp cimport BP
 
 
+# our noop used when monkey patching invalidate_caches
+def noop(*arg, **kwargs):
+    pass
+
+
 def to_skbio_treenode(BP bp):
     """Convert BP to TreeNode
 
@@ -21,6 +26,14 @@ def to_skbio_treenode(BP bp):
     cdef int i
 
     nodes = [skbio.TreeNode() for i in range(sum(bp.B))]
+
+    # skbio.TreeNode.append makes a very expensive call to
+    # invalidate_caches. Let's remove that from consideration
+    # temporarily while constructing the tree
+    for node in nodes:
+        node._old_invalidate_caches = node.invalidate_caches
+        node.invalidate_caches = noop
+
     root = nodes[0]
 
     for i in range(sum(bp.B)):
@@ -35,6 +48,11 @@ def to_skbio_treenode(BP bp):
             nodes[parent].append(nodes[i])
 
     root.length = None
+    
+    # ...and then let's restore cache invalidation
+    for node in nodes:
+        node.invalidate_caches = node._old_invalidate_caches
+
     return root
 
 
