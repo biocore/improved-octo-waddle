@@ -784,7 +784,7 @@ cdef class BP:
         """
         cdef:
             SIZE_t i, n = len(tips)
-            SIZE_t p, t
+            SIZE_t p, t, count = 0
             BIT_ARRAY* mask
             BP new_bp
 
@@ -797,6 +797,7 @@ cdef class BP:
             if self.isleaf(i):
                 if self.name(i) in tips:  # gil is required for set operation
                     with nogil:
+                        count += 1
                         bit_array_set_bit(mask, i)
                         bit_array_set_bit(mask, i + 1)
 
@@ -807,6 +808,10 @@ cdef class BP:
 
                             p = self.parent(p)
 
+        if count == 0:
+            bit_array_free(mask)
+            raise ValueError("No requested tips found")
+                
         new_bp = self._mask_from_self(mask, self._lengths)
         bit_array_free(mask)
         return new_bp
@@ -825,6 +830,7 @@ cdef class BP:
 
         n = bit_array_length(mask)
         mask_sum = bit_array_num_bits_set(mask)
+
         k = 0
 
         lengths_ptr = &lengths[0]
