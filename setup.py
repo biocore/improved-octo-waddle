@@ -33,8 +33,9 @@ classes = """
 """
 classifiers = [s.strip() for s in classes.split('\n') if s]
 
-long_description = """An implementation of a balanced tree as described by
-Cordova and Navarro"""
+
+with open('README.md') as f:
+    long_description = f.read()
 
 
 curdir = os.path.abspath(__file__).rsplit('/', 1)[0]
