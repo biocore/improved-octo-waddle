@@ -62,12 +62,8 @@ cdef class mM:
         cdef int offset  # tip offset in binary tree for a given parenthesis
         cdef int lower_limit  # the lower limit of the bucket a parenthesis is in
         cdef int upper_limit  # the upper limit of the bucket a parenthesis is in
-        
-        #cdef SIZE_t[:, :] mM  # exact min/max per bucket
-        #cdef SIZE_t[:] r  
         cdef int min_ = 0 # m, absolute minimum for a blokc
         cdef int max_ = 0 # M, absolute maximum for a block
-        #cdef int n = 0
         cdef int excess = 0 # e, absolute excess
         cdef int vbar
         cdef int r = 0
