@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# cython files
+bp/GPL/_*.c
+bp/_*.c
+bp/tests/test_bp_cy.c
+
 # Distribution / packaging
 .Python
 env/

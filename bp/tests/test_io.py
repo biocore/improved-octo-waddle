@@ -237,6 +237,47 @@ class JPlaceParseTests(TestCase):
         pdt.assert_frame_equal(obs_df, exp_df)
         self.assertEqual(obs_tree.compare_rfd(exp_tree), 0)
 
+    def test_parse_jplace_multiple_per_fragment(self):
+        columns = ['fragment', 'edge_num', 'likelihood', 'like_weight_ratio',
+                   'distal_length', 'pendant_length']
+        exp_df = [["82", 361, 0.01013206496780672, 1, 0.02652932626620403,
+                   0.039354548684623215],
+                  ["99", 308, 0.04520741687623886, 1, 0.11020044356641526,
+                   0.06550337922097477],
+                  # tied on like_weight_ratio but lower pendant
+                  ["99", 309, 0.04520741687623886, 1, 0.11020044356641526,
+                   0.00550337922097477],
+                  ["55", 139, 0.09563944060686769, 1, 0.014593217782258146,
+                   0.04537214236560885],
+                  # tied higher like_weight_ratio
+                  ["55", 138, 0.09563944060686769, 10, 0.014593217782258146,
+                   0.04537214236560885]]
+        exp_df = pd.DataFrame(exp_df, columns=columns)
+
+        # ...adjust jplace data
+        data = json.loads(self.jplacedata)
+        keep = []
+        for placement in data['placements']:
+            if placement['n'][0] == '82':
+                keep.append(placement)
+            elif placement['n'][0] == '99':
+                placement['p'].append([309, 0.04520741687623886, 1,
+                                       0.11020044356641526,
+                                       0.00550337922097477])
+                keep.append(placement)
+            elif placement['n'][0] == '55':
+                placement['p'].append([138, 0.09563944060686769, 10,
+                                       0.014593217782258146,
+                                       0.04537214236560885])
+                keep.append(placement)
+        data['placements'] = keep
+        data = json.dumps(data)
+        exp_tree = self.tree
+        obs_df, obs_tree = parse_jplace(data)
+        obs_tree = to_skbio_treenode(obs_tree)
+        pdt.assert_frame_equal(obs_df, exp_df)
+        self.assertEqual(obs_tree.compare_rfd(exp_tree), 0)
+
 
 if __name__ == '__main__':
     main()
