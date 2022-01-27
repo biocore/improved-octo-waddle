@@ -333,12 +333,14 @@ def test_rmm():
     # this is from fig 2 of Cordova and Navarro:
     # http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf
     bp = parse_newick('((a,b,(c)),d,((e,f)));')
-    exp = np.array([[0, 1, 0, 1, 1, 0, 0, 1, 2, 1, 1, 2, 0],  # m
-                    [4, 4, 4, 4, 4, 4, 0, 3, 4, 3, 4, 4, 1],  # M
-                    [0, 0, 10, 0, 6, 10, 0, 0, 3, 6, 7, 10, 11], # r
-                    [11, 6, 11, 2, 6, 11, 0, 1, 2, 5, 6, 9, 11]],  # k0
+    exp = np.array([[0, 1, 0, 1, 1, 0, 0, 1, 2, 1, 1, 2, 0],   # m
+                    [4, 4, 4, 4, 4, 4, 0, 3, 4, 3, 4, 4, 1]],  # M
                    dtype=np.intp).T 
     obs = mM(bp.B, bp.B.size)
+    
+    # original r / k0 values, preserving for posterity 
+    # [0, 0, 10, 0, 6, 10, 0, 0, 3, 6, 7, 10, 11], # r
+    # [11, 6, 11, 2, 6, 11, 0, 1, 2, 5, 6, 9, 11]],  # k0
 
     assert exp.shape[0] == obs.mM.shape[0]
     assert exp.shape[1] == obs.mM.shape[1]
