@@ -14,3 +14,5 @@ global-exclude .git
 global-exclude *.so
 global-exclude *.a
 global-exclude *.o
+include versioneer.py
+include bp/_version.py

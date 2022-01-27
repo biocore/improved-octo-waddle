@@ -12,7 +12,7 @@ from setuptools.command.build_py import build_py
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 from setuptools.command.egg_info import egg_info
-
+import versioneer
 import subprocess
 
 import numpy as np
@@ -101,22 +101,13 @@ extensions.extend([Extension("bp._ba",
                              libraries=['bitarr'])])
 
 
-
-
-
 if USE_CYTHON:
     from Cython.Build import cythonize
     extensions = cythonize(extensions)
 
 
-if os.environ.get('RELEASE_VERSION') is not None:
-    __version__ = os.environ['RELEASE_VERSION']
-else:
-    __version__ = '1.0.0-dev'
-
-
 setup(name='iow',
-      version=__version__,
+      version=versioneer.get_version(),
       description='Balanced parentheses',
       author='Daniel McDonald',
       author_email='d3mcdonald@eng.ucsd.edu',
@@ -139,8 +130,8 @@ setup(name='iow',
       cmdclass={'build_py': BitArrayBuild,
                 'install': BitArrayInstall,
                 'develop': BitArrayDevelop,
-                'egg_info': BitArrayEggInfo
-                },
+                'egg_info': BitArrayEggInfo,
+                'versioneer': versioneer.get_cmdclass()},
       entry_points='''
           [console_scripts]
           bp=bp._cli:cli
