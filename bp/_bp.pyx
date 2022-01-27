@@ -224,9 +224,7 @@ cdef class BP:
             self._edges = np.full(self.B.size, 0, dtype=INT32)
             self._edge_lookup = None
 
-        # construct a rank index. These operations are performed frequently,
-        # and easy to cache at a relatively minor memory expense
-        #TODO: leverage rmm tree, and calculate rank on the fly
+        # precursor for select index cache
         _r_index_0 = np.cumsum((1 - B), dtype=SIZE)
         _r_index_1 = np.cumsum(B, dtype=SIZE)
 
