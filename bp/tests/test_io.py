@@ -55,6 +55,14 @@ class NewickTests(TestCase):
             obs = buf.read()
             self._compare_newick(obs, test)
 
+    def test_parse_newick_singlenode_bug(self):
+        # https://github.com/wasade/improved-octo-waddle/issues/29
+        test = 'i:1;'
+
+        # let's not allow this edge case
+        with self.assertRaises(ValueError):
+            parse_newick(test)
+
     def test_write_newick_underscore_bug(self):
         test = "(((a)b)'c_foo',((d)e)f)r;"
         buf = io.StringIO()
