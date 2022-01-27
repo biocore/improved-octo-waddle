@@ -142,6 +142,12 @@ cpdef parse_newick(unicode data):
         np.ndarray[np.double_t, ndim=1] lengths
         np.ndarray[np.int32_t, ndim=1] edges
 
+    if data.count(',') == 0:
+        raise ValueError("Only trees with more than 1 node supported")
+
+    if not data.endswith(';'):
+        raise ValueError("Newick does not appear terminated with a semicolon")
+
     datalen = len(data)
     topology = _newick_to_bp(data)
 

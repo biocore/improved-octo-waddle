@@ -264,6 +264,14 @@ class BPTests(TestCase):
         obs = self.BP.shear(in_).B
         npt.assert_equal(obs, exp)
 
+    def test_shear_raise_tree_is_empty(self):
+        names = np.array(['r', '2', '3', None, '4', None, '5', '6', None, None, None, '7', None, '8', '9', '10', None,
+                          '11', None, None, None, None])
+        lengths = np.array([0, 1, 2, 0, 3, 0, 4, 5, 0, 0, 0, 6, 0, 7, 8, 9, 0, 10, 0, 0, 0, 0], dtype=np.double)
+        self.BP.set_names(names)
+        with self.assertRaises(ValueError):
+            self.BP.shear({'not', 'in', 'tree'})
+
     def test_collapse(self):
         names = np.array(['r', '2', '3', None, '4', None, '5', '6', None, None, None, '7', None, '8', '9', '10', None,
                           '11', None, None, None, None])
