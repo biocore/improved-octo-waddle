@@ -127,11 +127,10 @@ setup(name='iow',
           'click',
           'scikit-bio >= 0.5.0, < 0.6.0'],
       long_description=long_description,
-      cmdclass={'build_py': BitArrayBuild,
-                'install': BitArrayInstall,
-                'develop': BitArrayDevelop,
-                'egg_info': BitArrayEggInfo,
-                'versioneer': versioneer.get_cmdclass()},
+      cmdclass=versioneer.get_cmdclass({'build_py': BitArrayBuild,
+                                        'install': BitArrayInstall,
+                                        'develop': BitArrayDevelop,
+                                        'egg_info': BitArrayEggInfo}),
       entry_points='''
           [console_scripts]
           bp=bp._cli:cli
