@@ -109,8 +109,14 @@ if USE_CYTHON:
     extensions = cythonize(extensions)
 
 
+if os.environ.get('RELEASE_VERSION') is not None:
+    __version__ = os.environ['RELEASE_VERSION']
+else:
+    __version__ = '1.0.0-dev'
+
+
 setup(name='iow',
-      version="1.0.0",
+      version=__version__,
       description='Balanced parentheses',
       author='Daniel McDonald',
       author_email='d3mcdonald@eng.ucsd.edu',
