@@ -1,0 +1,20 @@
+on:
+  push:
+    tags:
+      - 'iow-*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish a Python distribution to PyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: 'testtest' # ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          # set version from '${{ github.ref_name }}'
+          python setup.py sdist
+          ls dist
+          echo "${{ github.ref_name }}"

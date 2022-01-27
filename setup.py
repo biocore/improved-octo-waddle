@@ -22,11 +22,14 @@ classes = """
     License :: OSI Approved :: BSD License
     Topic :: Scientific/Engineering
     Programming Language :: Python
-    Programming Language :: Python :: 3.5
     Programming Language :: Python :: 3.6
+    Programming Language :: Python :: 3.7
+    Programming Language :: Python :: 3.8
+    Programming Language :: Python :: 3.9
     Operating System :: Unix
     Operating System :: POSIX
     Operating System :: MacOS :: MacOS X
+    Operating System :: Linux
 """
 classifiers = [s.strip() for s in classes.split('\n') if s]
 
@@ -107,12 +110,12 @@ if USE_CYTHON:
 
 
 setup(name='iow',
-      version="0.1.3",
+      version="1.0.0",
       description='Balanced parentheses',
       author='Daniel McDonald',
-      author_email='mcdonadt@colorado.edu',
+      author_email='d3mcdonald@eng.ucsd.edu',
       maintainer='Daniel McDonald',
-      maintainer_email='mcdonadt@colorado.edu',
+      maintainer_email='d3mcdonald@eng.ucsd.edu',
       url='https://github.com/wasade/improved-octo-waddle',
       packages=['bp'],
       ext_modules=extensions,
