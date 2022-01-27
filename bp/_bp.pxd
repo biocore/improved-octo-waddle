@@ -19,8 +19,8 @@ cdef class mM:
     cdef int m_idx  # m is minimum excess
     cdef int M_idx  # M is maximum excess
     cdef int r_idx  # rank
-    cdef int k0_idx
     cdef SIZE_t[:, ::1] mM
+    cdef SIZE_t[:] r
 
     cdef void rmm(self, BOOL_t[:] B, int B_size) nogil
 

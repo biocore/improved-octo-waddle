@@ -50,8 +50,6 @@ cdef class mM:
     def __cinit__(self, BOOL_t[:] B, int B_size):
         self.m_idx = 0
         self.M_idx = 1
-        self.r_idx = 2
-        self.k0_idx = 3
 
         self.rmm(B, B_size)
 
@@ -65,14 +63,14 @@ cdef class mM:
         cdef int lower_limit  # the lower limit of the bucket a parenthesis is in
         cdef int upper_limit  # the upper limit of the bucket a parenthesis is in
         
-        cdef SIZE_t[:, :] mM  # exact min/max per bucket
+        #cdef SIZE_t[:, :] mM  # exact min/max per bucket
+        #cdef SIZE_t[:] r  
         cdef int min_ = 0 # m, absolute minimum for a blokc
         cdef int max_ = 0 # M, absolute maximum for a block
         #cdef int n = 0
         cdef int excess = 0 # e, absolute excess
         cdef int vbar
         cdef int r = 0
-        cdef int k0 = 0
 
         # build tip info
         self.b = <int>ceil(ln(<double> B_size) * ln(ln(<double> B_size)))
@@ -86,7 +84,8 @@ cdef class mM:
         with gil:
             # creation of a memoryview directly or via numpy requires the GIL:
             # http://stackoverflow.com/a/22238012
-            self.mM = np.zeros((self.n_total, 4), dtype=SIZE)
+            self.mM = np.zeros((self.n_total, 2), dtype=SIZE)
+            self.r = np.zeros(self.n_total, dtype=SIZE)
 
         # annoying, cannot do step in range if step is not known at runtime
         # see https://github.com/cython/cython/pull/520
@@ -101,14 +100,12 @@ cdef class mM:
             min_ = INT_MAX
             max_ = 0
             
-            self.mM[offset + self.n_internal, self.r_idx] = r
-            
+            self.r[offset + self.n_internal] = r 
             for j in range(lower_limit, upper_limit):
                 # G function, a +-1 method where if B[j] == 1 we +1, and if
                 # B[j] == 0 we -1
                 excess += -1 + (2 * B[j]) 
                 r += B[j]
-                k0 += 1 - B[j]  # avoid if statement, inc if B[j] == 0
 
                 if excess < min_:
                     min_ = excess
@@ -120,7 +117,6 @@ cdef class mM:
             
             self.mM[offset + self.n_internal, self.m_idx] = min_
             self.mM[offset + self.n_internal, self.M_idx] = max_
-            self.mM[offset + self.n_internal, self.k0_idx] = k0
 
             i += self.b
 
@@ -142,16 +138,13 @@ cdef class mM:
                 elif rchild >= self.n_total:
                     self.mM[node, self.m_idx] = self.mM[lchild, self.m_idx] 
                     self.mM[node, self.M_idx] = self.mM[lchild, self.M_idx]
-                    self.mM[node, self.k0_idx] = self.mM[lchild, self.k0_idx]
                 else:    
                     self.mM[node, self.m_idx] = min(self.mM[lchild, self.m_idx], 
                                                     self.mM[rchild, self.m_idx])
                     self.mM[node, self.M_idx] = max(self.mM[lchild, self.M_idx], 
                                                     self.mM[rchild, self.M_idx])
-                    self.mM[node, self.k0_idx] = max(self.mM[lchild, self.k0_idx], 
-                                                     self.mM[rchild, self.k0_idx])
 
-                self.mM[node, self.r_idx] = self.mM[lchild, self.r_idx] 
+                self.r[node] = self.r[lchild] 
                     
 
 @cython.final
@@ -340,7 +333,7 @@ cdef class BP:
         
         # collect the rank at the left end of the block
         node = bt_node_from_left(k, self._rmm.height)
-        r += self._rmm.mM[node, self._rmm.r_idx]
+        r += self._rmm.r[node]
 
         # TODO: can this if statement be removed?
         if t:
