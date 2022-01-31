@@ -70,6 +70,10 @@ class NewickTests(TestCase):
         with self.assertRaises(ValueError):
             parse_newick(test)
 
+        # make sure we work with a newline
+        test = "((h:1, i:1, j:1, k:1, l: 1),(e:1,f:1),(n:1,o:1,p:1))a:1;\n"
+        parse_newick(test)
+
     def test_write_newick_underscore_bug(self):
         test = "(((a)b)'c_foo',((d)e)f)r;"
         buf = io.StringIO()

@@ -145,6 +145,7 @@ cpdef parse_newick(unicode data):
     if data.count(',') == 0:
         raise ValueError("Only trees with more than 1 node supported")
 
+    data = data.strip()
     if not data.endswith(';'):
         raise ValueError("Newick does not appear terminated with a semicolon")
 
