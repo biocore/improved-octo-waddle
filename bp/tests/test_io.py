@@ -50,10 +50,29 @@ class NewickTests(TestCase):
 
         for test in tests:
             buf = io.StringIO()
-            obs = write_newick(parse_newick(test), buf)
+            obs = write_newick(parse_newick(test), buf, False)
             buf.seek(0)
             obs = buf.read()
             self._compare_newick(obs, test)
+
+    def test_write_newick_edges(self):
+        test_a = '((foo"bar":1{0},baz:2{1})x:3{2})r;'
+        test_b = "(((a)b)c,((d)e)f)r;"
+
+        buf = io.StringIO()
+        obs = write_newick(parse_newick(test_a), buf, True)
+        buf.seek(0)
+        obs = to_skbio_treenode(parse_newick(buf.read()))
+        self.assertEqual(obs.find('foo"bar"').edge_num, 0)
+        self.assertEqual(obs.find('baz').edge_num, 1)
+        self.assertEqual(obs.find('x').edge_num, 2)
+
+        buf = io.StringIO()
+        obs = write_newick(parse_newick(test_b), buf, True)
+        buf.seek(0)
+        obs = to_skbio_treenode(parse_newick(buf.read()))
+        for o in obs.traverse():
+            self.assertEqual(o.edge_num, 0)
 
     def test_parse_newick_singlenode_bug(self):
         # https://github.com/wasade/improved-octo-waddle/issues/29
@@ -77,7 +96,7 @@ class NewickTests(TestCase):
     def test_write_newick_underscore_bug(self):
         test = "(((a)b)'c_foo',((d)e)f)r;"
         buf = io.StringIO()
-        obs = write_newick(parse_newick(test), buf)
+        obs = write_newick(parse_newick(test), buf, False)
         buf.seek(0)
         self.assertEqual(buf.read(), test)
 

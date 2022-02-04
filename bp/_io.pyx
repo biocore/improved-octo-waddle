@@ -32,7 +32,7 @@ cdef inline np.int32_t number_from_edge(unicode token):
         Py_ssize_t end
 
     # 0.12345{0123} -> 0123
-    # OR 0.12345[0123] -> 0.12345
+    # OR 0.12345[0123] -> 0123
     split_idx_curly = token.find('{')
     split_idx_square = token.find('[')
     split_idx = max(split_idx_curly, split_idx_square)
@@ -86,9 +86,10 @@ cdef void _set_node_metadata(np.uint32_t ptr, unicode token,
     edges[ptr] = edge
 
 
-def write_newick(BP tree, object output):
+def write_newick(BP tree, object output, bint include_edge):
     cdef:
         list name_stack
+        list edge_stack
         list length_stack
         list open_paren_stack
         object name
@@ -99,6 +100,7 @@ def write_newick(BP tree, object output):
 
     length_stack = []
     name_stack = []
+    edge_stack = []
     open_paren_stack = []
     root_close = tree.close(0)
 
@@ -108,10 +110,12 @@ def write_newick(BP tree, object output):
                 output.write('(')
             name_stack.append(tree.name(idx))
             length_stack.append(tree.length(idx))
+            edge_stack.append(tree.edge(idx))
             open_paren_stack.append(idx)
         else:
             name = name_stack.pop()
             length = length_stack.pop()
+            edge = edge_stack.pop()
 
             if name is not None:
                 # if we have magical characters, make sure we quote
@@ -121,7 +125,11 @@ def write_newick(BP tree, object output):
                     output.write(name)
 
             if length > 0:
-                output.write(':%f' % length)
+                # an edge label only makes sense if there is length i think?
+                if include_edge:
+                    output.write(':%f{%d}' % (length, edge))
+                else:
+                    output.write(':%f' % length)
                 
             if tree.nsibling(open_paren_stack.pop()) == 0:
                 if idx != root_close:
