@@ -74,6 +74,7 @@ def from_skbio_treenode(tree):
     topo = np.zeros(n_nodes * 2, dtype=np.uint8)
     names = np.full(n_nodes * 2, None, dtype=object)
     lengths = np.zeros(n_nodes * 2, dtype=np.double)
+    edges = np.zeros(n_nodes * 2, dtype=np.int32)
 
     ptr = 0
     seen = set()
@@ -82,6 +83,7 @@ def from_skbio_treenode(tree):
             topo[ptr] = 1
             names[ptr] = n.name
             lengths[ptr] = n.length or 0.0
+            edges[ptr] = getattr(n, 'edge_num', 0)
 
             if n.is_tip():
                 ptr += 1
