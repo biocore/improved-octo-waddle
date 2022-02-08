@@ -88,7 +88,7 @@ def from_skbio_treenode(tree):
             topo[ptr] = 1
             names[ptr] = n.name
             lengths[ptr] = n.length or 0.0
-            edges[ptr] = getattr(n, 'edge_num', 0)
+            edges[ptr] = getattr(n, 'edge_num', None) or 0
 
             if n.is_tip():
                 ptr += 1
@@ -96,7 +96,7 @@ def from_skbio_treenode(tree):
             seen.add(n)
 
         ptr += 1
-    return BP(topo, names=names, lengths=lengths)
+    return BP(topo, names=names, lengths=lengths, edges=edges)
 
 
 def to_skbio_treearray(BP bp):
