@@ -31,6 +31,11 @@ def to_skbio_treenode(BP bp):
     # invalidate_caches. Let's remove that from consideration
     # temporarily while constructing the tree
     for node in nodes:
+        # monkey patching triggers a weird edge case with python's copy, so the
+        # "easy" thing is to disregard what we're doing in copy as these are
+        # immutable anyway
+        node._exclude_from_copy.add('_old_invalidate_caches')
+        node._exclude_from_copy.add('invalidate_caches')
         node._old_invalidate_caches = node.invalidate_caches
         node.invalidate_caches = noop
 
