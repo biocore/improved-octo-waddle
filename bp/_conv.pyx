@@ -88,7 +88,7 @@ def from_skbio_treenode(tree):
             topo[ptr] = 1
             names[ptr] = n.name
             lengths[ptr] = n.length or 0.0
-            edges[ptr] = getattr(n, 'edge_num') or 0
+            edges[ptr] = getattr(n, 'edge_num', None) or 0
 
             if n.is_tip():
                 ptr += 1
