@@ -96,7 +96,7 @@ def from_skbio_treenode(tree):
             seen.add(n)
 
         ptr += 1
-    return BP(topo, names=names, lengths=lengths)
+    return BP(topo, names=names, lengths=lengths, edges=edges)
 
 
 def to_skbio_treearray(BP bp):
