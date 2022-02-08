@@ -98,7 +98,7 @@ class NewickTests(TestCase):
         buf = io.StringIO()
         obs = write_newick(parse_newick(test), buf, False)
         buf.seek(0)
-        self.assertEqual(buf.read(), test)
+        self.assertIn("'c_foo'", test)
 
     def test_parse_newick_nested_quotes(self):
         # bug: quotes are removed
