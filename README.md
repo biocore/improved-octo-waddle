@@ -1,6 +1,8 @@
 Improved Octo Waddle
 --------------------
 
+[![Improved Octo Waddle CI](https://github.com/biocore/improved-octo-waddle/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/biocore/improved-octo-waddle/actions/workflows/python-package-conda.yml)
+
 An implementation of the balanced parentheses tree structure as described by
 [Cordova and Navarro](http://www.dcc.uchile.cl/~gnavarro/ps/tcs16.2.pdf).
 
