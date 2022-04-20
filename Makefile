@@ -1,6 +1,6 @@
 libbitarr.a: 
-	cd BitArray && $(MAKE)
-	make -C BitArray -f Makefile
+	cd bp/BitArray && $(MAKE)
+	make -C bp/BitArray -f Makefile
 
 build: libbitarr.a
 	python setup.py build_ext --inplace
