@@ -16,7 +16,7 @@ class ConversionTests(TestCase):
         self.sktn = skbio.TreeNode.read(StringIO(self.tstr))
 
     def test_to_skbio_treenode_with_edge_numbers(self):
-        # from https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031009
+        # from https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031009 # noqa
         # but without edge labels
         # 0 1 2 3 4 5 6 7 8 9
         # 1 1 1 0 1 0 0 1 0 0

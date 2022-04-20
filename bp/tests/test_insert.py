@@ -7,11 +7,14 @@ import pandas as pd
 
 class InsertTests(unittest.TestCase):
     package = 'bp.tests'
+
     def setUp(self):
         self.jplacedata_multiple = \
             open(self.get_data_path('300/placement_mul.jplace')).read()
         self.final_multiple_fully_resolved = \
-            skbio.TreeNode.read(self.get_data_path('300/placement.full_resolve.newick'))
+            skbio.TreeNode.read(
+                self.get_data_path('300/placement.full_resolve.newick')
+            )
 
     def get_data_path(self, filename):
         # adapted from qiime2.plugin.testing.TestPluginBase
@@ -50,6 +53,7 @@ class InsertTests(unittest.TestCase):
                          {n.name for n in exp.tips()})
         self.assertEqual(obs.compare_rfd(exp), 0)
         self.assertAlmostEqual(obs.compare_tip_distances(exp), 0)
+
 
 if __name__ == '__main__':
     unittest.main()
