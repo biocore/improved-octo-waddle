@@ -95,6 +95,7 @@ class NewickTests(TestCase):
         skbio_tree = to_skbio_treenode(topology)
         self.assertEqual(skbio_tree.name, "root")
         self.assertEqual([n.name for n in skbio_tree.children], ["a"])
+        self.assertEqual([n.name for n in skbio_tree.non_tips()], ["a"])
         self.assertEqual([n.name for n in skbio_tree.tips()], ["b"])
 
     def test_parse_newick_no_semicolon_bug(self):
