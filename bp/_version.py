@@ -1,4 +1,3 @@
-
 # This file helps to compute a version number in source trees obtained from
 # git-archive tarball (such as those provided by githubs download-from-tag
 # feature). Distribution tarballs (built by setup.py sdist) and build
@@ -339,7 +338,9 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, runner=run_command):
         pieces["distance"] = int(count_out)  # total number of commits
 
     # commit date: see ISO-8601 comment in git_versions_from_keywords()
-    date = runner(GITS, ["show", "-s", "--format=%ci", "HEAD"], cwd=root)[0].strip()
+    date = runner(
+        GITS, ["show", "-s", "--format=%ci", "HEAD"], cwd=root
+    )[0].strip()
     # Use only the last line.  Previous lines may contain GPG signature
     # information.
     date = date.splitlines()[-1]
@@ -429,10 +430,14 @@ def render_pep440_pre(pieces):
     if pieces["closest-tag"]:
         if pieces["distance"]:
             # update the post release segment
-            tag_version, post_version = pep440_split_post(pieces["closest-tag"])
+            tag_version, post_version = pep440_split_post(
+                pieces["closest-tag"]
+            )
             rendered = tag_version
             if post_version is not None:
-                rendered += ".post%d.dev%d" % (post_version+1, pieces["distance"])
+                rendered += ".post%d.dev%d" % (
+                    post_version+1, pieces["distance"]
+                )
             else:
                 rendered += ".post0.dev%d" % (pieces["distance"])
         else:

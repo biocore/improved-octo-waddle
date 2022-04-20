@@ -13,12 +13,13 @@ import numpy.testing as npt
 
 class NewickTests(TestCase):
     def test_parse_newick_simple_edge_numbers(self):
-        # from https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031009
+        # from https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031009 # noqa
         # but without edge labels
         # 0 1 2 3 4 5 6 7 8 9
         # 1 1 1 0 1 0 0 1 0 0
         in_ = '((A:.01{0}, B:.01{1})D:.01{3}, C:.01{4}) {5};'
-        exp_sk = '((A:.01, B:.01)D:.01, C:.01);'  # skbio doesn't know about edge numbers
+        # skbio doesn't know about edge numbers
+        exp_sk = '((A:.01, B:.01)D:.01, C:.01);'
         obs = parse_newick(in_)
         obs_sk = to_skbio_treenode(obs)
         exp_sk = skbio.TreeNode.read([exp_sk])
@@ -82,6 +83,20 @@ class NewickTests(TestCase):
         with self.assertRaises(ValueError):
             parse_newick(test)
 
+    def test_parse_newick_linear_tree(self):
+        # https://github.com/biocore/improved-octo-waddle/pull/48
+        test = '((b:3)a:2)root:1;'
+
+        # Test that we can parse these edge cases successfully, without
+        # mistaking them for single-node trees
+        topology = parse_newick(test)
+
+        # Convert the tree to a skbio TreeNode to make checking easier
+        skbio_tree = to_skbio_treenode(topology)
+        self.assertEqual(skbio_tree.name, "root")
+        self.assertEqual([n.name for n in skbio_tree.children], ["a"])
+        self.assertEqual([n.name for n in skbio_tree.tips()], ["b"])
+
     def test_parse_newick_no_semicolon_bug(self):
         # https://github.com/wasade/improved-octo-waddle/issues/26
         test = "((h:1, i:1, j:1, k:1, l: 1),(e:1,f:1),(n:1,o:1,p:1))a:1"
@@ -96,7 +111,7 @@ class NewickTests(TestCase):
     def test_write_newick_underscore_bug(self):
         test = "(((a)b)'c_foo',((d)e)f)r;"
         buf = io.StringIO()
-        obs = write_newick(parse_newick(test), buf, False)
+        write_newick(parse_newick(test), buf, False)
         buf.seek(0)
         self.assertIn("'c_foo'", test)
 
