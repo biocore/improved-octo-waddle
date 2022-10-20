@@ -360,6 +360,8 @@ def parse_jplace(object data):
         Py_ssize_t placement_idx, placement_inner_idx, fragment_idx, 
         Py_ssize_t n_fragments
         BP tree
+        object df
+        set edges
 
     as_json = json.loads(data)
     newick = as_json['tree']
@@ -389,4 +391,8 @@ def parse_jplace(object data):
                 placements.append(entry)
 
     tree = parse_newick(newick)
-    return pd.DataFrame(placements, columns=fields), tree
+    edges = {tree.edge(i) for i, v in enumerate(tree.B) if v}
+    df = pd.DataFrame(placements, columns=fields)
+    df = df[df['edge_num'].isin(edges)]
+
+    return df, tree
