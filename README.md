@@ -51,4 +51,4 @@ Options:
   --help                          Show this message and exit.
 ```
 
-Note that the multifurcating support relies on GPL code derived from the Genesis project. That code and LICENSE can be found under `bp/GPL`.
+Note that the multifurcating support relies on GPL code derived from the Genesis project. To use this method, please install [iow-gpl](https://github.com/biocore/improved-octo-waddle-gpl).
