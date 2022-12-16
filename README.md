@@ -33,6 +33,8 @@ Fragment insertion
 
 BP supports the [jplace format](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031009). Fragments can be inserted using either fully-resolved or multifurcation mode to resolve multiple placements to the same edge. In fully resolved, the edge placed against is broken N times where N is the number of fragments on the edge. In multifurcation, a new node is constructed as the average of the distal length for the N fragments, and a separate multifurcation node is added which encompasses the placed fragments.
 
+Important: the multifurcation mode support is GPL licensed code. Support for that mode is in a fork of this repository, see [improved-octo-waddle-gpl](https://github.com/biocore/improved-octo-waddle-gpl).
+
 Insertions can be handled by the command line following install:
 
 ```
