@@ -51,7 +51,6 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install --yes -c conda-forge --file ci/conda_requirements.txt
-        pip install . --no-deps
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
@@ -62,4 +61,5 @@ jobs:
     - name: Test with pytest
       shell: bash -l {0}
       run: |
+        pip install . --no-deps
         pytest
