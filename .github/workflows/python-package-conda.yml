@@ -4,6 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
+    branches: [ master ]
 
 env:
   latest_python: "3.12"
@@ -26,7 +27,8 @@ jobs:
         run: |
           echo "latest_python=$latest_python" >> $GITHUB_OUTPUT
           echo "supported_pythons=$supported_pythons" >> $GITHUB_OUTPUT
-  build-linux:
+  build-lint-test:
+    needs: conf
     strategy:
       max-parallel: 5
       fail-fast: true
