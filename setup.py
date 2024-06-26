@@ -101,7 +101,8 @@ extensions.extend([Extension("bp._ba",
 
 if USE_CYTHON:
     from Cython.Build import cythonize
-    extensions = cythonize(extensions)
+    extensions = cythonize(extensions,
+                           language_level=3)
 
 
 setup(name='iow',
