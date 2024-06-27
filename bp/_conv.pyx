@@ -24,9 +24,9 @@ def to_skbio_treenode(BP bp):
         The tree represented as an skbio.TreeNode
     """
     cdef int i
-
-    nodes = [skbio.TreeNode() for i in range(sum(bp.B))]
-
+    
+    nodes = [skbio.TreeNode() for i in range(bp.B.sum())]
+    
     # skbio.TreeNode.append makes a very expensive call to
     # invalidate_caches. Let's remove that from consideration
     # temporarily while constructing the tree
@@ -41,7 +41,7 @@ def to_skbio_treenode(BP bp):
 
     root = nodes[0]
 
-    for i in range(sum(bp.B)):
+    for i in range(bp.B.sum()):
         node_idx = bp.preorderselect(i)
         nodes[i].name = bp.name(node_idx)
         nodes[i].length = bp.length(node_idx)

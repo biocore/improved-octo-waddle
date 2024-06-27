@@ -1,5 +1,5 @@
-nose
+pytest
 numpy
 flake8
-cython
+cython < 1.0.0
 scikit-bio
