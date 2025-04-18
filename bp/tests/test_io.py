@@ -105,21 +105,21 @@ class NewickTests(TestCase):
         in_ = '((foo"bar":1,baz:2)x:3)r;'
         exp = skbio.TreeNode.read([in_])
         obs = to_skbio_treenode(parse_newick(in_))
-        self.assertEqual(obs.compare_subsets(exp), 0.0)
+        self.assertEqual(obs.compare_rfd(exp), 0.0)
 
     def test_parse_newick_with_commas(self):
         # bug: comma is getting interpreted even if in quotes
         in_ = "(('foo,bar':1,baz:2)x:3)r;"
         exp = skbio.TreeNode.read([in_])
         obs = to_skbio_treenode(parse_newick(in_))
-        self.assertEqual(obs.compare_subsets(exp), 0.0)
+        self.assertEqual(obs.compare_rfd(exp), 0.0)
 
     def test_parse_newick_with_parens(self):
         # bug: parens are getting interpreted even if in quotes
         in_ = "(('foo(b)ar':1,baz:2)x:3)r;"
         exp = skbio.TreeNode.read([in_])
         obs = to_skbio_treenode(parse_newick(in_))
-        self.assertEqual(obs.compare_subsets(exp), 0.0)
+        self.assertEqual(obs.compare_rfd(exp), 0.0)
 
     def test_parse_newick(self):
         in_ = "((a:2,b):1,(c:4,d)y:20,e)r;"
