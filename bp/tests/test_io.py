@@ -301,6 +301,21 @@ class JPlaceParseTests(TestCase):
         pdt.assert_frame_equal(obs_df, exp_df)
         self.assertEqual(obs_tree.compare_rfd(exp_tree), 0)
 
+    def test_parse_newick_linear_tree(self):
+        # https://github.com/biocore/improved-octo-waddle/pull/48
+        test = '((b:3)a:2)root:1;'
+
+        # Test that we can parse these edge cases successfully, without
+        # mistaking them for single-node trees
+        topology = parse_newick(test)
+
+        # Convert the tree to a skbio TreeNode to make checking easier
+        skbio_tree = to_skbio_treenode(topology)
+        self.assertEqual(skbio_tree.name, "root")
+        self.assertEqual([n.name for n in skbio_tree.children], ["a"])
+        self.assertEqual([n.name for n in skbio_tree.non_tips()], ["a"])
+        self.assertEqual([n.name for n in skbio_tree.tips()], ["b"])
+
 
 if __name__ == '__main__':
     main()
