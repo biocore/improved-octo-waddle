@@ -148,8 +148,6 @@ cpdef parse_newick(unicode data):
         np.ndarray[np.double_t, ndim=1] lengths
         np.ndarray[np.int32_t, ndim=1] edges
 
-    if data.count(',') == 0:
-        raise ValueError("Only trees with more than 1 node supported")
 
     data = data.strip()
     if not data.endswith(';'):
@@ -157,6 +155,9 @@ cpdef parse_newick(unicode data):
 
     datalen = len(data)
     topology = _newick_to_bp(data)
+    
+    if len(topology.B) <= 2:
+        raise ValueError("Only trees with more than 1 node supported")
 
     names = np.full(len(topology.B), None, dtype=object)
     lengths = np.zeros(len(topology.B), dtype=np.double)
