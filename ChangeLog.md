@@ -4,6 +4,9 @@ BP ChangeLog
 BP 0.1.1-dev
 ------------
 
+* Restore execution of the existing compiled Cython tests and binary-tree
+  self-test in GitHub Actions alongside pytest.
+
 BP 0.1.1 (released on August 26, 2016)
 --------------------------------------
 
