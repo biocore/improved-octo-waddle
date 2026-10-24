@@ -4,7 +4,7 @@ import re
 import json
 import pandas as pd
 import pandas.testing as pdt
-import pkg_resources
+from importlib.resources import files
 import skbio
 import io
 import numpy as np
@@ -212,9 +212,7 @@ class JPlaceParseTests(TestCase):
         self.tree = skbio.TreeNode.read([no_edge_numbers])
 
     def get_data_path(self, filename):
-        # adapted from qiime2.plugin.testing.TestPluginBase
-        return pkg_resources.resource_filename(self.package,
-                                               'data/%s' % filename)
+        return str(files(self.package).joinpath('data', filename))
 
     def test_place_jplace_square_braces(self):
         self.jplacedata = json.loads(self.jplacedata)

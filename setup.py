@@ -116,7 +116,6 @@ setup(name='iow',
       packages=['bp'],
       ext_modules=extensions,
       include_dirs=[np.get_include(), bitarr],
-      setup_requires=['numpy >= 1.9.2'],
       package_data={'bp': ['BitArray/*', ]},
       install_requires=[
           'numpy >= 1.9.2',

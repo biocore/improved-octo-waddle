@@ -1,5 +1,5 @@
 import unittest
-import pkg_resources
+from importlib.resources import files
 from bp import parse_jplace, insert_fully_resolved
 import skbio
 import pandas as pd
@@ -14,9 +14,7 @@ class InsertTests(unittest.TestCase):
             skbio.TreeNode.read(self.get_data_path('300/placement.full_resolve.newick'))
 
     def get_data_path(self, filename):
-        # adapted from qiime2.plugin.testing.TestPluginBase
-        return pkg_resources.resource_filename(self.package,
-                                               'data/%s' % filename)
+        return str(files(self.package).joinpath('data', filename))
 
     def test_insert_fully_resolved(self):
         exp = self.final_multiple_fully_resolved

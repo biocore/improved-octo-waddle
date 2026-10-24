@@ -7,14 +7,14 @@ An implementation of the balanced parentheses tree structure as described by
 Install notes
 -------------
 
-Installation is a two step procedure right now due to the chicken and egg
-problem of requiring numpy and cython for setup.py to execute. The package is
-named iow in pypi as "bp" was taken at time of registration.
+The package is named iow on PyPI because "bp" was taken at registration.
+For source checkouts, build dependencies (NumPy, Cython, setuptools, and
+Versioneer) are installed automatically in an isolated environment using
+`pyproject.toml`.
 
 ```
-$ conda create --name bp python=3.8
+$ conda create --name bp python=3.13
 $ conda activate bp
-$ conda install numpy cython
 $ pip install iow
 ```
 
